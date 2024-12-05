@@ -9,7 +9,7 @@ function createMainWindow () {
     height: 600
   })
 
-
+mainWindow.webContents.openDevTools();
 
   const startUrl = url.format({
     pathname: path.join(__dirname, './app/build/index.html'),
