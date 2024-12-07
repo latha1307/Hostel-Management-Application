@@ -1,3 +1,22 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* Set the global background color */
+body {
+  background-color: #F4F7FE;
+  margin: 0;
+  font-family: Arial, sans-serif; /* Add your preferred font-family */
+  color: #333; /* Set default text color */
+}
+
+/* Ensure the html and body elements take full height */
+html, body {
+  height: 100%;
+  width: 100%;
+}
+
+#root {
+  height: 100%;
+}

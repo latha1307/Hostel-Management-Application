@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import logo from "../assets/TPGIT_logo_created.png";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
@@ -16,31 +17,44 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { theme } from "../constants/theme";
 
 const navItems = [
-  { label: "Dashboard", icon: <DashboardIcon /> },
-  { label: "Student Requests", icon: <PersonIcon /> },
-  { label: "Student Details", icon: <SchoolIcon /> },
-  { label: "Leave Requests", icon: <ListAltIcon /> },
+  { label: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
+  { label: "Student Requests", icon: <PersonIcon />, path: "/student-requests" },
+  { label: "Student Details", icon: <SchoolIcon />, path: "/student-details" },
+  { label: "Leave Requests", icon: <ListAltIcon />, path: "/leave-requests" },
   {
     label: "Manage Mess",
     icon: <RestaurantIcon />,
     subItems: [
-      { label: "Provisions", icon: <StoreIcon /> },
-      { label: "Boys Hostel", icon: <ApartmentIcon /> },
-      { label: "Girls Hostel", icon: <ApartmentIcon /> },
+      { label: "Provisions", icon: <StoreIcon />, path: "/manage-mess/provisions" },
+      { label: "Boys Hostel", icon: <ApartmentIcon />, path: "/manage-mess/boys-hostel" },
+      { label: "Girls Hostel", icon: <ApartmentIcon />, path: "/manage-mess/girls-hostel" },
     ],
   },
-  { label: "Notice Board", icon: <NotificationsIcon /> },
-  { label: "Complaints", icon: <ReportProblemIcon /> },
-  { label: "Feedback", icon: <FeedbackIcon /> },
-  { label: "Vacate Requests", icon: <ExitToAppIcon /> },
+  { label: "Notice Board", icon: <NotificationsIcon />, path: "/notice-board" },
+  { label: "Complaints", icon: <ReportProblemIcon />, path: "/complaints" },
+  { label: "Feedback", icon: <FeedbackIcon />, path: "/feedback" },
+  { label: "Vacate Requests", icon: <ExitToAppIcon />, path: "/vacate-requests" },
 ];
 
 const Navbar = () => {
-  const [expandedIndex, setExpandedIndex] = useState(null);
+  const location = useLocation(); // Get the current URL path
+  const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  const handleExpand = (index) => {
-    setExpandedIndex(expandedIndex === index ? null : index);
+  // Load expandedIndex from localStorage when component mounts
+  useEffect(() => {
+    const savedIndex = JSON.parse(localStorage.getItem("navbarExpandedIndex") || "null");
+    if (savedIndex !== null) {
+      setExpandedIndex(savedIndex);
+    }
+  }, []);
+
+  const handleExpand = (index: number) => {
+    const newExpandedIndex = expandedIndex === index ? null : index;
+    setExpandedIndex(newExpandedIndex);
+    localStorage.setItem("navbarExpandedIndex", JSON.stringify(newExpandedIndex));
   };
+
+  const isSelected = (path: string) => location.pathname === path;
 
   return (
     <div className="w-72 h-screen bg-white">
@@ -55,7 +69,11 @@ const Navbar = () => {
         {navItems.map((item, index) => (
           <div key={index}>
             <div
-              className="flex items-center px-8 py-1 text-[#646464] hover:bg-[#0180FF] hover:text-white cursor-pointer transition-all duration-300 rounded-lg"
+              className={`flex items-center px-8 py-1 cursor-pointer transition-all duration-300 rounded-lg ${
+                isSelected(item.path || "")
+                  ? "bg-[#0180FF] text-white"
+                  : "text-[#646464] hover:bg-[#0180FF] hover:text-white"
+              }`}
               style={{ borderRadius: "8px" }}
               onClick={() => item.subItems && handleExpand(index)}
             >
@@ -67,7 +85,13 @@ const Navbar = () => {
                   fontWeight: theme.fonts.bold,
                 }}
               >
-                {item.label}
+                {item.path ? (
+                  <Link to={item.path} className="w-full">
+                    {item.label}
+                  </Link>
+                ) : (
+                  <span>{item.label}</span>
+                )}
               </span>
               {item.subItems && (
                 <div className="ml-auto">
@@ -81,7 +105,11 @@ const Navbar = () => {
                 {item.subItems.map((subItem, subIndex) => (
                   <div
                     key={subIndex}
-                    className="flex items-center px-8 py-1 text-[#646464] font-semibold hover:bg-[#0180FF] hover:text-white cursor-pointer transition-all duration-300 rounded-lg"
+                    className={`flex items-center px-8 py-1 cursor-pointer transition-all duration-300 rounded-lg ${
+                      isSelected(subItem.path || "")
+                        ? "bg-[#0180FF] text-white"
+                        : "text-[#646464] hover:bg-[#0180FF] hover:text-white"
+                    }`}
                     style={{ borderRadius: "8px" }}
                   >
                     <div style={{ fontSize: "1.2rem" }}>{subItem.icon}</div>
@@ -92,7 +120,11 @@ const Navbar = () => {
                         fontWeight: theme.fonts.regular,
                       }}
                     >
-                      {subItem.label}
+                      {subItem.path ? (
+                        <Link to={subItem.path}>{subItem.label}</Link>
+                      ) : (
+                        <span>{subItem.label}</span>
+                      )}
                     </span>
                   </div>
                 ))}
