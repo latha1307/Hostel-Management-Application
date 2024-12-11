@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Box,
   Button,
@@ -26,6 +27,21 @@ import MilkImage from "../../assets/milk.png";
 import GasImage from "../../assets/gas.png";
 import { theme } from "../../constants/theme";
 
+interface GroceryItem {
+  itemName: string;
+  ConsumedQnty: number;
+  ConsumedCostTotal: number;
+  RemainingQty: number;
+  DateOfConsumed: string;
+  CostPerPiece: number;
+  CostPerKg: number;
+  CostPerLitre: number;
+  TotalCost: number;
+  TotalAmount: number;
+  id: number;
+  Quantity: number; // Or use the actual identifier you want
+}
+
 const categoryData = [
   { label: "Consumed Provisions", image: ConsumedProvisionsImage, color: "#A07444" },
   { label: "Vegetables", image: VegetableImage, color: "#43A047" },
@@ -34,27 +50,58 @@ const categoryData = [
   { label: "Gas", image: GasImage, color: "#D32F2F" },
 ];
 
-// Example data for tables
-const groceriesData = {
-  "Consumed Provisions": [
-    { id: 1, itemName: "Rice", consumedQty: 100, consumedCost: 50, remainingQty: 20, dateConsumed: "10/9/2024" },
-  ],
-  Vegetables: [
-    { id: 1, itemName: "Carrot", consumedQty: 10, consumedCost: 30, remainingQty: 5, dateConsumed: "11/9/2024" },
-  ],
-  Egg: [
-    { id: 1, itemName: "Egg", consumedQty: 50, consumedCost: 200, remainingQty: 10, dateConsumed: "12/9/2024" },
-  ],
-  Milk: [
-    { id: 1, itemName: "Milk", consumedQty: 20, consumedCost: 100, remainingQty: 5, dateConsumed: "13/9/2024" },
-  ],
-  Gas: [
-    { id: 1, itemName: "Gas Cylinder", consumedQty: 1, consumedCost: 1500, remainingQty: 0, dateConsumed: "14/9/2024" },
-  ],
-};
-
 const Groceries = () => {
   const [selectedCategory, setSelectedCategory] = useState("Consumed Provisions");
+  const [groceriesData, setGroceriesData] = useState<GroceryItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchGroceriesData = async (category) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await axios.get(`http://localhost:8081/api/mess/grocery/consumed/Boys/${category}`);
+        setGroceriesData(response.data);
+      } catch (error) {
+        console.error("Error fetching groceries data:", error);
+        setError("Error fetching groceries data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGroceriesData(selectedCategory);
+  }, [selectedCategory]);
+
+  const getTableHeaders = () => {
+    switch (selectedCategory) {
+      case 'Consumed Provisions':
+        return ['S.No', 'Item Name', 'Consumed Quantity', 'Consumed Cost', 'Remaining Quantity', 'Date of Consumed', 'Action'];
+      case 'Vegetables':
+        return ['S.No', 'Item Name', 'Quantity', 'Cost Per Kg', 'Total Cost', 'Date of Consumed', 'Action'];
+      case 'Egg':
+        return ['S.No', 'Quantity', 'Cost Per Piece', 'Total Cost', 'Date of Consumed', 'Action'];
+      case 'Milk':
+        return ['S.No', 'Quantity', 'Cost Per Litre', 'Total Cost', 'Date of Consumed', 'Action'];
+      case 'Gas':
+        return ['S.No', 'Total Amount', 'Date of Consumed', 'Action'];
+      default:
+        return [];
+    }
+  };
+
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return '';
+
+    const date = new Date(dateString);
+
+    const day = String(date.getDate()).padStart(2, '0'); // Add leading zero if day is single digit
+    const month = String(date.getMonth() + 1).padStart(2, '0'); // Get month (0-based, so add 1)
+    const year = date.getFullYear();
+
+    return `${day}/${month}/${year}`;
+  };
 
   return (
     <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-10">
@@ -64,9 +111,9 @@ const Groceries = () => {
         <span className="ml-2 text-primary text-xl font-bold">Groceries</span>
       </div>
       <p className="text-tertiary font-medium mb-4">
-        <nav className="text-sm mb-4">
+        <div className="text-sm mb-4">
           <Link to="/manage-mess/boys-hostel">Boys Hostel</Link> &gt; Groceries
-        </nav>
+        </div>
       </p>
 
       {/* Category Buttons */}
@@ -91,7 +138,6 @@ const Groceries = () => {
 
       {/* Search and Filter Section */}
       <Box display="flex" alignItems="center" mb={2} gap={2}>
-        {/* Search Box */}
         <TextField
           variant="outlined"
           size="small"
@@ -113,7 +159,6 @@ const Groceries = () => {
           }}
         />
 
-        {/* Filter Button */}
         <Button
           variant="contained"
           startIcon={<FilterListIcon />}
@@ -122,43 +167,76 @@ const Groceries = () => {
           Filter By
         </Button>
       </Box>
+      {error && <div className="text-red-600">{error}</div>}
 
-      {/* Table Section */}
-      <TableContainer sx={{ border: "1px solid #E0E0E0", borderRadius: "8px" }}>
-        <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: categoryData.find((cat) => cat.label === selectedCategory)?.color || "#F5F5F5" }}>
-              {["S.No", "Item Name", "Consumed Quantity", "Consumed Cost", "Remaining Quantity", "Date of Consumed", "Action"].map(
-                (header, index) => (
-                  <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
-                    {header}
-                  </TableCell>
-                )
-              )}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {groceriesData[selectedCategory]?.map((row, index) => (
-              <TableRow key={row.id}>
-                <TableCell align="center">{index + 1}</TableCell>
-                <TableCell align="center">{row.itemName}</TableCell>
-                <TableCell align="center">{row.consumedQty}</TableCell>
-                <TableCell align="center">{row.consumedCost}</TableCell>
-                <TableCell align="center">{row.remainingQty}</TableCell>
-                <TableCell align="center">{row.dateConsumed}</TableCell>
-                <TableCell align="center">
-                  <IconButton color="primary">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
+      {/* Loading state */}
+      {loading ? (
+        <div>Loading...</div>
+      ) : (
+        <TableContainer sx={{ border: "1px solid #E0E0E0", borderRadius: "8px" }}>
+          <Table>
+            <TableHead>
+              <TableRow sx={{ backgroundColor: categoryData.find((cat) => cat.label === selectedCategory)?.color || "#F5F5F5" }}>
+              {getTableHeaders().map((header, index) => (
+              <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: 'white' }}>
+                {header}
+              </TableCell>
             ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              </TableRow>
+            </TableHead>
+            <TableBody >
+              {groceriesData.map((row, index) => (
+                <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
+                  <TableCell align="center">{index + 1}</TableCell>
+
+              {selectedCategory === 'Consumed Provisions' && (
+                <>
+                  <TableCell align="center">{row.itemName}</TableCell>
+                  <TableCell align="center">{row.ConsumedQnty}</TableCell>
+                  <TableCell align="center">{row.ConsumedCostTotal}</TableCell>
+                  <TableCell align="center">{row.RemainingQty || '-'}</TableCell>
+                </>
+              )}
+              {selectedCategory === 'Vegetables' && (
+                <>
+                  <TableCell align="center">{row.itemName}</TableCell>
+                  <TableCell align="center">{row.Quantity}</TableCell>
+                  <TableCell align="center">{row.CostPerKg}</TableCell>
+                  <TableCell align="center">{row.TotalCost}</TableCell>
+                </>
+              )}
+              {selectedCategory === 'Egg' && (
+                <>
+                  <TableCell align="center">{row.Quantity}</TableCell>
+                  <TableCell align="center">{row.CostPerPiece}</TableCell>
+                  <TableCell align="center">{row.TotalCost}</TableCell>
+                </>
+              )}
+              {selectedCategory === 'Milk' && (
+                <>
+                  <TableCell align="center">{row.Quantity}</TableCell>
+                  <TableCell align="center">{row.CostPerLitre}</TableCell>
+                  <TableCell align="center">{row.TotalCost}</TableCell>
+                </>
+              )}
+              {selectedCategory === 'Gas' && (
+                <TableCell align="center">{row.TotalAmount}</TableCell>
+              )}
+                  <TableCell align="center">{formatDate(row.DateOfConsumed)}</TableCell>
+                  <TableCell align="center">
+                    <IconButton color="primary">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
     </div>
   );
 };
