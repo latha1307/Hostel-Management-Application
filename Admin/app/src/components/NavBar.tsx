@@ -26,8 +26,8 @@ const navItems = [
     icon: <RestaurantIcon />,
     subItems: [
       { label: "Provisions", icon: <StoreIcon />, path: "/manage-mess/provisions" },
-      { label: "Boys Hostel", icon: <ApartmentIcon />, path: "/manage-mess/boys-hostel" },
-      { label: "Girls Hostel", icon: <ApartmentIcon />, path: "/manage-mess/girls-hostel" },
+      { label: "Boys Hostel", icon: <ApartmentIcon />, path: "/manage-mess/Boys" },
+      { label: "Girls Hostel", icon: <ApartmentIcon />, path: "/manage-mess/Girls" },
     ],
   },
   { label: "Notice Board", icon: <NotificationsIcon />, path: "/notice-board" },

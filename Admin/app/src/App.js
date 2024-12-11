@@ -3,8 +3,8 @@ import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "./components/NavBar.tsx";
 import { User } from "./user.tsx";
 import "./index.css";
-import Main from "./pages/BoysHostel/main.tsx";
-import Groceries from "./pages/BoysHostel/Grocery.tsx";
+import Main from "./pages/Mess/main.tsx";
+import Groceries from "./pages/Mess/Grocery.tsx";
 
 function App() {
   return (
@@ -26,8 +26,8 @@ function App() {
           {/* Routes and Main Content */}
           <div className="flex-grow mt-24 mx-8">
             <Routes>
-              <Route path="/manage-mess/boys-hostel" element={<Main />} />
-              <Route path="/manage-mess/boys-hostel/groceries" element={<Groceries/>}/>
+              <Route path="/manage-mess/:hostel" element={<Main />} />
+              <Route path="/manage-mess/:hostel/groceries" element={<Groceries/>}/>
               <Route path="*" element={<div>Page Not Found</div>} />
             </Routes>
           </div>

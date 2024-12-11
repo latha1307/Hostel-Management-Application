@@ -26,6 +26,7 @@ import EggImage from "../../assets/egg.png";
 import MilkImage from "../../assets/milk.png";
 import GasImage from "../../assets/gas.png";
 import { theme } from "../../constants/theme";
+import { useParams } from 'react-router-dom';
 
 interface GroceryItem {
   itemName: string;
@@ -51,6 +52,7 @@ const categoryData = [
 ];
 
 const Groceries = () => {
+  const { hostel } = useParams();
   const [selectedCategory, setSelectedCategory] = useState("Consumed Provisions");
   const [groceriesData, setGroceriesData] = useState<GroceryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -60,8 +62,9 @@ const Groceries = () => {
     const fetchGroceriesData = async (category) => {
       setLoading(true);
       setError(null);
+      const hostelType = hostel === 'Boys' ? 'boys' : 'girls';
       try {
-        const response = await axios.get(`http://localhost:8081/api/mess/grocery/consumed/Boys/${category}`);
+        const response = await axios.get(`http://localhost:8081/api/mess/grocery/consumed/${hostelType}/${category}`);
         setGroceriesData(response.data);
       } catch (error) {
         console.error("Error fetching groceries data:", error);
@@ -72,7 +75,7 @@ const Groceries = () => {
     };
 
     fetchGroceriesData(selectedCategory);
-  }, [selectedCategory]);
+  }, [selectedCategory, hostel]);
 
   const getTableHeaders = () => {
     switch (selectedCategory) {
@@ -112,7 +115,7 @@ const Groceries = () => {
       </div>
       <p className="text-tertiary font-medium mb-4">
         <div className="text-sm mb-4">
-          <Link to="/manage-mess/boys-hostel">Boys Hostel</Link> &gt; Groceries
+          <Link to="/manage-mess/boys-hostel">{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
         </div>
       </p>
 
