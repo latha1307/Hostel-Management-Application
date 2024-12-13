@@ -5,6 +5,7 @@ import { User } from "./user.tsx";
 import "./index.css";
 import Main from "./pages/Mess/main.tsx";
 import Groceries from "./pages/Mess/Grocery.tsx";
+import Provisions from "./pages/Mess/Provisions.tsx";
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           {/* Routes and Main Content */}
           <div className="flex-grow mt-24 mx-8">
             <Routes>
+              <Route path="/mess/provisions" element={<Provisions />}/>
               <Route path="/manage-mess/:hostel" element={<Main />} />
               <Route path="/manage-mess/:hostel/groceries" element={<Groceries/>}/>
               <Route path="*" element={<div>Page Not Found</div>} />
