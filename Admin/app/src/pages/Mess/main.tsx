@@ -4,7 +4,6 @@ import staffSalariesImage from '../../assets/staffSalaries.png';
 import groceriesImage from '../../assets/groceries.png';
 import attendanceImage from '../../assets/attendance.png';
 import billDistributionImage from '../../assets/billDistribution.png';
-import ArrowBack from "@mui/icons-material/ArrowBack";
 import { useParams } from 'react-router-dom';
 
 const Main = () => {
@@ -13,8 +12,7 @@ const Main = () => {
     <div className="max-h-screen bg-pageBg p-1 -mt-10 w-[100vh]">
 
       <div className="flex items-center mb-4">
-        <ArrowBack className="text-primary cursor-pointer" />
-        <span className="ml-2 text-primary text-xl font-bold">{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</span>
+        <span className=" text-primary text-xl font-bold">{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</span>
       </div>
       <p className="text-tertiary font-medium mb-4">Manage mess / {hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</p>
 
@@ -26,7 +24,7 @@ const Main = () => {
     <div className='flex m-3 w-full px-4 justify-between items-center'>
     <span className="text-lg font-semibold mt-3">Staff Salaries</span>
     <Link
-      to="/staff-salaries"
+      to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}/staffsalary`}
       className="text-primary font-extrabold text-4xl transform transition-transform duration-300 hover:scale-150"
     >
       →

@@ -4,7 +4,7 @@ const { openPool } = require('../database');
 
 const router = express.Router();
 
-const validTables = ['Consumed Provisions', 'Vegetables', 'Egg', 'Milk', 'Gas', 'Purchased Provisions'];
+const validTables = ['Consumed Provisions', 'Vegetables', 'Egg', 'Milk', 'Gas', 'Purchased Provisions', 'Staff Salary'];
 
 //Get item-name
 router.get('/mess/grocery/purchased/item-name', async (req, res) => {
@@ -41,6 +41,24 @@ router.get('/mess/grocery/consumed/:Hostel/:table', async (req, res) => {
     // Construct dynamic query based on the table name
     let query;
     switch (table) {
+      case 'Staff Salary':
+        query = `
+          SELECT
+              SalaryID,
+              StaffName,
+              StaffCategory,
+              bank,
+              salaryPerDay,
+              PresentDays,
+              SalaryAmount,
+              DateOfIssued
+          FROM
+              [TPGITHostelManagement].[dbo].[StaffSalary]
+          WHERE
+              Hostel = @Hostel;
+        `;
+        break;
+
       case 'Purchased Provisions':
         query = `
           SELECT
@@ -162,6 +180,13 @@ router.put('/mess/grocery/consumed/:hostel/:category/:id', async (req, res) => {
     let query;
 
     switch (category) {
+      case 'Staff Salary':
+        query = `
+          UPDATE [TPGITHostelManagement].[dbo].[StaffSalary]
+          SET StaffCategory = @StaffCategory, StaffName = @StaffName, bank = @bank, salaryPerDay = @salaryPerDay, PresentDays = @PresentDays, SalaryAmount = @salaryPerDay * @PresentDays, DateOfIssued = @DateOfIssued
+          WHERE Hostel = @Hostel AND SalaryID = @ID
+        `;
+        break;
       case 'Purchased Provisions':
         query = `
           DECLARE @ChangeInQnty INT;
@@ -245,9 +270,15 @@ router.put('/mess/grocery/consumed/:hostel/:category/:id', async (req, res) => {
     await pool.request()
       .input('Hostel', sql.VarChar, hostel)
       .input('ID', sql.Int, id)
+      .input('salaryPerDay', sql.Int, formData.salaryPerDay)
+      .input('PresentDays', sql.Int, formData.PresentDays)
+      .input('StaffCategory', sql.VarChar, formData.StaffCategory)
+      .input('StaffName', sql.VarChar, formData.StaffName)
+      .input('bank', sql.VarChar, formData.bank)
       .input('ConsumedQnty', sql.Decimal, formData.ConsumedQnty || null)
       .input('PurchasedQnty', sql.Decimal, formData.PurchasedQnty || null)
       .input('DateOfConsumed', sql.Date, formData.DateOfConsumed || null)
+      .input('DateOfIssued', sql.Date, formData.DateOfIssued || null)
       .input('DateOfPurchased', sql.Date, formData.DateOfPurchased || null)
       .input('Quantity', sql.Decimal, formData.Quantity || null)
       .input('CostPerKg', sql.Decimal, formData.CostPerKg || null)
@@ -279,6 +310,12 @@ router.post('/mess/grocery/consumed/:hostel/:category/', async (req, res) => {
     let query;
 
     switch (category) {
+      case 'Staff Salary':
+        query = `
+          INSERT INTO [TPGITHostelManagement].[dbo].[StaffSalary] (Hostel, StaffCategory, StaffName, bank, salaryPerDay, PresentDays, SalaryAmount, DateOfIssued)
+          VALUES (@Hostel, @StaffCategory, @StaffName, @bank, @salaryPerDay, @PresentDays, @salaryPerDay * @PresentDays , @DateOfIssued)
+        `;
+        break;
       case 'Purchased Provisions':
         query = `
           INSERT INTO [TPGITHostelManagement].[dbo].[PurchasedProvisions] (itemName, PurchasedQnty, PurchasedCostPerKg, RemainingQty, DateOfPurchased)
@@ -339,10 +376,16 @@ router.post('/mess/grocery/consumed/:hostel/:category/', async (req, res) => {
 
     await pool.request()
       .input('Hostel', sql.VarChar, hostel)
+      .input('salaryPerDay', sql.Int, formData.salaryPerDay)
+      .input('PresentDays', sql.Int, formData.PresentDays)
+      .input('StaffCategory', sql.VarChar, formData.StaffCategory)
+      .input('StaffName', sql.VarChar, formData.StaffName)
+      .input('bank', sql.VarChar, formData.bank)
       .input('itemName', sql.VarChar, formData.itemName)
       .input('ConsumedQnty', sql.Decimal, formData.ConsumedQnty || null)
       .input('PurchasedQnty', sql.Decimal, formData.PurchasedQnty || null)
       .input('DateOfConsumed', sql.Date, formData.DateOfConsumed || null)
+      .input('DateOfIssued', sql.Date, formData.DateOfIssued || null)
       .input('DateOfPurchased', sql.Date, formData.DateOfPurchased || null)
       .input('Quantity', sql.Decimal, formData.Quantity || null)
       .input('CostPerKg', sql.Decimal, formData.CostPerKg || null)
@@ -373,6 +416,12 @@ router.delete('/mess/grocery/consumed/:hostel/:category/:id', async (req, res) =
     let query;
 
     switch (category) {
+      case 'Staff Salary':
+        query = `
+          DELETE FROM [TPGITHostelManagement].[dbo].[StaffSalary]
+          WHERE SalaryID = @ID
+        `;
+        break;
       case 'Purchased Provisions':
         query = `
           DELETE FROM [TPGITHostelManagement].[dbo].[PurchasedProvisions]

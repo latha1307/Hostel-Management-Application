@@ -333,12 +333,12 @@ const Groceries = () => {
     <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
       {/* Header */}
       <div className="flex items-center mb-2">
-        <ArrowBack className="text-primary cursor-pointer" />
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
         <span className="ml-2 text-primary text-xl font-bold">Groceries</span>
       </div>
       <p className="text-tertiary font-medium mb-4">
         <div className="text-sm mb-4">
-          <Link to="/manage-mess/boys-hostel">{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
+          <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
         </div>
       </p>
 
