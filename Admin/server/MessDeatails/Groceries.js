@@ -28,7 +28,6 @@ router.get('/mess/grocery/purchased/item-name', async (req, res) => {
 router.get('/mess/grocery/consumed/:Hostel/:table', async (req, res) => {
   const { Hostel, table } = req.params;
 
-  // Define valid table names
 
 
   if (!validTables.includes(table)) {
@@ -38,7 +37,6 @@ router.get('/mess/grocery/consumed/:Hostel/:table', async (req, res) => {
   try {
     const pool = await openPool();
 
-    // Construct dynamic query based on the table name
     let query;
     switch (table) {
       case 'Staff Salary':

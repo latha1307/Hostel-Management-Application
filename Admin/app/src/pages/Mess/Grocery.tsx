@@ -1,5 +1,4 @@
 import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
 import {
   Box,
   Button,
@@ -33,12 +32,13 @@ import EggImage from "../../assets/egg.png";
 import MilkImage from "../../assets/milk.png";
 import GasImage from "../../assets/gas.png";
 import { theme } from "../../constants/theme";
+import  supabase  from "../../supabaseClient";
 import { useParams } from 'react-router-dom';
 
 interface GroceryItem {
   itemName: string;
   ConsumedQnty: number;
-  ConsumedCostTotal: number;
+  ConsumedCost: number;
   RemainingQty: number;
   DateOfConsumed: string;
   CostPerPiece: number;
@@ -59,7 +59,7 @@ const categoryData = [
 ];
 
 interface PurchasedItem {
-  ItemName: string;
+  itemName: string;
   RemainingQty: number;
 }
 
@@ -111,10 +111,31 @@ const Groceries = () => {
   const fetchGroceriesData = useCallback(async (category) => {
     setLoading(true);
     setError(null);
-    const hostelType = hostel === 'Boys' ? 'boys' : 'girls';
+    const categoryMap = {
+      "Consumed Provisions": "consumedprovisions",
+      "Vegetables": "vegetables",
+      "Egg": "egg",
+      "Milk": "milk",
+      "Gas": "gas",
+    };
+
+    const selectedCategory = categoryMap[category];
+
+    if (!selectedCategory) {
+      setError('Invalid category selected');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await axios.get(`http://localhost:8081/api/mess/grocery/consumed/${hostelType}/${category}`);
-      setGroceriesData(response.data);
+      console.log(selectedCategory)
+      const { data, error } = await supabase
+        .from(selectedCategory)  // Table based on category
+        .select('*')  // Selecting all fields
+        .eq('hostel', hostel); // Filter by hostel type (Boys or Girls)
+
+      if (error) throw error;
+      setGroceriesData(data);
     } catch (error) {
       console.error("Error fetching groceries data:", error);
       setError("Error fetching groceries data");
@@ -132,12 +153,18 @@ const Groceries = () => {
   useEffect(() => {
     const fetchPurchasedItems = async () => {
       try {
-        const response = await axios.get('http://localhost:8081/api/mess/grocery/purchased/item-name');
-        setAvailableItems(response.data);
-        console.log(response.data)
-        console.log('Fetched items:', response.data);
+        const { data, error } = await supabase
+          .from('purchasedprovisions')
+          .select('itemName, RemainingQty');
+
+        if (error) {
+          throw error;
+        }
+
+        setAvailableItems(data);
+        console.log('Fetched items:', data);
       } catch (error) {
-        console.error('Error fetching items:', error);
+        console.error('Error fetching items:', error.message);
       }
     };
 
@@ -206,16 +233,16 @@ const Groceries = () => {
               setDeleteId(data?.ConsumedID || null);
               break;
           case 'Vegetables':
-            setDeleteId(data?.VegetableID || null);
+            setDeleteId(data?.vegetableid || null);
               break;
           case 'Egg':
-            setDeleteId(data?.ID || null);
+            setDeleteId(data?.id || null);
               break;
           case 'Milk':
-            setDeleteId(data?.ID || null);
+            setDeleteId(data?.id || null);
               break;
           case 'Gas':
-            setDeleteId(data?.ID || null);
+            setDeleteId(data?.id || null);
               break;
           default:
             setDeleteId(null);
@@ -241,16 +268,16 @@ const Groceries = () => {
                 setEditId(data?.ConsumedID || null);
                 break;
             case 'Vegetables':
-                setEditId(data?.VegetableID || null);
+                setEditId(data?.vegetableid || null);
                 break;
             case 'Egg':
-                setEditId(data?.ID || null);
+                setEditId(data?.id || null);
                 break;
             case 'Milk':
-                setEditId(data?.ID || null);
+                setEditId(data?.id || null);
                 break;
             case 'Gas':
-                setEditId(data?.ID || null);
+                setEditId(data?.id || null);
                 break;
             default:
                 setEditId(null);
@@ -261,7 +288,7 @@ const Groceries = () => {
 
     // Set maxQty for the selected item
     const selectedItem = availableItems.find(
-        item => item.ItemName === (data?.itemName || formData?.itemName)
+        item => item.itemName === (data?.itemName || formData?.itemName)
     );
     setMaxQty(selectedItem?.RemainingQty || 0);  // Set maxQty for the selected item
 };
@@ -289,33 +316,335 @@ const Groceries = () => {
     }
 
     if (name === "itemName") {
-      const selectedItem = availableItems.find((item) => item.ItemName === value);
+      const selectedItem = availableItems.find((item) => item.itemName === value);
       setMaxQty(selectedItem?.RemainingQty || 0);
     }
   };
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8081/api/mess/grocery/consumed/${hostel}/${selectedCategory}/${deleteId}`);
-      fetchGroceriesData(selectedCategory)
+      let response;
+
+      switch (selectedCategory) {
+        case 'Consumed Provisions':
+            // Fetch the purchase ID and consumed quantity before deleting
+            const { data: existingData, error: fetchError } = await supabase
+              .from('consumedprovisions')
+              .select('purchaseid, ConsumedQnty')
+              .eq('ConsumedID', deleteId)
+              .single();
+
+            if (fetchError) throw fetchError;
+
+            const { purchaseid, ConsumedQnty } = existingData;
+
+            // Fetch the current RemainingQty from purchasedprovisions
+            const { data: purchasedData, error: fetchPurchasedError } = await supabase
+              .from('purchasedprovisions')
+              .select('RemainingQty')
+              .eq('purchaseid', purchaseid)
+              .single();
+
+            if (fetchPurchasedError) throw fetchPurchasedError;
+
+            const updatedQty = purchasedData.RemainingQty + ConsumedQnty;
+
+            // Update the remaining quantity in purchasedprovisions
+            const updateResponse = await supabase
+              .from('purchasedprovisions')
+              .update({ RemainingQty: updatedQty })
+              .eq('purchaseid', purchaseid);
+
+            if (updateResponse.error) throw updateResponse.error;
+
+            // Delete the record from consumedprovisions
+            const deleteResponse = await supabase
+              .from('consumedprovisions')
+              .delete()
+              .eq('ConsumedID', deleteId);
+
+            if (deleteResponse.error) throw deleteResponse.error;
+            break;
+
+
+        case 'Vegetables':
+          response = await supabase
+            .from('vegetables')
+            .delete()
+            .eq('vegetableid', deleteId);
+          if (response.error) throw response.error;
+          break;
+
+        case 'Egg':
+          response = await supabase
+            .from('egg')
+            .delete()
+            .eq('id', deleteId);
+          if (response.error) throw response.error;
+          break;
+
+        case 'Milk':
+          response = await supabase
+            .from('milk')
+            .delete()
+            .eq('id', deleteId);
+          if (response.error) throw response.error;
+          break;
+
+        case 'Gas':
+          response = await supabase
+            .from('gas')
+            .delete()
+            .eq('id', deleteId);
+          if (response.error) throw response.error;
+          break;
+
+        default:
+          throw new Error('Invalid category');
+      }
+
+      fetchGroceriesData(selectedCategory); // Refresh data after deletion
       setOpen(false); // Close the dialog
     } catch (error) {
       console.error('Error deleting item:', error.message);
     }
   };
+
   const handleSubmit = async () => {
     try {
+      const { itemName, DateOfConsumed, ConsumedQnty = 0, Quantity, CostPerKg, CostPerPiece, CostPerLitre, TotalAmount } = formData;
+
+      let response;
+
       if (isEditing) {
-        await axios.put(`http://localhost:8081/api/mess/grocery/consumed/${hostel}/${selectedCategory}/${editId}`, formData);
+        // Editing logic
+        switch (selectedCategory) {
+          case 'Consumed Provisions':
+             // Step 1: Fetch the existing record from `consumedprovisions` to get `purchaseid`, `ConsumedQnty`, and `RemainingQty`
+             const { data: existingData, error: fetchError } = await supabase
+               .from('consumedprovisions')
+               .select('purchaseid, ConsumedQnty, RemainingQty')
+               .eq('ConsumedID', editId)
+               .single();
+
+             if (fetchError) throw fetchError;
+
+             const { purchaseid, ConsumedQnty: previousQty, RemainingQty: previousRemaining } = existingData;
+
+             // Step 2: Fetch `PurchasedCostPerKg` from `purchasedprovisions` using `purchaseid`
+             const { data: purchasedData, error: purchasedError } = await supabase
+               .from('purchasedprovisions')
+               .select('PurchasedCostPerKg, RemainingQty')
+               .eq('purchaseid', purchaseid)
+               .single();
+
+             if (purchasedError) throw purchasedError;
+
+             const { PurchasedCostPerKg, RemainingQty: purchasedRemainingQty } = purchasedData;
+
+             // Step 3: Calculate new values
+             const changeInQnty = ConsumedQnty - previousQty;
+             const updatedRemainingQty = previousRemaining - changeInQnty;
+             const ConsumedCost = ConsumedQnty * PurchasedCostPerKg;
+
+             // Step 4: Update `consumedprovisions` table
+             response = await supabase
+               .from('consumedprovisions')
+               .update({
+                 ConsumedQnty,
+                 ConsumedCost,
+                 RemainingQty: updatedRemainingQty,
+                 DateOfConsumed,
+               })
+               .eq('ConsumedID', editId);
+
+             if (response.error) throw response.error;
+
+             // Step 5: Update `purchasedprovisions` table with the correct `RemainingQty`
+             const updateResponse = await supabase
+               .from('purchasedprovisions')
+               .update({ RemainingQty: purchasedRemainingQty - changeInQnty })
+               .eq('purchaseid', purchaseid);
+
+             if (updateResponse.error) throw updateResponse.error;
+
+             break;
+
+
+          case 'Vegetables':
+            response = await supabase
+              .from('vegetables')
+              .update({
+                Quantity,
+                CostPerKg,
+                DateOfConsumed,
+              })
+              .eq('vegetableid', editId);
+
+            if (response.error) throw response.error;
+            break;
+
+          case 'Egg':
+            response = await supabase
+              .from('egg')
+              .update({
+                Quantity,
+                CostPerPiece,
+                DateOfConsumed,
+              })
+              .eq('id', editId);
+
+            if (response.error) throw response.error;
+            break;
+
+          case 'Milk':
+            response = await supabase
+              .from('milk')
+              .update({
+                Quantity,
+                CostPerLitre,
+                DateOfConsumed,
+              })
+              .eq('id', editId);
+
+            if (response.error) throw response.error;
+            break;
+
+          case 'Gas':
+            response = await supabase
+              .from('gas')
+              .update({
+                TotalAmount,
+                DateOfConsumed,
+              })
+              .eq('id', editId);
+
+            if (response.error) throw response.error;
+            break;
+
+          default:
+            throw new Error('Invalid category');
+        }
       } else {
-        await axios.post(`http://localhost:8081/api/mess/grocery/consumed/${hostel}/${selectedCategory}`, formData);
+        // Insert logic (already implemented in your code)
+        switch (selectedCategory) {
+          case 'Consumed Provisions':
+            // First, fetch the required data
+            const { data: purchasedData, error: purchasedError } = await supabase
+              .from('purchasedprovisions')
+              .select('purchaseid, PurchasedCostPerKg, RemainingQty')
+              .eq('itemName', itemName)
+              .limit(1);
+
+            if (purchasedError) throw purchasedError;
+
+            if (!purchasedData || purchasedData.length === 0) {
+              throw new Error('Item not found in PurchasedProvisions');
+            }
+
+            const { purchaseid, PurchasedCostPerKg, RemainingQty } = purchasedData[0];
+            const ConsumedCost = PurchasedCostPerKg * ConsumedQnty;
+            const updatedRemainingQty = RemainingQty - ConsumedQnty;
+
+            // Insert into ConsumedProvisions
+            response = await supabase
+              .from('consumedprovisions')
+              .insert([
+                {
+                  hostel,
+                  itemName,
+                  purchaseid,
+                  ConsumedQnty,
+                  ConsumedCost,
+                  RemainingQty: updatedRemainingQty,
+                  DateOfConsumed,
+                },
+              ]);
+
+            if (response.error) throw response.error;
+
+            // Update PurchasedProvisions table
+            const updateResponse = await supabase
+              .from('purchasedprovisions')
+              .update({ RemainingQty: updatedRemainingQty })
+              .eq('purchaseid', purchaseid);
+
+            if (updateResponse.error) throw updateResponse.error;
+            break;
+
+          case 'Vegetables':
+            response = await supabase
+              .from('vegetables')
+              .insert([
+                {
+                  hostel,
+                  itemName,
+                  Quantity,
+                  CostPerKg,
+                  DateOfConsumed,
+                },
+              ]);
+
+            if (response.error) throw response.error;
+            break;
+
+          case 'Egg':
+            response = await supabase
+              .from('egg')
+              .insert([
+                {
+                  hostel,
+                  Quantity,
+                  CostPerPiece,
+                  DateOfConsumed,
+                },
+              ]);
+
+            if (response.error) throw response.error;
+            break;
+
+          case 'Milk':
+            response = await supabase
+              .from('milk')
+              .insert([
+                {
+                  hostel,
+                  Quantity,
+                  CostPerLitre,
+                  DateOfConsumed,
+                },
+              ]);
+
+            if (response.error) throw response.error;
+            break;
+
+          case 'Gas':
+            response = await supabase
+              .from('gas')
+              .insert([
+                {
+                  hostel,
+                  TotalAmount,
+                  DateOfConsumed,
+                },
+              ]);
+
+            if (response.error) throw response.error;
+            break;
+
+          default:
+            throw new Error('Invalid category');
+        }
       }
-      fetchGroceriesData(selectedCategory)
-      handleDialogClose();
+
+      fetchGroceriesData(selectedCategory); // Fetch updated data
+      handleDialogClose(); // Close dialog
+
     } catch (error) {
-      console.error("Error submitting data:", error);
+      console.error('Error submitting data:', error);
     }
   };
+
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return '';
@@ -414,8 +743,8 @@ const Groceries = () => {
 
         <TableContainer
         sx={{
-          height: "346px", // Set fixed height
-          overflow: "auto", // Enable scrolling
+          height: "346px",
+          overflow: "auto",
           border: "1px solid #E0E0E0",
           borderTopLeftRadius: "8px",
           borderTopRightRadius: "8px",
@@ -441,7 +770,7 @@ const Groceries = () => {
                 <>
                   <TableCell align="center">{row.itemName}</TableCell>
                   <TableCell align="center">{row.ConsumedQnty}</TableCell>
-                  <TableCell align="center">{row.ConsumedCostTotal}</TableCell>
+                  <TableCell align="center">{row.ConsumedCost}</TableCell>
                   <TableCell align="center">{row.RemainingQty || '-'}</TableCell>
                 </>
               )}
@@ -506,7 +835,7 @@ const Groceries = () => {
     field.name === "itemName" && field.label === "Item Name" ? (
       <Autocomplete
         key={index}
-        options={availableItems.map(item => item.ItemName)}
+        options={availableItems.map(item => item.itemName)}
         value={formData.itemName || ""}
         onChange={(event, newValue) => {
           handleInputChange({

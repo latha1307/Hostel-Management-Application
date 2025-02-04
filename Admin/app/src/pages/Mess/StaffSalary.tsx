@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ArrowBack from "@mui/icons-material/ArrowBack";
-import axios from "axios";
+import  supabase  from "../../supabaseClient";
 import {
   Box,
   Button,
@@ -51,7 +51,6 @@ type FormData = {
 
 const StaffSalary = () => {
   const { hostel } = useParams();
-  const category = "Staff Salary";
   const [salaryData, setSalaryData] = useState<SalaryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -75,19 +74,26 @@ const StaffSalary = () => {
     setLoading(true);
     setError(null);
     try {
-      const hostelType = hostel === 'Boys' ? 'boys' : 'girls';
-      const response = await axios.get(
-        `http://localhost:8081/api/mess/grocery/consumed/${hostelType}/${category}`
-      );
-      setSalaryData(response.data);
-      console.log(response.data)
+
+      // Fetch data from Supabase
+      const { data, error } = await supabase
+        .from('staffsalary')
+        .select('*')
+        .eq('hostel', hostel)
+      if (error) {
+        throw error;
+      }
+
+      setSalaryData(data);
+      console.log(data);
+
     } catch (error: any) {
       console.error("Error fetching groceries data:", error);
       setError("Error fetching groceries data");
     } finally {
       setLoading(false);
     }
-  }, [category, hostel]);
+  }, [hostel]);
 
   useEffect(() => {
     fetchSalaryData();
@@ -137,29 +143,72 @@ const StaffSalary = () => {
 
   const handleDelete = async () => {
     try {
-      await axios.delete(`http://localhost:8081/api/mess/grocery/consumed/${hostel}/${category}/${deleteItemId}`);
-      fetchSalaryData()
+      const { error } = await supabase
+        .from('staffsalary')
+        .delete()
+        .eq('SalaryID', deleteItemId);
+
+      if (error) throw error;
+
+      fetchSalaryData();
       setOpen(false);
+
     } catch (error) {
       console.error('Error deleting item:', error.message);
     }
   };
 
+
   const handleSubmit = async () => {
     try {
+      let response;
+
       if (isEditing) {
-        await axios.put(`http://localhost:8081/api/mess/grocery/consumed/${hostel}/${category}/${editId}`, formData);
-        console.log(formData)
+        // Edit (UPDATE) existing record
+        response = await supabase
+          .from('staffsalary')
+          .update({
+            StaffCategory: formData.StaffCategory,
+            StaffName: formData.StaffName,
+            bank: formData.bank,
+            salaryPerDay: formData.salaryPerDay,
+            PresentDays: formData.PresentDays,
+            SalaryAmount: formData.salaryPerDay * formData.PresentDays,
+            DateOfIssued: formData.DateOfIssued
+          })
+          .eq('hostel', hostel)
+          .eq('SalaryID', editId);
+
       } else {
-        await axios.post(`http://localhost:8081/api/mess/grocery/consumed/${hostel}/${category}`, formData);
+        // Add (INSERT) new record
+        response = await supabase
+          .from('staffsalary')
+          .insert([
+            {
+              hostel: hostel,
+              StaffCategory: formData.StaffCategory,
+              StaffName: formData.StaffName,
+              bank: formData.bank,
+              salaryPerDay: formData.salaryPerDay,
+              PresentDays: formData.PresentDays,
+              SalaryAmount: formData.salaryPerDay * formData.PresentDays,
+              DateOfIssued: formData.DateOfIssued
+            }
+          ]);
       }
 
-      fetchSalaryData()
+      // Check for errors
+      if (response.error) throw response.error;
+
+      // Refresh the list after submission
+      fetchSalaryData();
       handleDialogClose();
+
     } catch (error) {
       console.error("Error submitting data:", error);
     }
   };
+
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return '';

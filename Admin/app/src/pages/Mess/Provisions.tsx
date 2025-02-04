@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import ArrowBack from "@mui/icons-material/ArrowBack";
-import axios from "axios";
+import  supabase  from "../../supabaseClient";
 import {
   Box,
   Button,
@@ -33,18 +33,18 @@ interface GroceryItem {
   RemainingQty: number;
   DateOfPurchased: string;
   PurchasedQnty: number;
-  PurchaseID: number;
+  purchaseid: number;
 }
 
 type FormData = {
   itemName: string;
-  PurchasedQnty: string;
-  PurchasedCostPerKg: string;
+  PurchasedQnty: number;
+  PurchasedCostPerKg: number;
+  RemainingQty: number;
   DateOfPurchased: string;
 };
 
 const Provisions = () => {
-  const category = "Purchased Provisions";
   const [groceriesData, setGroceriesData] = useState<GroceryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,30 +54,34 @@ const Provisions = () => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<FormData>({
     itemName: "",
-    PurchasedQnty: "",
-    PurchasedCostPerKg: "",
+    PurchasedQnty: 0,
+    PurchasedCostPerKg: 0,
+    RemainingQty: 0,
     DateOfPurchased: "",
   });
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null); // Track the item to be deleted
 
-  // Fetch groceries data
+  // Fetch groceries data from Supabase
   const fetchGroceriesData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get(
-        `http://localhost:8081/api/mess/grocery/consumed/Boys/${category}`
-      );
-      setGroceriesData(response.data);
+      const { data, error } = await supabase
+        .from("purchasedprovisions")
+        .select("*");
+
+      if (error) throw error;
+
+      setGroceriesData(data as GroceryItem[]);
     } catch (error: any) {
-      console.error("Error fetching groceries data:", error);
+      console.error("Error fetching groceries data:", error.message);
       setError("Error fetching groceries data");
     } finally {
       setLoading(false);
     }
-  }, [category]);
+  }, []);
 
   useEffect(() => {
     fetchGroceriesData();
@@ -94,8 +98,10 @@ const Provisions = () => {
 
   const handleDialogOpen = (data: any = null) => {
     setIsEditing(!!data);
-    setEditId(data.PurchaseID || null);
-    setFormData(data || {});
+    if(isEditing) {
+    setEditId(data.purchaseid || {});
+
+    }    setFormData(data || {});
     setOpenDialog(true);
   };
 
@@ -103,8 +109,9 @@ const Provisions = () => {
     setOpenDialog(false);
     setFormData({
       itemName: "",
-      PurchasedQnty: "",
-      PurchasedCostPerKg: "",
+      PurchasedQnty: 0,
+      PurchasedCostPerKg: 0,
+      RemainingQty: 0,
       DateOfPurchased: "",
     });
     setIsEditing(false);
@@ -122,31 +129,89 @@ const Provisions = () => {
   const handleDelete = async () => {
     if (deleteItemId) {
       try {
-        await axios.delete(`http://localhost:8081/api/mess/grocery/consumed/Boys/Purchased Provisions/${deleteItemId}`);
-        setOpen(false); // Close the dialog
-        fetchGroceriesData(); // Refresh data after deletion
-      } catch (error: any) {
-        console.error("Error deleting item:", error.message);
+        const { error } = await supabase
+          .from('purchasedprovisions')
+          .delete()
+          .eq('purchaseid', deleteItemId);
+
+        if (error) {
+          throw error;
+        }
+
+        setOpen(false);
+        fetchGroceriesData();
+        console.log('Item deleted successfully!');
+      } catch (error) {
+        console.error('Error deleting item:', error);
       }
     }
   };
 
   const handleSubmit = async () => {
     try {
+
+
       if (isEditing) {
-        console.log(editId)
-        await axios.put(`http://localhost:8081/api/mess/grocery/consumed/Boys/Purchased Provisions/${editId}`, formData);
+        // Fetch the current record to calculate the change in quantity
+        const { data: currentData, error: fetchError } = await supabase
+          .from('purchasedprovisions')
+          .select('PurchasedQnty, RemainingQty')
+          .eq('purchaseid', editId)
+          .single();
+        if (fetchError) {
+          throw fetchError;
+        }
+
+        const changeInQnty = formData.PurchasedQnty - currentData.PurchasedQnty;
+
+        const { error } = await supabase
+          .from('purchasedprovisions')
+          .update({
+            itemName: formData.itemName,
+            PurchasedQnty: formData.PurchasedQnty,
+            PurchasedCostPerKg: formData.PurchasedCostPerKg,
+            DateOfPurchased: formData.DateOfPurchased,
+            RemainingQty: currentData.RemainingQty + changeInQnty,
+          })
+          .eq('purchaseid', editId);
+
+        if (error) {
+          throw error;
+        }
+
+        console.log('Item updated successfully!');
       } else {
-        console.log(formData)
-        await axios.post(`http://localhost:8081/api/mess/grocery/consumed/Boys/Purchased Provisions`, formData);
+        // If not editing, insert a new item
+        const { error } = await supabase
+          .from('purchasedprovisions')
+          .insert([
+            {
+              itemName: formData.itemName,
+              PurchasedQnty: formData.PurchasedQnty,
+              PurchasedCostPerKg: formData.PurchasedCostPerKg,
+              RemainingQty: formData.PurchasedQnty,
+              DateOfPurchased: formData.DateOfPurchased,
+            }
+          ]);
+
+        if (error) {
+          throw error;
+        }
+
+        console.log('New item added successfully!');
       }
+
       fetchGroceriesData();
 
       handleDialogClose();
+
     } catch (error) {
       console.error("Error submitting data:", error);
     }
   };
+
+
+
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return '';
@@ -228,7 +293,7 @@ const Provisions = () => {
         <>
           <TableContainer
             sx={{
-              height: "400px",
+              height: "420px",
               overflow: "auto",
               backgroundColor: 'white',
               border: "1px solid #E0E0E0",
@@ -250,7 +315,7 @@ const Provisions = () => {
               </TableHead>
               <TableBody>
                 {paginatedData.map((row, index) => (
-                  <TableRow key={row.PurchaseID} sx={{ backgroundColor: 'white' }}>
+                  <TableRow key={row.purchaseid} sx={{ backgroundColor: 'white' }}>
                     <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
                     <TableCell align="center">{row.itemName}</TableCell>
                     <TableCell align="center">{row.PurchasedQnty}</TableCell>
@@ -261,7 +326,7 @@ const Provisions = () => {
                       <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
                         <EditIcon />
                       </IconButton>
-                      <IconButton color="error" onClick={() => { setDeleteItemId(row.PurchaseID); setOpen(true); }}>
+                      <IconButton color="error" onClick={() => { setDeleteItemId(row.purchaseid); setOpen(true); }}>
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>
