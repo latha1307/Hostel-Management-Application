@@ -25,7 +25,7 @@ const navItems = [
     label: "Manage Mess",
     icon: <RestaurantIcon />,
     subItems: [
-      { label: "Provisions", icon: <StoreIcon />, path: "/mess/provisions" },
+      { label: "Inventory", icon: <StoreIcon />, path: "/mess/provisions" },
       { label: "Boys Hostel", icon: <ApartmentIcon />, path: "/manage-mess/Boys" },
       { label: "Girls Hostel", icon: <ApartmentIcon />, path: "/manage-mess/Girls" },
     ],

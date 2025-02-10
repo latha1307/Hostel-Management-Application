@@ -25,7 +25,8 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import { Link } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
-
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ConsumedProvisionsImage from "../../assets/consumed_provisions.png";
 import VegetableImage from "../../assets/vegetable.png";
 import EggImage from "../../assets/egg.png";
@@ -36,6 +37,13 @@ import  supabase  from "../../supabaseClient";
 import { useParams } from 'react-router-dom';
 
 interface GroceryItem {
+  itemname: string;
+  unit: string;
+  monthyear: string;
+  total_quantity_issued: number;
+  cost_per_quantity: number;
+  total_cost: number;
+  today_quantity: number;
   itemName: string;
   ConsumedQnty: number;
   ConsumedCost: number;
@@ -59,8 +67,8 @@ const categoryData = [
 ];
 
 interface PurchasedItem {
-  itemName: string;
-  RemainingQty: number;
+  itemname: string;
+  total_stock_available: number;
 }
 
 interface FormData {
@@ -112,14 +120,23 @@ const Groceries = () => {
     setLoading(true);
     setError(null);
     const categoryMap = {
-      "Consumed Provisions": "consumedprovisions",
+      "Consumed Provisions": "consumedgrocery",
       "Vegetables": "vegetables",
       "Egg": "egg",
       "Milk": "milk",
       "Gas": "gas",
     };
 
+    const categoryId = {
+      "Consumed Provisions": 'id',
+      "Vegetables": 'vegetableid',
+      "Egg": 'id',
+      "Milk": 'id',
+      "Gas": 'id',
+    };
+
     const selectedCategory = categoryMap[category];
+    const selectedID = categoryId[category];
 
     if (!selectedCategory) {
       setError('Invalid category selected');
@@ -130,9 +147,10 @@ const Groceries = () => {
     try {
       console.log(selectedCategory)
       const { data, error } = await supabase
-        .from(selectedCategory)  // Table based on category
-        .select('*')  // Selecting all fields
-        .eq('hostel', hostel); // Filter by hostel type (Boys or Girls)
+        .from(selectedCategory)
+        .select('*')
+        .eq('hostel', hostel)
+        .order(selectedID, { ascending: true });
 
       if (error) throw error;
       setGroceriesData(data);
@@ -154,8 +172,8 @@ const Groceries = () => {
     const fetchPurchasedItems = async () => {
       try {
         const { data, error } = await supabase
-          .from('purchasedprovisions')
-          .select('itemName, RemainingQty');
+          .from('inventorygrocery')
+          .select('itemname, total_stock_available');
 
         if (error) {
           throw error;
@@ -174,7 +192,7 @@ const Groceries = () => {
   const getTableHeaders = () => {
     switch (selectedCategory) {
       case 'Consumed Provisions':
-        return ['S.No', 'Item Name', 'Consumed Quantity', 'Consumed Cost', 'Remaining Quantity', 'Date of Consumed', 'Action'];
+        return ['S.No', 'Item Name', 'Month Year', 'Unit', 'Total Quantity Issued', 'Total Consumed Cost',"Today's Quantity Entered?", 'Action'];
       case 'Vegetables':
         return ['S.No', 'Name', 'Quantity', 'Cost Per Kg', 'Total Cost', 'Date of Consumed', 'Action'];
       case 'Egg':
@@ -192,9 +210,8 @@ const Groceries = () => {
     switch (selectedCategory) {
       case 'Consumed Provisions':
         return [
-          { label: "Item Name", name: "itemName" },
-          { label: "Consumed Quantity", name: "ConsumedQnty", type: "number" },
-          { label: "Date of Consumed", name: "DateOfConsumed", type: "date" },
+          { label: "Item Name", name: "itemname" },
+          { label: "Add Today's Consumed Units", name: "total_quantity_issued", type: "number" },
         ];
       case 'Vegetables':
         return [
@@ -230,7 +247,7 @@ const Groceries = () => {
     if (data) {
       switch (selectedCategory) {
           case 'Consumed Provisions':
-              setDeleteId(data?.ConsumedID || null);
+              setDeleteId(data?.id || null);
               break;
           case 'Vegetables':
             setDeleteId(data?.vegetableid || null);
@@ -265,7 +282,7 @@ const Groceries = () => {
     if (data) {
         switch (selectedCategory) {
             case 'Consumed Provisions':
-                setEditId(data?.ConsumedID || null);
+                setEditId(data?.id || null);
                 break;
             case 'Vegetables':
                 setEditId(data?.vegetableid || null);
@@ -288,9 +305,9 @@ const Groceries = () => {
 
     // Set maxQty for the selected item
     const selectedItem = availableItems.find(
-        item => item.itemName === (data?.itemName || formData?.itemName)
+        item => item.itemname === (data?.itemName || formData?.itemName)
     );
-    setMaxQty(selectedItem?.RemainingQty || 0);  // Set maxQty for the selected item
+    setMaxQty(selectedItem?.total_stock_available || 0);  // Set maxQty for the selected item
 };
 
 
@@ -315,9 +332,9 @@ const Groceries = () => {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
 
-    if (name === "itemName") {
-      const selectedItem = availableItems.find((item) => item.itemName === value);
-      setMaxQty(selectedItem?.RemainingQty || 0);
+    if (name === "itemname") {
+      const selectedItem = availableItems.find((item) => item.itemname === value);
+      setMaxQty(selectedItem?.total_stock_available || 0);
     }
   };
 
@@ -646,17 +663,6 @@ const Groceries = () => {
   };
 
 
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return '';
-
-    const date = new Date(dateString);
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}/${month}/${year}`;
-  };
 
   return (
     <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
@@ -743,7 +749,7 @@ const Groceries = () => {
 
         <TableContainer
         sx={{
-          height: "346px",
+          maxHeight: '70vh',
           overflow: "auto",
           border: "1px solid #E0E0E0",
           borderTopLeftRadius: "8px",
@@ -763,15 +769,20 @@ const Groceries = () => {
             </TableHead>
             <TableBody >
               {paginatedData.map((row, index) => (
-                <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
+                <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white",flexGrow: 1  }}>
                   <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
 
               {selectedCategory === 'Consumed Provisions' && (
                 <>
-                  <TableCell align="center">{row.itemName}</TableCell>
-                  <TableCell align="center">{row.ConsumedQnty}</TableCell>
-                  <TableCell align="center">{row.ConsumedCost}</TableCell>
-                  <TableCell align="center">{row.RemainingQty || '-'}</TableCell>
+                  <TableCell align="center">{row.itemname}</TableCell>
+                  <TableCell align="center">{row.monthyear}</TableCell>
+                  <TableCell align="center">{row.unit}</TableCell>
+                  <TableCell align="center">{row.total_quantity_issued}</TableCell>
+                  <TableCell align="center">{row.total_cost}</TableCell>
+                  <TableCell align="center">
+                    {(row.today_quantity === null || row.today_quantity === 0) ? <CancelIcon color="error" /> : <CheckCircleIcon color="success" />}
+                  </TableCell>
+
                 </>
               )}
               {selectedCategory === 'Vegetables' && (
@@ -799,7 +810,7 @@ const Groceries = () => {
               {selectedCategory === 'Gas' && (
                 <TableCell align="center">{row.TotalAmount}</TableCell>
               )}
-                  <TableCell align="center">{formatDate(row.DateOfConsumed)}</TableCell>
+
                   <TableCell align="center">
                     <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
                       <EditIcon />
@@ -816,7 +827,7 @@ const Groceries = () => {
         </TableContainer>
         <TablePagination
           sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
-        rowsPerPageOptions={[5, 10, 15]}
+        rowsPerPageOptions={[10, 25, 50]}
         component="div"
         count={groceriesData.length}
         rowsPerPage={rowsPerPage}
@@ -835,7 +846,7 @@ const Groceries = () => {
     field.name === "itemName" && field.label === "Item Name" ? (
       <Autocomplete
         key={index}
-        options={availableItems.map(item => item.itemName)}
+        options={availableItems.map(item => item.itemname)}
         value={formData.itemName || ""}
         onChange={(event, newValue) => {
           handleInputChange({
