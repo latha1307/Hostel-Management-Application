@@ -9,12 +9,10 @@ export default function HostelWelcomeScreen() {
 
       {/* Enhanced Image */}
       <Image
-        source={{
-          uri: 'https://s3-alpha-sig.figma.com/img/f729/e079/cde7d1bc6da0082725df62b4814736b2?Expires=1736121600&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4&Signature=P86RC7KNq6VezsAvro8uLqgYD0IFjUsdHAlMjOuFr7zYwI2jbZjjNPU7XESIVPCukDpuOBJEZdSTt1pDEP-~LI8fFA4KxvImgf8SuUvXyVuCH~7y3CEANfyjZ0c8fJxDJm6uFs4ytB3L2r5ryUcLYjCb1FIoRRCQA-N5iPexBB3yH15d5t-Aa8YLzgargGnpcp1pcpgkD5v09BqVsy6tCWOPsbPZtuwaH--tcuVuaNV5wY4sV6U8MAreS-HPeIMDD9yiMXtjpAiZGzWH6WpDMwNrkXyDnGDxDXuEagiDe4tKkF0WanW9IDL9NYcxil1WNE-tuP0pGnMx64B4lQhJnQ__'
-        }}
-        style={styles.imageFullWidth}
-        resizeMode="cover"
-      />
+  source={require('../assets/images/hostelimg.jpeg')} // Replace with your image file path if needed
+  style={styles.imageFullWidth}
+  resizeMode="cover"
+/>
 
       {/* Quote */}
       <Text style={styles.quote}>
@@ -23,7 +21,7 @@ export default function HostelWelcomeScreen() {
 
       {/* Buttons */}
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.registerButton} onPress={() => alert('Navigate to Register')}>
+        <TouchableOpacity style={styles.registerButton} onPress={() => alert('/register')}>
           <Text style={styles.registerButtonText}>Register</Text>
         </TouchableOpacity>
 
