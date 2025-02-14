@@ -18,19 +18,20 @@ import {
   DialogTitle,
   TableRow,
   IconButton,
-  InputAdornment
+  InputAdornment,
+
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import { GrDocumentExcel } from "react-icons/gr";
 import { DatePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import { theme } from "../../constants/theme";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import * as XLSX from "xlsx";
-import { saveAs } from "file-saver";
+import  saveAs from "file-saver";
 
 
 interface InventoryItem {
@@ -98,19 +99,13 @@ const Provisions = () => {
   const [openNewMonth, setOpenNewMonth] = useState(false);
   const [monthYear, setMonthYear] = useState<string
    | null>(null);
-  const [showSupplier2, setShowSupplier2] = useState(false)
   const [fileName, setFileName] = useState("Provisions_Stock.xlsx");
-
   const [searchQuery, setSearchQuery] = useState("");
+
 
 const handleSearch = (event) => {
   setSearchQuery(event.target.value);
 };
-
-useEffect(() => {
-  localStorage.setItem("showSupplier2", JSON.stringify(showSupplier2));
-}, [showSupplier2]);
-
 
   // Fetch groceries data from Supabase
   const fetchGroceriesData = useCallback(async () => {
@@ -147,18 +142,14 @@ const getDialogFields = [
   { label: "Month/Year", name: "monthyear" },
   { label: "Opening Stock", name: "opening_stock", type: "number" },
   { label: "Supplier 1 Rate in Rs.", name: "supplier1_rate", type: "number" },
-  ...(showSupplier2
-    ? [
-        { label: "Supplier 2 Rate in Rs.", name: "supplier2_rate", type: "number" },
-        { label: "Quantity Received From Supplier 2", name: "quantity_received_supplier2", type: "number" },
-      ]
-    : []),
-    { label: "Quantity Received (Indent Order 1)", name: "quantity_received_intend_1", type: "number" },
-    { label: "Rate (Indent Order 1)", name: "rate_intend_1", type: "number" },
-    { label: "Quantity Received (Indent Order 2)", name: "quantity_received_intend_2", type: "number" },
-    { label: "Rate (Indent Order 2)", name: "rate_intend_2", type: "number" },
-    { label: "Quantity Received (Indent Order 3)", name: "quantity_received_intend_3", type: "number" },
-    { label: "Rate (Indent Order 3)", name: "rate_intend_3", type: "number" },
+  { label: "Quantity Received From Supplier 2", name: "quantity_received_supplier2", type: "number" },
+  { label: "Supplier 2 Rate in Rs.", name: "supplier2_rate", type: "number" },
+  { label: "Quantity Received (Indent Order 1)", name: "quantity_received_intend_1", type: "number" },
+  { label: "Rate (Indent Order 1)", name: "rate_intend_1", type: "number" },
+  { label: "Quantity Received (Indent Order 2)", name: "quantity_received_intend_2", type: "number" },
+  { label: "Rate (Indent Order 2)", name: "rate_intend_2", type: "number" },
+  { label: "Quantity Received (Indent Order 3)", name: "quantity_received_intend_3", type: "number" },
+  { label: "Rate (Indent Order 3)", name: "rate_intend_3", type: "number" },
 ];
 
 
@@ -180,6 +171,9 @@ const handleMonthSubmit = async () => {
   setLoading(true);
 
   try {
+
+    const today = new Date();
+    const formattedDate = today.toISOString().split("T")[0].split("-").reverse().join("-");
       // 1. Fetch groceries list (itemname, unit)
       const { data: groceriesList, error: groceriesError } = await supabase
           .from("grocerieslist")
@@ -198,14 +192,16 @@ const handleMonthSubmit = async () => {
         monthyear: monthYear,
         itemname: item.itemname,
         unit: item.unit,
-        hostel: 'Boys'
+        hostel: 'Boys',
+        dailyconsumption: { [formattedDate]: "0" }
     }));
 
     const inventoryGirlsData = groceriesList.map(item => ({
       monthyear: monthYear,
       itemname: item.itemname,
       unit: item.unit,
-      hostel: 'Girls'
+      hostel: 'Girls',
+      dailyconsumption: { [formattedDate]: "0" }
   }));
       const { error: insertError } = await supabase.from("inventorygrocery").insert(inventoryData);
       if (insertError) throw insertError;
@@ -267,10 +263,6 @@ const handleMonthSubmit = async () => {
     }));
   };
 
-
-  const handleDeleteSupplier = () => {
-    setShowSupplier2(false);
-  };
 
 
   const handleSubmit = async () => {
@@ -339,10 +331,6 @@ const handleMonthSubmit = async () => {
     }
   };
 
-  const handleAddSupplier = () => {
-    setShowSupplier2(true);
-  };
-
 
   // Handle pagination
   const handleChangePage = (event: unknown, newPage: number) => {
@@ -354,7 +342,6 @@ const handleMonthSubmit = async () => {
     setPage(0);
   };
 
-  // Paginate data
   const paginatedData = groceriesData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
 
@@ -365,6 +352,7 @@ const handleMonthSubmit = async () => {
         value.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
+
 
   const exportToExcel = () => {
     if (!groceriesData || groceriesData.length === 0) {
@@ -383,6 +371,8 @@ const handleMonthSubmit = async () => {
       "Quantity Received (Indent Order 2)",
       "Quantity Received (Indent Order 3)",
       "Supplier 1 Rate in Rs.",
+      "Supplier 2 Rate",
+      "Quantity Received From Supplier 2",
       "Quantity Issued Boys",
       "Quantity Issued Girls",
       "Total Quantity Issued in Units",
@@ -391,9 +381,6 @@ const handleMonthSubmit = async () => {
       "Stock Remaining in Rupees",
     ];
 
-    if (showSupplier2) {
-      headers.push("Supplier 2 Rate", "Quantity Received From Supplier 2");
-    }
 
     // Convert table data into an array format
     const excelData = groceriesData.map((row, index) => {
@@ -407,6 +394,8 @@ const handleMonthSubmit = async () => {
         row.quantity_received_intend_2,
         row.quantity_received_intend_3,
         row.supplier1_rate,
+        row.supplier2_rate,
+        row.quantity_received_supplier2,
         row.quantity_issued_boys,
         row.quantity_issued_girls,
         row.total_quantity_issued_units,
@@ -414,10 +403,6 @@ const handleMonthSubmit = async () => {
         row.closing_balance_till_date,
         row.stock_remaining,
       ];
-
-      if (showSupplier2) {
-        rowData.push(row.supplier2_rate, row.quantity_received_supplier2);
-      }
 
       return rowData;
     });
@@ -468,8 +453,8 @@ const handleMonthSubmit = async () => {
           quantity_received_intend_3: row[9] || "",
           rate_intend_3: row[10] || "",
           supplier1_rate: row[11] || "",
-          supplier2_rate: showSupplier2 ? row[12] || "" : null,
-          quantity_received_supplier2: showSupplier2 ? row[13] || "" : null,
+          supplier2_rate:  row[12] || "" ,
+          quantity_received_supplier2: row[13] || "",
           quantity_issued_boys: row[14] || "",
           quantity_issued_girls: row[15] || "",
           total_quantity_issued_units: row[16] || "",
@@ -491,9 +476,42 @@ const handleMonthSubmit = async () => {
         <span className="ml-2 text-primary text-xl font-bold"> Stocks in Inventory</span>
       </div>
       <p className="text-tertiary font-medium mb-4">Manage mess / Inventory</p>
+      <div className='flex space-x-3 m-3 -ml-0'>
+      <Button
+            variant="contained"
+            size="small"
+            startIcon={<GrDocumentExcel size={18} />}
+            onClick={exportToExcel}
+            sx={{
+              backgroundColor: "#01713c",
+              color: "white",
+              "&:hover": { backgroundColor: "#01582e" },
+            }}
+          >
+            Export
+          </Button>
 
-      <div className="flex justify-between">
+          {/* Import from Excel Button */}
+          <label htmlFor="import-excel">
+            <Input type="file" id="import-excel" style={{ display: "none" }} onChange={importFromExcel} />
+            <Button
+              variant="contained"
+              size="small"
+              startIcon={<GrDocumentExcel size={18} />}
+              component="span"
+              sx={{
+                backgroundColor: "#ffc107",
+                color: "black",
+                "&:hover": { backgroundColor: "#e0a800" },
+              }}
+            >
+              Import
+            </Button>
+          </label>
+      </div>
+            <div className="flex justify-between">
         <Box display="flex" alignItems="center" mb={2} gap={2}>
+          {/* Search Field */}
           <TextField
             variant="outlined"
             size="small"
@@ -502,63 +520,57 @@ const handleMonthSubmit = async () => {
             onChange={handleSearch}
             sx={{
               width: "60%",
-              backgroundColor: "white",
-              borderRadius: "20px",
+              backgroundColor: "#f9f9f9",
+              borderRadius: "10px",
               "& .MuiOutlinedInput-root": {
-                borderRadius: "20px",
+                borderRadius: "10px",
               },
             }}
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <SearchIcon />
+                  <SearchIcon style={{ color: "#007bff" }} />
                 </InputAdornment>
               ),
             }}
           />
+
+
+          {/* Add New Month Button */}
           <Button
             variant="contained"
+            size="small"
             startIcon={<AddIcon />}
-            onClick={() => handleNewMonth()}
-            sx={{ backgroundColor: theme.colors.primary }}
+            onClick={handleNewMonth}
+            sx={{
+              backgroundColor: "#28a745",
+              color: "white",
+              "&:hover": { backgroundColor: "#218838" },
+            }}
           >
-            Add New Month
+            Add Month
           </Button>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{ backgroundColor: '#43A047' }}
-            onClick={handleAddSupplier}
-          >
-            Add New Supplier
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<DeleteIcon />}
-            color='error'
-            onClick={handleDeleteSupplier}
-          >
-            Delete Supplier
-          </Button>
-          <Button variant="contained" color="primary" onClick={exportToExcel} >
-            Export to Excel
-          </Button>
-          <label htmlFor="import-excel">
-            <Input type="file" id="import-excel" style={{ display: "none" }} onChange={importFromExcel} />
-            <Button variant="contained" color="secondary" component="span">
-              Import from Excel
-            </Button>
-          </label>
+
+
         </Box>
+
+        {/* Add Item Button */}
         <Button
           variant="contained"
-          color="primary"
-          onClick={() => handleDialogOpen()}
-          sx={{ marginBottom: 2 }}
+          size="small"
+          startIcon={<AddCircleOutlineIcon />}
+          onClick={handleDialogOpen}
+          sx={{
+            backgroundColor: "secondary",
+            color: "white",
+            "&:hover": { backgroundColor: "#c82333" },
+            marginBottom: 2,
+          }}
         >
           Add Item
         </Button>
       </div>
+
 
       {error && <div className="text-red-600">{error}</div>}
 
@@ -566,25 +578,23 @@ const handleMonthSubmit = async () => {
         <div>Loading...</div>
       ) : (
         <>
-          <Box sx={{ width: "100%", overflowX: "auto" }}>
+          <Box sx={{ maxHeight: "70vh", maxWidth: '1180px', overflowX: "auto" }}>
           <TableContainer
             sx={{
-              maxHeight: "70vh",
+              maxHeight: "60vh",
               overflow: "auto",
               backgroundColor: 'white',
               border: "1px solid #E0E0E0",
               borderTopLeftRadius: "8px",
               borderTopRightRadius: "8px",
-              maxWidth: '1550px',
+
               overflowX: "auto",
             }}
           >
-            <Table sx={{ minWidth: "1000px" }}>
+            <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#7d1818', position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap" }}>
-                  {["S.No", "Item Description", "Unit", "Month Year", "Opening stock", "Quantity Received (Indent Order 1)", "Rate (Order 1)", "Quantity Received (Indent Order 2)", "Rate (Order 2)", "Quantity Received (Indent Order 3)", "Rate (Order 3)", "Supplier 1 Rate in Rs."]
-                    .concat(showSupplier2 ? ["Supplier 2 Rate", "Quantity Received From Supplier 2"] : [])
-                    .concat(["Quantity Issued Boys", "Quantity Issued Girls", "Total Quantity Issued in Units", "Total Quantity Issued in Rupees", "Closing Stock Balance as on till date", "Stock Remaining in Rupees", "Action"])
+                  {["S.No", "Item Description", "Unit", "Month Year", "Opening stock", "Quantity Received (Indent Order 1)", "Rate (Order 1)", "Quantity Received (Indent Order 2)", "Rate (Order 2)", "Quantity Received (Indent Order 3)", "Rate (Order 3)", "Supplier 1 Rate in Rs.", "Supplier 2 Rate", "Quantity Received From Supplier 2", "Quantity Issued Boys", "Quantity Issued Girls", "Total Quantity Issued in Units", "Total Quantity Issued in Rupees", "Closing Stock Balance as on till date", "Stock Remaining in Rupees", "Action"]
                     .map((header, index) => (
                       <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
                         {header}
@@ -608,12 +618,8 @@ const handleMonthSubmit = async () => {
                     <TableCell align="center">{row.quantity_received_intend_3}</TableCell>
                     <TableCell align="center">{row.rate_intend_3}</TableCell>
                     <TableCell align="center">{row.supplier1_rate}</TableCell>
-                    {showSupplier2 && (
-                      <>
-                        <TableCell align="center">{row.supplier2_rate}</TableCell>
-                        <TableCell align="center">{row.quantity_received_supplier2}</TableCell>
-                      </>
-                    )}
+                    <TableCell align="center">{row.supplier2_rate}</TableCell>
+                    <TableCell align="center">{row.quantity_received_supplier2}</TableCell>
                     <TableCell align="center">{row.quantity_issued_boys}</TableCell>
                     <TableCell align="center">{row.quantity_issued_girls}</TableCell>
                     <TableCell align="center">{row.total_quantity_issued_units}</TableCell>
@@ -632,9 +638,8 @@ const handleMonthSubmit = async () => {
                 ))}
               </TableBody>
             </Table>
-          </TableContainer>
 
-          </Box>
+          </TableContainer>
           <TablePagination
             sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
             rowsPerPageOptions={[10, 20, 50]}
@@ -645,6 +650,8 @@ const handleMonthSubmit = async () => {
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
+          </Box>
+
         </>
       )}
 

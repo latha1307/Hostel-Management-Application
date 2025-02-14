@@ -57,7 +57,7 @@ const Navbar = () => {
   const isSelected = (path: string) => location.pathname === path;
 
   return (
-    <div className="w-72 h-screen bg-white">
+    <div className="w-72 max-h-screen bg-white">
       {/* Logo Section */}
       <div className="px-16 py-3">
         <img src={logo} alt="TPGIT Logo" />

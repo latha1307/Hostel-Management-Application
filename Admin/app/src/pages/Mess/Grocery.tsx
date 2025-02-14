@@ -11,7 +11,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   TablePagination,
   DialogTitle,
   TableRow,
@@ -21,8 +20,6 @@ import {
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import Autocomplete from '@mui/material/Autocomplete';
 import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { Link } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import CancelIcon from "@mui/icons-material/Cancel";
@@ -32,7 +29,6 @@ import VegetableImage from "../../assets/vegetable.png";
 import EggImage from "../../assets/egg.png";
 import MilkImage from "../../assets/milk.png";
 import GasImage from "../../assets/gas.png";
-import { theme } from "../../constants/theme";
 import  supabase  from "../../supabaseClient";
 import { useParams } from 'react-router-dom';
 
@@ -56,10 +52,12 @@ interface GroceryItem {
   TotalAmount: number;
   id: number;
   Quantity: number;
+  no_of_cylinder: number;
+  dailyconsumption: JSON;
 }
 
 const categoryData = [
-  { label: "Consumed Provisions", image: ConsumedProvisionsImage, color: "#A07444" },
+  { label: "Provisions", image: ConsumedProvisionsImage, color: "#A07444" },
   { label: "Vegetables", image: VegetableImage, color: "#43A047" },
   { label: "Egg", image: EggImage, color: "#F9A825" },
   { label: "Milk", image: MilkImage, color: "#03A9F4" },
@@ -72,6 +70,7 @@ interface PurchasedItem {
 }
 
 interface FormData {
+  itemname?: string;
   itemName?: string;
   ConsumedQnty?: number;
   ConsumedCostTotal?: number;
@@ -83,11 +82,16 @@ interface FormData {
   CostPerPiece?: number;
   CostPerLitre?: number;
   TotalAmount?: number;
+  no_of_cylinder?: number;
+  entry_date?: Date;
+  selectedDate?: Date;
+  dailyconsumption?: JSON;
+  today_quantity?: number;
 }
 
 const Groceries = () => {
   const { hostel } = useParams();
-  const [selectedCategory, setSelectedCategory] = useState("Consumed Provisions");
+  const [selectedCategory, setSelectedCategory] = useState("Provisions");
   const [groceriesData, setGroceriesData] = useState<GroceryItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,12 +99,12 @@ const Groceries = () => {
   const [formData, setFormData] = useState<FormData>({});
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
-  const [deleteId, setDeleteId] = useState(null);
-  const [open, setOpen] = useState(false);
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(4);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [availableItems, setAvailableItems] = useState<PurchasedItem[]>([]);
   const [maxQty, setMaxQty] = useState(0);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [today_quantity, setToday_quantity] = useState(0);
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -120,7 +124,7 @@ const Groceries = () => {
     setLoading(true);
     setError(null);
     const categoryMap = {
-      "Consumed Provisions": "consumedgrocery",
+      "Provisions": "consumedgrocery",
       "Vegetables": "vegetables",
       "Egg": "egg",
       "Milk": "milk",
@@ -128,7 +132,7 @@ const Groceries = () => {
     };
 
     const categoryId = {
-      "Consumed Provisions": 'id',
+      "Provisions": 'id',
       "Vegetables": 'vegetableid',
       "Egg": 'id',
       "Milk": 'id',
@@ -169,6 +173,17 @@ const Groceries = () => {
 
 
   useEffect(() => {
+    setSelectedDate(new Date().toISOString().split("T")[0]);
+  }, []);
+
+  useEffect(() => {
+    if (groceriesData.length > 0) {
+      setToday_quantity(Number(groceriesData[0].dailyconsumption[selectedDate]));
+    }
+  }, [groceriesData, selectedDate]);
+
+
+  useEffect(() => {
     const fetchPurchasedItems = async () => {
       try {
         const { data, error } = await supabase
@@ -191,16 +206,16 @@ const Groceries = () => {
 
   const getTableHeaders = () => {
     switch (selectedCategory) {
-      case 'Consumed Provisions':
-        return ['S.No', 'Item Name', 'Month Year', 'Unit', 'Total Quantity Issued', 'Total Consumed Cost',"Today's Quantity Entered?", 'Action'];
+      case 'Provisions':
+        return ['S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Consumed units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued',"Quantity Entered?", 'Action'];
       case 'Vegetables':
-        return ['S.No', 'Name', 'Quantity', 'Cost Per Kg', 'Total Cost', 'Date of Consumed', 'Action'];
+        return ['S.No', 'Bill Date', 'Name', 'Quantity', 'Cost Per Kg', 'Total Amount', 'Action'];
       case 'Egg':
-        return ['S.No', 'Quantity', 'Cost Per Piece', 'Total Cost', 'Date of Consumed', 'Action'];
+        return ['S.No', 'Bill Date', 'Quantity', 'Rate Per Piece', 'Total Amount', 'Action'];
       case 'Milk':
-        return ['S.No', 'Quantity', 'Cost Per Litre', 'Total Cost', 'Date of Consumed', 'Action'];
+        return ['S.No', 'Bill Date', 'Quantity', 'Rate Per Litre', 'Total Amount', 'Action'];
       case 'Gas':
-        return ['S.No', 'Total Amount', 'Date of Consumed', 'Action'];
+        return ['S.No', 'Bill Date', 'No Of Cylinders', 'Total Amount', 'Action'];
       default:
         return [];
     }
@@ -208,70 +223,44 @@ const Groceries = () => {
 
   const getDialogFields = () => {
     switch (selectedCategory) {
-      case 'Consumed Provisions':
+      case 'Provisions':
         return [
+          { label: "Billing Month", name: "monthyear" },
           { label: "Item Name", name: "itemname" },
-          { label: "Add Today's Consumed Units", name: "total_quantity_issued", type: "number" },
+          { label: "Entry Date", name: "selectedDate", type: "date" },
+          { label: "Add Consumed Units", name: "today_quantity", type: "number" },
         ];
+
       case 'Vegetables':
         return [
+          { label: "Bill Date", name: "DateOfConsumed", type: "date" },
           { label: "Name", name: "itemName" },
           { label: "Quantity", name: "Quantity", type: "number" },
-          { label: "Cost Per Kg", name: "CostPerKg", type: "number" },
-          { label: "Date of Consumed", name: "DateOfConsumed", type: "date" },
+          { label: "Rate Per Kg", name: "CostPerKg", type: "number" },
         ];
       case 'Egg':
         return [
+          { label: "Bill Date", name: "DateOfConsumed", type: "date" },
           { label: "Quantity", name: "Quantity", type: "number" },
-          { label: "Cost Per Piece", name: "CostPerPiece", type: "number" },
-          { label: "Date of Consumed", name: "DateOfConsumed", type: "date" },
+          { label: "Rate Per Piece", name: "CostPerPiece", type: "number" },
         ];
       case 'Milk':
         return [
+          { label: "Bill Date", name: "DateOfConsumed", type: "date" },
           { label: "Quantity", name: "Quantity", type: "number" },
-          { label: "Cost Per Litre", name: "CostPerLitre", type: "number" },
-          { label: "Date of Consumed", name: "DateOfConsumed", type: "date" },
+          { label: "Amount Per Litre", name: "CostPerLitre", type: "number" },
         ];
       case 'Gas':
         return [
+          { label: "Bill Date", name: "DateOfConsumed", type: "date" },
+          { label: "No. Of Cylinders", name: "no_of_cylinder", type: "number" },
           { label: "Total Amount", name: "TotalAmount", type: "number" },
-          { label: "Date of Consumed", name: "DateOfConsumed", type: "date" },
         ];
       default:
         return [];
     }
   };
 
-  const handleClickOpen = (data: any = null) => {
-    setOpen(true);
-    if (data) {
-      switch (selectedCategory) {
-          case 'Consumed Provisions':
-              setDeleteId(data?.id || null);
-              break;
-          case 'Vegetables':
-            setDeleteId(data?.vegetableid || null);
-              break;
-          case 'Egg':
-            setDeleteId(data?.id || null);
-              break;
-          case 'Milk':
-            setDeleteId(data?.id || null);
-              break;
-          case 'Gas':
-            setDeleteId(data?.id || null);
-              break;
-          default:
-            setDeleteId(null);
-      }
-  } else {
-    setDeleteId(null);
-  }
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   const handleDialogOpen = (data: any = null) => {
     setIsEditing(!!data);
@@ -281,7 +270,7 @@ const Groceries = () => {
     // Set editId dynamically based on provisionType
     if (data) {
         switch (selectedCategory) {
-            case 'Consumed Provisions':
+            case 'Provisions':
                 setEditId(data?.id || null);
                 break;
             case 'Vegetables':
@@ -307,7 +296,7 @@ const Groceries = () => {
     const selectedItem = availableItems.find(
         item => item.itemname === (data?.itemName || formData?.itemName)
     );
-    setMaxQty(selectedItem?.total_stock_available || 0);  // Set maxQty for the selected item
+    setMaxQty(selectedItem?.total_stock_available || 0);
 };
 
 
@@ -338,155 +327,62 @@ const Groceries = () => {
     }
   };
 
-  const handleDelete = async () => {
-    try {
-      let response;
-
-      switch (selectedCategory) {
-        case 'Consumed Provisions':
-            // Fetch the purchase ID and consumed quantity before deleting
-            const { data: existingData, error: fetchError } = await supabase
-              .from('consumedprovisions')
-              .select('purchaseid, ConsumedQnty')
-              .eq('ConsumedID', deleteId)
-              .single();
-
-            if (fetchError) throw fetchError;
-
-            const { purchaseid, ConsumedQnty } = existingData;
-
-            // Fetch the current RemainingQty from purchasedprovisions
-            const { data: purchasedData, error: fetchPurchasedError } = await supabase
-              .from('purchasedprovisions')
-              .select('RemainingQty')
-              .eq('purchaseid', purchaseid)
-              .single();
-
-            if (fetchPurchasedError) throw fetchPurchasedError;
-
-            const updatedQty = purchasedData.RemainingQty + ConsumedQnty;
-
-            // Update the remaining quantity in purchasedprovisions
-            const updateResponse = await supabase
-              .from('purchasedprovisions')
-              .update({ RemainingQty: updatedQty })
-              .eq('purchaseid', purchaseid);
-
-            if (updateResponse.error) throw updateResponse.error;
-
-            // Delete the record from consumedprovisions
-            const deleteResponse = await supabase
-              .from('consumedprovisions')
-              .delete()
-              .eq('ConsumedID', deleteId);
-
-            if (deleteResponse.error) throw deleteResponse.error;
-            break;
-
-
-        case 'Vegetables':
-          response = await supabase
-            .from('vegetables')
-            .delete()
-            .eq('vegetableid', deleteId);
-          if (response.error) throw response.error;
-          break;
-
-        case 'Egg':
-          response = await supabase
-            .from('egg')
-            .delete()
-            .eq('id', deleteId);
-          if (response.error) throw response.error;
-          break;
-
-        case 'Milk':
-          response = await supabase
-            .from('milk')
-            .delete()
-            .eq('id', deleteId);
-          if (response.error) throw response.error;
-          break;
-
-        case 'Gas':
-          response = await supabase
-            .from('gas')
-            .delete()
-            .eq('id', deleteId);
-          if (response.error) throw response.error;
-          break;
-
-        default:
-          throw new Error('Invalid category');
-      }
-
-      fetchGroceriesData(selectedCategory); // Refresh data after deletion
-      setOpen(false); // Close the dialog
-    } catch (error) {
-      console.error('Error deleting item:', error.message);
-    }
-  };
 
   const handleSubmit = async () => {
     try {
-      const { itemName, DateOfConsumed, ConsumedQnty = 0, Quantity, CostPerKg, CostPerPiece, CostPerLitre, TotalAmount } = formData;
+      const { itemname, itemName, DateOfConsumed, today_quantity ,ConsumedQnty = 0, Quantity, CostPerKg, CostPerPiece, CostPerLitre,no_of_cylinder, TotalAmount } = formData;
 
       let response;
 
       if (isEditing) {
         // Editing logic
         switch (selectedCategory) {
-          case 'Consumed Provisions':
-             // Step 1: Fetch the existing record from `consumedprovisions` to get `purchaseid`, `ConsumedQnty`, and `RemainingQty`
-             const { data: existingData, error: fetchError } = await supabase
-               .from('consumedprovisions')
-               .select('purchaseid, ConsumedQnty, RemainingQty')
-               .eq('ConsumedID', editId)
-               .single();
+          case 'Provisions':
+            const formattedDate = new Date().toISOString().split("T")[0];
 
-             if (fetchError) throw fetchError;
+            // Fetch existing entry
+            const { data: existingEntry, error: fetchError } = await supabase
+              .from('consumedgrocery')
+              .select('dailyconsumption')
+              .eq('id', editId)
+              .single();
 
-             const { purchaseid, ConsumedQnty: previousQty, RemainingQty: previousRemaining } = existingData;
+            if (fetchError && fetchError.code !== 'PGRST116') {
+              throw fetchError;
+            }
 
-             // Step 2: Fetch `PurchasedCostPerKg` from `purchasedprovisions` using `purchaseid`
-             const { data: purchasedData, error: purchasedError } = await supabase
-               .from('purchasedprovisions')
-               .select('PurchasedCostPerKg, RemainingQty')
-               .eq('purchaseid', purchaseid)
-               .single();
+            let updatedDailyConsumption = {};
 
-             if (purchasedError) throw purchasedError;
+            if (existingEntry) {
 
-             const { PurchasedCostPerKg, RemainingQty: purchasedRemainingQty } = purchasedData;
+              updatedDailyConsumption = existingEntry.dailyconsumption[selectedDate] ? JSON.parse(existingEntry.dailyconsumption[selectedDate]) : {};
 
-             // Step 3: Calculate new values
-             const changeInQnty = ConsumedQnty - previousQty;
-             const updatedRemainingQty = previousRemaining - changeInQnty;
-             const ConsumedCost = ConsumedQnty * PurchasedCostPerKg;
 
-             // Step 4: Update `consumedprovisions` table
-             response = await supabase
-               .from('consumedprovisions')
-               .update({
-                 ConsumedQnty,
-                 ConsumedCost,
-                 RemainingQty: updatedRemainingQty,
-                 DateOfConsumed,
-               })
-               .eq('ConsumedID', editId);
+              updatedDailyConsumption[selectedDate] = String(today_quantity);
 
-             if (response.error) throw response.error;
+              response = await supabase
+                .from('consumedgrocery')
+                .update({
+                  dailyconsumption: updatedDailyConsumption,
+                })
+                .eq('id', editId);
+            } else {
 
-             // Step 5: Update `purchasedprovisions` table with the correct `RemainingQty`
-             const updateResponse = await supabase
-               .from('purchasedprovisions')
-               .update({ RemainingQty: purchasedRemainingQty - changeInQnty })
-               .eq('purchaseid', purchaseid);
+              updatedDailyConsumption[selectedDate] = today_quantity;
 
-             if (updateResponse.error) throw updateResponse.error;
+              response = await supabase
+                .from('consumedgrocery')
+                .insert([
+                  {
+                    id: editId,
+                    monthyear: formattedDate.slice(0, 7),
+                    dailyconsumption: updatedDailyConsumption, // ✅ Store JSON
+                  },
+                ]);
+            }
 
-             break;
-
+            if (response.error) throw response.error;
+            break;
 
           case 'Vegetables':
             response = await supabase
@@ -531,6 +427,7 @@ const Groceries = () => {
             response = await supabase
               .from('gas')
               .update({
+                no_of_cylinder,
                 TotalAmount,
                 DateOfConsumed,
               })
@@ -545,12 +442,12 @@ const Groceries = () => {
       } else {
         // Insert logic (already implemented in your code)
         switch (selectedCategory) {
-          case 'Consumed Provisions':
+          case 'Provisions':
             // First, fetch the required data
             const { data: purchasedData, error: purchasedError } = await supabase
               .from('purchasedprovisions')
               .select('purchaseid, PurchasedCostPerKg, RemainingQty')
-              .eq('itemName', itemName)
+              .eq('itemname', itemname)
               .limit(1);
 
             if (purchasedError) throw purchasedError;
@@ -569,7 +466,7 @@ const Groceries = () => {
               .insert([
                 {
                   hostel,
-                  itemName,
+                  itemname,
                   purchaseid,
                   ConsumedQnty,
                   ConsumedCost,
@@ -720,14 +617,30 @@ const Groceries = () => {
             ),
           }}
         />
-
+      {selectedCategory === "Provisions" && (
+          <TextField
+            type="date"
+            label="Select Date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            variant="outlined"
+            size="small"
+            sx={{
+              width: "180px",
+              backgroundColor: "white",
+              borderRadius: "10px",
+            }}
+            InputLabelProps={{ shrink: true }}
+          />
+        )}
+        {selectedCategory !== "Provisions" && (
         <Button
-          variant="contained"
-          startIcon={<FilterListIcon />}
-          sx={{ backgroundColor: theme.colors.secondary }}
-        >
-          Filter By
-        </Button>
+        variant="contained"
+        color="primary"
+      >
+        Filter By
+      </Button>
+      )}
       </Box>
       <Button
         variant="contained"
@@ -746,20 +659,23 @@ const Groceries = () => {
         <div>Loading...</div>
       ) : (
         <>
+        <Box sx={{ maxHeight: "70vh", maxWidth: '1150px', overflowX: "auto" }}>
 
         <TableContainer
         sx={{
-          maxHeight: '70vh',
+          maxHeight: "55vh",
           overflow: "auto",
+          backgroundColor: 'white',
           border: "1px solid #E0E0E0",
           borderTopLeftRadius: "8px",
           borderTopRightRadius: "8px",
-          backgroundColor: 'white'
-          }}
+
+          overflowX: "auto",
+        }}
         >
           <Table>
             <TableHead>
-              <TableRow sx={{ backgroundColor: categoryData.find((cat) => cat.label === selectedCategory)?.color || "#F5F5F5", position: "sticky", top: 0, zIndex: 1 }}>
+              <TableRow sx={{ backgroundColor: categoryData.find((cat) => cat.label === selectedCategory)?.color || "#F5F5F5", position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap"  }}>
               {getTableHeaders().map((header, index) => (
               <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: 'white' }}>
                 {header}
@@ -772,21 +688,33 @@ const Groceries = () => {
                 <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white",flexGrow: 1  }}>
                   <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
 
-              {selectedCategory === 'Consumed Provisions' && (
+              {selectedCategory === 'Provisions' && (
                 <>
                   <TableCell align="center">{row.itemname}</TableCell>
                   <TableCell align="center">{row.monthyear}</TableCell>
                   <TableCell align="center">{row.unit}</TableCell>
+                  <TableCell align="center">
+                    {row?.dailyconsumption && selectedDate in row.dailyconsumption
+                      ? row.dailyconsumption[selectedDate]
+                      : "0"}
+                  </TableCell>
+
                   <TableCell align="center">{row.total_quantity_issued}</TableCell>
                   <TableCell align="center">{row.total_cost}</TableCell>
                   <TableCell align="center">
-                    {(row.today_quantity === null || row.today_quantity === 0) ? <CancelIcon color="error" /> : <CheckCircleIcon color="success" />}
+                    {row?.dailyconsumption && row?.dailyconsumption[selectedDate] !== undefined
+                      ? (row.dailyconsumption[selectedDate] === 0
+                          ? <CancelIcon color="error" />
+                          : <CheckCircleIcon color="success" />)
+                      : <CancelIcon color="error" />}
                   </TableCell>
+
 
                 </>
               )}
               {selectedCategory === 'Vegetables' && (
                 <>
+                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
                   <TableCell align="center">{row.itemName}</TableCell>
                   <TableCell align="center">{row.Quantity}</TableCell>
                   <TableCell align="center">{row.CostPerKg}</TableCell>
@@ -795,6 +723,7 @@ const Groceries = () => {
               )}
               {selectedCategory === 'Egg' && (
                 <>
+                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
                   <TableCell align="center">{row.Quantity}</TableCell>
                   <TableCell align="center">{row.CostPerPiece}</TableCell>
                   <TableCell align="center">{row.TotalCost}</TableCell>
@@ -802,21 +731,23 @@ const Groceries = () => {
               )}
               {selectedCategory === 'Milk' && (
                 <>
+                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
                   <TableCell align="center">{row.Quantity}</TableCell>
                   <TableCell align="center">{row.CostPerLitre}</TableCell>
                   <TableCell align="center">{row.TotalCost}</TableCell>
                 </>
               )}
               {selectedCategory === 'Gas' && (
-                <TableCell align="center">{row.TotalAmount}</TableCell>
+                <>
+                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
+                  <TableCell align="center">{row.no_of_cylinder}</TableCell>
+                  <TableCell align="center">{row.TotalAmount}</TableCell>
+                </>
               )}
 
                   <TableCell align="center">
                     <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
                       <EditIcon />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => handleClickOpen(row)}>
-                      <DeleteIcon />
                     </IconButton>
                   </TableCell>
                 </TableRow>
@@ -837,73 +768,79 @@ const Groceries = () => {
       />
 
 
+        </Box>
       </>
       )}
       <Dialog open={openDialog} onClose={handleDialogClose}>
         <DialogTitle>{isEditing ? "Edit Item" : "Add Item"}</DialogTitle>
         <DialogContent>
-  {getDialogFields().map((field, index) => (
-    field.name === "itemName" && field.label === "Item Name" ? (
-      <Autocomplete
-        key={index}
-        options={availableItems.map(item => item.itemname)}
-        value={formData.itemName || ""}
-        onChange={(event, newValue) => {
-          handleInputChange({
-            target: {
-              name: "itemName",
-              value: newValue || ""
-            }
-          });
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            label="Item Name"
-            fullWidth
-            margin="dense"
-          />
-        )}
-        disabled={isEditing}
-      />
-    ) : field.name === "ConsumedQnty" ? (
-      <TextField
-        key={index}
-        fullWidth
-        label={field.label}
-        name={field.name}
-        type="number"
-        value={formData[field.name] || ""}
-        onChange={(e) => {
-          const value = parseInt(e.target.value, 10);
-              if (value > maxQty) {
-                alert("Consumed quantity cannot exceed remaining quantity.");
-              }
+          {getDialogFields().map((field, index) => (
+            field.name === "itemname" && field.label === "Item Name" ? (
+              <Autocomplete
+                key={index}
+                options={availableItems.map(item => item.itemname)}
+                value={formData.itemname || ""}
+                onChange={(event, newValue) => {
+                  handleInputChange({
+                    target: {
+                      name: "itemname",
+                      value: newValue || ""
+                    }
+                  });
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Item Name"
+                    fullWidth
+                    margin="dense"
+                  />
+                )}
+                disabled={isEditing}
+              />
+            ) : field.name === "ConsumedQnty" ? (
+              <TextField
+                key={index}
+                fullWidth
+                label={field.label}
+                name={field.name}
+                type="number"
+                value={formData[field.name] || ""}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value, 10);
+                      if (value > maxQty) {
+                        alert("Consumed quantity cannot exceed remaining quantity.");
+                      }
 
 
-          handleInputChange(e);
-        }}
-        margin="dense"
-          inputProps={{
-            max: maxQty,
-          }}
-          helperText={`Max: ${maxQty} kg or Lit`}
-      />
-    ) : (
-      <TextField
-        key={index}
-        fullWidth
-        label={field.label}
-        name={field.name}
-        type={field.type || "text"}
-        value={field.type === "date" ? (formData[field.name] ? formData[field.name].split('T')[0] : "") : formData[field.name] || ""}
-        onChange={handleInputChange}
-        margin="dense"
-        InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
-      />
-    )
-  ))}
-</DialogContent>
+                  handleInputChange(e);
+                }}
+                margin="dense"
+                  inputProps={{
+                    max: maxQty,
+                  }}
+                  helperText={`Max: ${maxQty} kg or Lit`}
+              />
+            ) : (
+              <TextField
+                key={index}
+                fullWidth
+                label={field.label}
+                name={field.name}
+                type={field.type || "text"}
+                value={
+                  field.type === "date"
+                    ? formData[field.name] || new Date().toISOString().split("T")[0] // Default today's date
+                    : formData[field.name] || ""
+                }
+                onChange={handleInputChange}
+                margin="dense"
+                InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
+                disabled={field.name === "selectedDate" || field.name === "monthyear"}
+              />
+            )
+          ))}
+        </DialogContent>
 
         <DialogActions>
           <Button onClick={handleDialogClose}>Cancel</Button>
@@ -912,28 +849,7 @@ const Groceries = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      {/* Confirmation Dialog */}
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">{"Confirm Deletion"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-dialog-description">
-            Are you sure you want to delete this item? This action cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} color="primary">
-            Cancel
-          </Button>
-          <Button onClick={handleDelete} color="error" autoFocus>
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
+
     </div>
   );
 };
