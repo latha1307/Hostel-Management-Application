@@ -9,6 +9,7 @@ export default function Layout() {
       {/* Add the "home" screen with header hidden */}
       <Stack.Screen name="home" options={{ headerShown: false }} />
       <Stack.Screen name="leave" options={{ headerShown: false }} />
+      <Stack.Screen name="register" options={{ headerShown: false }} />
     </Stack>
   );
 }
