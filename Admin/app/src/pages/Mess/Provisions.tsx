@@ -273,63 +273,56 @@ const handleMonthSubmit = async () => {
       }
 
       if (isEditing) {
-        // ✅ Update existing record
-        console.log("Updating item with data:", formData); // Debugging
+        // ✅ Fetch existing data to compare changes
+        const { data: existingData, error: fetchError } = await supabase
+          .from("inventorygrocery")
+          .select("*") // Select all columns to compare
+          .eq("id", editId)
+          .single();
 
-        const updateData = {
-          itemname: formData.itemname,
-          unit: formData.unit,
-          opening_stock: formData.opening_stock ? Number(formData.opening_stock) : 0,
-          monthyear: formData.monthyear,
-          supplier1_rate: formData.supplier1_rate ? Number(formData.supplier1_rate) : 0,
-          supplier2_rate: formData.supplier2_rate ? Number(formData.supplier2_rate) : 0 ,
-          quantity_received_supplier2: formData.quantity_received_supplier2,
-          quantity_received_intend_1: formData.quantity_received_intend_1,
-          rate_intend_1: formData.rate_intend_1,
-          quantity_received_intend_2: formData.quantity_received_intend_2,
-          rate_intend_2: formData.rate_intend_2,
-          quantity_received_intend_3: formData.quantity_received_intend_3,
-          rate_intend_3: formData.rate_intend_3,
-        };
-
-        console.log("Final update data:", updateData); // Debugging
-        console.log(editId)
-        const { error } = await supabase.from("inventorygrocery").update(updateData).eq("id", editId);
-
-        if (error) {
-          console.error("Error updating item:", error);
-          throw error;
+        if (fetchError) {
+          console.error("Error fetching existing data:", fetchError);
+          throw fetchError;
         }
 
-        console.log("Item updated successfully!");
+        console.log("Existing Data:", existingData); // Debugging
+
+        // ✅ Create update object with only changed values
+        const updateData: Record<string, any> = {};
+        Object.keys(formData).forEach((key) => {
+          if (formData[key] !== existingData[key] && formData[key] !== undefined) {
+            updateData[key] = formData[key]; // Only include changed values
+          }
+        });
+
+        console.log("Final update data:", updateData); // Debugging
+
+        if (Object.keys(updateData).length > 0) {
+          const { error } = await supabase.from("inventorygrocery").update(updateData).eq("id", editId);
+          if (error) {
+            console.error("Error updating item:", error);
+            throw error;
+          }
+          console.log("Item updated successfully!");
+        } else {
+          console.log("No changes detected, skipping update.");
+        }
       } else {
         // ✅ Insert new record
-        const { error } = await supabase.from("inventorygrocery").insert([
-          {
-            itemname: formData.itemname,
-            unit: formData.unit,
-            opening_stock: formData.opening_stock ?? 0,
-            supplier1_rate: formData.supplier1_rate ?? 0,
-            monthyear: formData.monthyear
-          }
-        ]);
-
+        const { error } = await supabase.from("inventorygrocery").insert([formData]);
         if (error) throw error;
-
         console.log("New item added successfully!");
       }
 
       // ✅ Fetch updated data
       fetchGroceriesData();
-
-      // ✅ Close dialog after submitting
       handleDialogClose();
-
     } catch (error) {
       console.error("Error submitting data:", error);
       alert("Error submitting data. Please try again.");
     }
   };
+
 
 
   // Handle pagination
@@ -587,7 +580,6 @@ const handleMonthSubmit = async () => {
               border: "1px solid #E0E0E0",
               borderTopLeftRadius: "8px",
               borderTopRightRadius: "8px",
-
               overflowX: "auto",
             }}
           >

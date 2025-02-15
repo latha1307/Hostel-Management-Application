@@ -340,48 +340,100 @@ const Groceries = () => {
           case 'Provisions':
             const formattedDate = new Date().toISOString().split("T")[0];
 
-            // Fetch existing entry
+            // Fetch existing consumedgrocery entry
             const { data: existingEntry, error: fetchError } = await supabase
-              .from('consumedgrocery')
-              .select('dailyconsumption')
-              .eq('id', editId)
-              .single();
+                .from('consumedgrocery')
+                .select('dailyconsumption, total_quantity_issued, itemname')
+                .eq('id', editId)
+                .single();
 
             if (fetchError && fetchError.code !== 'PGRST116') {
-              throw fetchError;
+                throw fetchError;
             }
 
-            let updatedDailyConsumption = {};
+            let updatedDailyConsumption = existingEntry?.dailyconsumption
+                ? typeof existingEntry.dailyconsumption === 'string'
+                    ? JSON.parse(existingEntry.dailyconsumption)
+                    : existingEntry.dailyconsumption
+                : {};
 
+            updatedDailyConsumption[selectedDate] = String(today_quantity);
+
+            // Calculate total quantity issued
+            const totalQuantityIssued = Object.values(updatedDailyConsumption)
+                .map(qty => Number(qty))
+                .reduce((sum, qty) => sum + qty, 0);
+
+            // Fetch inventorygrocery data for this item
+            const { data: inventoryData, error: inventoryError } = await supabase
+                .from('inventorygrocery')
+                .select('opening_stock_remaining, supplier1_rate, quantity_supplier2_remaining, supplier2_rate, quantity_intend1_remaining, rate_intend_1, quantity_intend2_remaining, rate_intend_2, quantity_intend3_remaining, rate_intend_3')
+                .eq('itemname', existingEntry?.itemname)
+                .single();
+
+            if (inventoryError) throw inventoryError;
+
+            let remainingQty = totalQuantityIssued;
+            let updatedInventory = { ...inventoryData };
+            let totalCost = 0;
+
+            // Function to deduct stock and calculate cost
+            const deductStock = (stockKey: string, rateKey: string) => {
+                if (remainingQty > 0 && updatedInventory[stockKey] > 0) {
+                    const usedQty = Math.min(remainingQty, updatedInventory[stockKey]);
+                    remainingQty -= usedQty;
+                    updatedInventory[stockKey] -= usedQty;
+                    totalCost += usedQty * inventoryData[rateKey]; // Calculate cost
+                }
+            };
+
+            // Reduce stock and calculate cost in priority order
+            deductStock('opening_stock_remaining', 'supplier1_rate');
+            deductStock('quantity_supplier2_remaining', 'supplier2_rate');
+            deductStock('quantity_intend1_remaining', 'rate_intend_1');
+            deductStock('quantity_intend2_remaining', 'rate_intend_2');
+            deductStock('quantity_intend3_remaining', 'rate_intend_3');
+
+            // Update consumedgrocery with the total quantity issued and cost
             if (existingEntry) {
-
-              updatedDailyConsumption = existingEntry.dailyconsumption[selectedDate] ? JSON.parse(existingEntry.dailyconsumption[selectedDate]) : {};
-
-
-              updatedDailyConsumption[selectedDate] = String(today_quantity);
-
-              response = await supabase
-                .from('consumedgrocery')
-                .update({
-                  dailyconsumption: updatedDailyConsumption,
-                })
-                .eq('id', editId);
+                response = await supabase
+                    .from('consumedgrocery')
+                    .update({
+                        dailyconsumption: updatedDailyConsumption,
+                        total_quantity_issued: totalQuantityIssued,
+                        total_cost: totalCost
+                    })
+                    .eq('id', editId);
             } else {
-
-              updatedDailyConsumption[selectedDate] = today_quantity;
-
-              response = await supabase
-                .from('consumedgrocery')
-                .insert([
-                  {
-                    id: editId,
-                    monthyear: formattedDate.slice(0, 7),
-                    dailyconsumption: updatedDailyConsumption, // ✅ Store JSON
-                  },
-                ]);
+                response = await supabase
+                    .from('consumedgrocery')
+                    .insert([
+                        {
+                            id: editId,
+                            monthyear: formattedDate.slice(0, 7),
+                            dailyconsumption: updatedDailyConsumption,
+                            total_quantity_issued: totalQuantityIssued,
+                            total_cost: totalCost
+                        }
+                    ]);
             }
 
             if (response.error) throw response.error;
+
+            // Update inventorygrocery with the reduced stock
+            const updateInventoryResponse = await supabase
+                .from('inventorygrocery')
+                .update({
+                    opening_stock_remaining: updatedInventory.opening_stock_remaining,
+                    quantity_supplier2_remaining: updatedInventory.quantity_supplier2_remaining,
+                    quantity_intend1_remaining: updatedInventory.quantity_intend1_remaining,
+                    quantity_intend2_remaining: updatedInventory.quantity_intend2_remaining,
+                    quantity_intend3_remaining: updatedInventory.quantity_intend3_remaining
+                })
+                .eq('itemname', existingEntry?.itemname);
+
+            if (updateInventoryResponse.error) throw updateInventoryResponse.error;
+
             break;
 
           case 'Vegetables':
@@ -568,11 +620,11 @@ const Groceries = () => {
         <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
         <span className="ml-2 text-primary text-xl font-bold">Groceries</span>
       </div>
-      <p className="text-tertiary font-medium mb-4">
+      <div className="text-tertiary font-medium mb-4">
         <div className="text-sm mb-4">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
         </div>
-      </p>
+      </div>
 
       {/* Category Buttons */}
       <div className="flex flex-nowrap justify-between gap-4 mb-2">
@@ -659,7 +711,7 @@ const Groceries = () => {
         <div>Loading...</div>
       ) : (
         <>
-        <Box sx={{ maxHeight: "70vh", maxWidth: '1150px', overflowX: "auto" }}>
+        <Box sx={{ maxHeight: "70vh",maxWidth: "min(100vw, 1160px)", overflowX: "auto" }}>
 
         <TableContainer
         sx={{
@@ -694,11 +746,12 @@ const Groceries = () => {
                   <TableCell align="center">{row.monthyear}</TableCell>
                   <TableCell align="center">{row.unit}</TableCell>
                   <TableCell align="center">
-                    {row?.dailyconsumption && selectedDate in row.dailyconsumption
-                      ? row.dailyconsumption[selectedDate]
+                    {row?.dailyconsumption
+                      ? (typeof row.dailyconsumption === "string"
+                          ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
+                          : row.dailyconsumption[selectedDate] ?? "0")
                       : "0"}
                   </TableCell>
-
                   <TableCell align="center">{row.total_quantity_issued}</TableCell>
                   <TableCell align="center">{row.total_cost}</TableCell>
                   <TableCell align="center">
