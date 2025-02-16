@@ -207,7 +207,7 @@ const Groceries = () => {
   const getTableHeaders = () => {
     switch (selectedCategory) {
       case 'Provisions':
-        return ['S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Consumed units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued',"Quantity Entered?", 'Action'];
+        return ['S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Issued units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued',"Quantity Entered?", 'Action'];
       case 'Vegetables':
         return ['S.No', 'Bill Date', 'Name', 'Quantity', 'Cost Per Kg', 'Total Amount', 'Action'];
       case 'Egg':
@@ -228,7 +228,7 @@ const Groceries = () => {
           { label: "Billing Month", name: "monthyear" },
           { label: "Item Name", name: "itemname" },
           { label: "Entry Date", name: "selectedDate", type: "date" },
-          { label: "Add Consumed Units", name: "today_quantity", type: "number" },
+          { label: "Add Issued Units", name: "today_quantity", type: "number" },
         ];
 
       case 'Vegetables':
@@ -359,68 +359,52 @@ const Groceries = () => {
 
             updatedDailyConsumption[selectedDate] = String(today_quantity);
 
-            // Calculate total quantity issued
             const totalQuantityIssued = Object.values(updatedDailyConsumption)
                 .map(qty => Number(qty))
                 .reduce((sum, qty) => sum + qty, 0);
 
-            // Fetch inventorygrocery data for this item
             const { data: inventoryData, error: inventoryError } = await supabase
                 .from('inventorygrocery')
-                .select('opening_stock_remaining, supplier1_rate, quantity_supplier2_remaining, supplier2_rate, quantity_intend1_remaining, rate_intend_1, quantity_intend2_remaining, rate_intend_2, quantity_intend3_remaining, rate_intend_3')
+                .select('opening_stock_remaining, supplier1_rate, quantity_supplier2_remaining, supplier2_rate, quantity_intend1_remaining, rate_intend_1, quantity_intend2_remaining, rate_intend_2, quantity_intend3_remaining, rate_intend_3, opening_stock, quantity_received_supplier2, quantity_received_intend_1, quantity_received_intend_2, quantity_received_intend_3')
                 .eq('itemname', existingEntry?.itemname)
                 .single();
 
             if (inventoryError) throw inventoryError;
 
-            let remainingQty = totalQuantityIssued;
+            let usedQty = totalQuantityIssued;
             let updatedInventory = { ...inventoryData };
             let totalCost = 0;
 
-            // Function to deduct stock and calculate cost
-            const deductStock = (stockKey: string, rateKey: string) => {
-                if (remainingQty > 0 && updatedInventory[stockKey] > 0) {
-                    const usedQty = Math.min(remainingQty, updatedInventory[stockKey]);
-                    remainingQty -= usedQty;
-                    updatedInventory[stockKey] -= usedQty;
-                    totalCost += usedQty * inventoryData[rateKey]; // Calculate cost
+            // Function to track stock usage and calculate cost
+            const trackUsage = (usedKey, stockKey, rateKey) => {
+                if (usedQty > 0 && updatedInventory[usedKey] < updatedInventory[stockKey]) {
+                    const usableQty = Math.min(usedQty, updatedInventory[stockKey] - updatedInventory[usedKey]);
+                    updatedInventory[usedKey] += usableQty;
+                    usedQty -= usableQty;
+                    totalCost += usableQty * inventoryData[rateKey];
                 }
             };
 
-            // Reduce stock and calculate cost in priority order
-            deductStock('opening_stock_remaining', 'supplier1_rate');
-            deductStock('quantity_supplier2_remaining', 'supplier2_rate');
-            deductStock('quantity_intend1_remaining', 'rate_intend_1');
-            deductStock('quantity_intend2_remaining', 'rate_intend_2');
-            deductStock('quantity_intend3_remaining', 'rate_intend_3');
+            // Track usage in priority order
+            trackUsage('opening_stock_remaining', 'opening_stock', 'supplier1_rate');
+            trackUsage('quantity_supplier2_remaining', 'quantity_supplier2_remaining', 'supplier2_rate');
+            trackUsage('quantity_intend1_remaining', 'quantity_intend1_remaining', 'rate_intend_1');
+            trackUsage('quantity_intend2_remaining', 'quantity_intend2_remaining', 'rate_intend_2');
+            trackUsage('quantity_intend3_remaining', 'quantity_intend3_remaining', 'rate_intend_3');
 
             // Update consumedgrocery with the total quantity issued and cost
-            if (existingEntry) {
-                response = await supabase
-                    .from('consumedgrocery')
-                    .update({
-                        dailyconsumption: updatedDailyConsumption,
-                        total_quantity_issued: totalQuantityIssued,
-                        total_cost: totalCost
-                    })
-                    .eq('id', editId);
-            } else {
-                response = await supabase
-                    .from('consumedgrocery')
-                    .insert([
-                        {
-                            id: editId,
-                            monthyear: formattedDate.slice(0, 7),
-                            dailyconsumption: updatedDailyConsumption,
-                            total_quantity_issued: totalQuantityIssued,
-                            total_cost: totalCost
-                        }
-                    ]);
-            }
+            response = await supabase
+                .from('consumedgrocery')
+                .update({
+                    dailyconsumption: updatedDailyConsumption,
+                    total_quantity_issued: totalQuantityIssued,
+                    total_cost: totalCost
+                })
+                .eq('id', editId);
 
             if (response.error) throw response.error;
 
-            // Update inventorygrocery with the reduced stock
+            // Update inventorygrocery with the tracked usage
             const updateInventoryResponse = await supabase
                 .from('inventorygrocery')
                 .update({
