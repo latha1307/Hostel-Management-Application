@@ -13,7 +13,7 @@ function App() {
     <Router>
       <div className="flex h-screen">
         {/* Sidebar */}
-        <div className="min-w-[200px] bg-gray-100">
+        <div className="min-w-[300px] bg-white">
           <Navbar />
         </div>
 
