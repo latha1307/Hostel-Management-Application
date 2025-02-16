@@ -882,8 +882,10 @@ const Groceries = () => {
                 name={field.name}
                 type={field.type || "text"}
                 value={
-                  field.type === "date"
-                    ? formData[field.name] || new Date().toISOString().split("T")[0] // Default today's date
+                  field.name === "selectedDate"
+                    ? selectedDate // Set value to selectedDate
+                    : field.type === "date"
+                    ? formData[field.name] || new Date().toISOString().split("T")[0]
                     : formData[field.name] || ""
                 }
                 onChange={handleInputChange}
