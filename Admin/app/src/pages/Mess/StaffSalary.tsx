@@ -234,7 +234,7 @@ const StaffSalary = () => {
 
   return (
     <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
-      <div className="flex items-center mb-4">
+      <div className="flex items-center mt-8 mb-4">
         <ArrowBack className="text-primary cursor-pointer" />
         <span className="ml-2 text-primary text-xl font-bold"> Staff Salaries </span>
       </div>

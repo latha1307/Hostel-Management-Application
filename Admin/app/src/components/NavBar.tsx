@@ -37,10 +37,9 @@ const navItems = [
 ];
 
 const Navbar = () => {
-  const location = useLocation(); // Get the current URL path
+  const location = useLocation();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  // Load expandedIndex from localStorage when component mounts
   useEffect(() => {
     const savedIndex = JSON.parse(localStorage.getItem("navbarExpandedIndex") || "null");
     if (savedIndex !== null) {
