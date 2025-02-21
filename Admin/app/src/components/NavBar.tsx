@@ -25,7 +25,7 @@ const navItems = [
     label: "Manage Mess",
     icon: <RestaurantIcon />,
     subItems: [
-      { label: "Provisions", icon: <StoreIcon />, path: "/mess/provisions" },
+      { label: "Inventory", icon: <StoreIcon />, path: "/mess/provisions" },
       { label: "Boys Hostel", icon: <ApartmentIcon />, path: "/manage-mess/Boys" },
       { label: "Girls Hostel", icon: <ApartmentIcon />, path: "/manage-mess/Girls" },
     ],
@@ -37,10 +37,9 @@ const navItems = [
 ];
 
 const Navbar = () => {
-  const location = useLocation(); // Get the current URL path
+  const location = useLocation();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
-  // Load expandedIndex from localStorage when component mounts
   useEffect(() => {
     const savedIndex = JSON.parse(localStorage.getItem("navbarExpandedIndex") || "null");
     if (savedIndex !== null) {
@@ -57,7 +56,7 @@ const Navbar = () => {
   const isSelected = (path: string) => location.pathname === path;
 
   return (
-    <div className="w-72 h-screen bg-white">
+    <div className="w-72 max-h-screen bg-white">
       {/* Logo Section */}
       <div className="px-16 py-3">
         <img src={logo} alt="TPGIT Logo" />
