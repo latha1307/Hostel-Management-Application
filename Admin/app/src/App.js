@@ -7,6 +7,7 @@ import Main from "./pages/Mess/main.tsx";
 import Groceries from "./pages/Mess/Grocery.tsx";
 import Provisions from "./pages/Mess/Provisions.tsx";
 import StaffSalary from "./pages/Mess/StaffSalary.tsx";
+import BillDistribution from "./pages/BillDistribution.jsx";
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
             <Route path="/manage-mess/:hostel" element={<Main />} />
             <Route path="/manage-mess/:hostel/groceries" element={<Groceries />} />
             <Route path="/manage-mess/:hostel/staffsalary" element={<StaffSalary />} />
+            <Route path="/manage-mess/:hostel/bill-distribution" element={<BillDistribution />} />
             <Route path="*" element={<div>Page Not Found</div>} />
           </Routes>
         </div>

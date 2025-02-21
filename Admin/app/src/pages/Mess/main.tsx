@@ -55,7 +55,7 @@ const Main = () => {
           <img src={billDistributionImage} alt="Bill Distribution" className="w-32 h-32 mb-3 mt-2" />
           <div className='flex m-4 w-full px-4 justify-between items-center'>
           <span className="text-lg font-semibold mt-3">Bill Distribution</span>
-          <Link to="/bill-distribution" className="text-primary font-extrabold text-4xl transform transition-transform duration-300 hover:scale-150">→</Link>
+          <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}/bill-distribution`} className="text-primary font-extrabold text-4xl transform transition-transform duration-300 hover:scale-150">→</Link>
           </div>
         </div>
       </div>
