@@ -1,7 +1,8 @@
-const { app, BrowserWindow, Menu  } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain  } = require('electron');
 const url = require("url")
 const path = require("path")
-
+const path = require('path'); // Import path module for cross-platform support
+const fs = require('fs');
 function createMainWindow () {
   const mainWindow = new BrowserWindow({
     title: "TPGIT Hostel Management",
@@ -20,5 +21,18 @@ mainWindow.webContents.openDevTools();
 }
 
 app.whenReady().then(createMainWindow);
+ipcMain.handle('open-file-dialog', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [{ name: 'Excel Files', extensions: ['xls', 'xlsx'] }]
+  });
+
+  if (canceled || filePaths.length === 0) {
+    return null; // No file selected
+  }
+
+  // Read file as ArrayBuffer
+  return fs.readFileSync(filePaths[0]).buffer;
+});
 
 

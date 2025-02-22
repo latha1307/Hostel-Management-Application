@@ -273,10 +273,10 @@ const handleMonthSubmit = async () => {
       }
 
       if (isEditing) {
-        // ✅ Fetch existing data to compare changes
+
         const { data: existingData, error: fetchError } = await supabase
           .from("inventorygrocery")
-          .select("*") // Select all columns to compare
+          .select("*")
           .eq("id", editId)
           .single();
 
@@ -285,17 +285,17 @@ const handleMonthSubmit = async () => {
           throw fetchError;
         }
 
-        console.log("Existing Data:", existingData); // Debugging
+        console.log("Existing Data:", existingData);
 
-        // ✅ Create update object with only changed values
+
         const updateData: Record<string, any> = {};
         Object.keys(formData).forEach((key) => {
           if (formData[key] !== existingData[key] && formData[key] !== undefined) {
-            updateData[key] = formData[key]; // Only include changed values
+            updateData[key] = formData[key];
           }
         });
 
-        console.log("Final update data:", updateData); // Debugging
+        console.log("Final update data:", updateData);
 
         if (Object.keys(updateData).length > 0) {
           const { error } = await supabase.from("inventorygrocery").update(updateData).eq("id", editId);
@@ -308,13 +308,12 @@ const handleMonthSubmit = async () => {
           console.log("No changes detected, skipping update.");
         }
       } else {
-        // ✅ Insert new record
+
         const { error } = await supabase.from("inventorygrocery").insert([formData]);
         if (error) throw error;
         console.log("New item added successfully!");
       }
 
-      // ✅ Fetch updated data
       fetchGroceriesData();
       handleDialogClose();
     } catch (error) {
