@@ -8,38 +8,37 @@ import Groceries from "./pages/Mess/Grocery.tsx";
 import Provisions from "./pages/Mess/Provisions.tsx";
 import StaffSalary from "./pages/Mess/StaffSalary.tsx";
 import Studentattendence from "./pages/Mess/StudentAttendence.tsx";
+import BillDistribution from "./pages/BillDistribution.jsx";
 
 function App() {
   return (
     <Router>
-      <div className="flex h-screen">
-        {/* Sidebar */}
-        <div className="min-w-[300px] bg-white">
-          <Navbar />
+    <div className="flex h-screen">
+      <div className="w-[290px] h-full bg-white  fixed left-0 top-0 z-50">
+        <Navbar />
+      </div>
+
+      <div className="flex-1 flex flex-col ml-[280px] relative">
+        <div className="absolute top-0 right-0 p-2">
+          <User />
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col relative">
-          {/* User Profile Section */}
-          <div className="absolute top-0 right-0 p-4">
-            <User />
-          </div>
+        <div className="flex-grow mt-24  mx-auto max-w-[calc(100vw-280px)] w-full overflow-x-hidden px-6">
+          <Routes>
+            <Route path="/mess/provisions" element={<Provisions />} />
+            <Route path="/manage-mess/:hostel" element={<Main />} />
+            <Route path="/manage-mess/:hostel/groceries" element={<Groceries />} />
+            <Route path="/manage-mess/:hostel/staffsalary" element={<StaffSalary />} />
+            <Route path="/manage-mess/:hostel/attendance" element={<Studentattendence />}/>
+            <Route path="/manage-mess/:hostel/bill-distribution" element={<BillDistribution />} />
+            <Route path="*" element={<div>Page Not Found</div>} />
+          </Routes>
 
-
-          {/* Routes and Main Content */}
-          <div className="flex-grow mt-24 mx-8">
-            <Routes>
-              <Route path="/mess/provisions" element={<Provisions />}/>
-              <Route path="/manage-mess/:hostel" element={<Main />} />
-              <Route path="/manage-mess/:hostel/groceries" element={<Groceries/>}/>
-              <Route path="/manage-mess/:hostel/staffsalary" element={<StaffSalary />}/>
-              <Route path="/manage-mess/:hostel/attendance" element={<Studentattendence />}/>
-              <Route path="*" element={<div>Page Not Found</div>} />
-            </Routes>
-          </div>
         </div>
       </div>
-    </Router>
+    </div>
+  </Router>
+
   );
 }
 

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+# Hostel-Management-Application
+This app is for my college hostel(TPGIT Vellore). To automate the mess bill calculation, manage students history.
+=======
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
@@ -68,3 +72,4 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+>>>>>>> cbf7a07 (icons update)

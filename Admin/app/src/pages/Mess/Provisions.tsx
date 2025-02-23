@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import ArrowBack from "@mui/icons-material/ArrowBack";
 import  supabase  from "../../supabaseClient";
 import {
   Box,
@@ -463,9 +462,8 @@ const handleMonthSubmit = async () => {
   };
   return (
     <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
-      <div className="flex items-center mb-4">
-        <ArrowBack className="text-primary cursor-pointer" />
-        <span className="ml-2 text-primary text-xl font-bold"> Stocks in Inventory</span>
+      <div className="flex items-center mt-8 mb-2">
+        <span className=" text-primary text-xl font-bold"> Stocks in Inventory</span>
       </div>
       <p className="text-tertiary font-medium mb-4">Manage mess / Inventory</p>
       <div className='flex space-x-3 m-3 -ml-0'>
@@ -570,10 +568,10 @@ const handleMonthSubmit = async () => {
         <div>Loading...</div>
       ) : (
         <>
-          <Box sx={{ maxHeight: "70vh", maxWidth: '1180px', overflowX: "auto" }}>
+          <Box sx={{ maxHeight: "110vh", maxWidth: '100%', overflowX: "auto", padding: "8px" }}>
           <TableContainer
             sx={{
-              maxHeight: "60vh",
+              maxHeight: "100vh",
               overflow: "auto",
               backgroundColor: 'white',
               border: "1px solid #E0E0E0",
@@ -582,7 +580,7 @@ const handleMonthSubmit = async () => {
               overflowX: "auto",
             }}
           >
-            <Table>
+            <Table size='small'>
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#7d1818', position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap" }}>
                   {["S.No", "Item Description", "Unit", "Month Year", "Opening stock", "Quantity Received (Indent Order 1)", "Rate (Order 1)", "Quantity Received (Indent Order 2)", "Rate (Order 2)", "Quantity Received (Indent Order 3)", "Rate (Order 3)", "Supplier 1 Rate in Rs.", "Supplier 2 Rate", "Quantity Received From Supplier 2", "Quantity Issued Boys", "Quantity Issued Girls", "Total Quantity Issued in Units", "Total Quantity Issued in Rupees", "Closing Stock Balance as on till date", "Stock Remaining in Rupees", "Action"]

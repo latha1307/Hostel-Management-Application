@@ -177,8 +177,14 @@ const Groceries = () => {
   }, []);
 
   useEffect(() => {
-    if (groceriesData.length > 0) {
+    if (
+      groceriesData.length > 0 &&
+      groceriesData[0].dailyconsumption &&
+      groceriesData[0].dailyconsumption[selectedDate] !== undefined
+    ) {
       setToday_quantity(Number(groceriesData[0].dailyconsumption[selectedDate]));
+    } else {
+      setToday_quantity(0);
     }
   }, [groceriesData, selectedDate]);
 
@@ -207,7 +213,7 @@ const Groceries = () => {
   const getTableHeaders = () => {
     switch (selectedCategory) {
       case 'Provisions':
-        return ['S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Consumed units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued',"Quantity Entered?", 'Action'];
+        return ['S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Issued units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued',"Quantity Entered?", 'Action'];
       case 'Vegetables':
         return ['S.No', 'Bill Date', 'Name', 'Quantity', 'Cost Per Kg', 'Total Amount', 'Action'];
       case 'Egg':
@@ -228,7 +234,7 @@ const Groceries = () => {
           { label: "Billing Month", name: "monthyear" },
           { label: "Item Name", name: "itemname" },
           { label: "Entry Date", name: "selectedDate", type: "date" },
-          { label: "Add Consumed Units", name: "today_quantity", type: "number" },
+          { label: "Add Issued Units", name: "today_quantity", type: "number" },
         ];
 
       case 'Vegetables':
@@ -267,7 +273,7 @@ const Groceries = () => {
     setFormData(data || {});
     setOpenDialog(true);
 
-    // Set editId dynamically based on provisionType
+
     if (data) {
         switch (selectedCategory) {
             case 'Provisions':
@@ -292,7 +298,6 @@ const Groceries = () => {
         setEditId(null);
     }
 
-    // Set maxQty for the selected item
     const selectedItem = availableItems.find(
         item => item.itemname === (data?.itemName || formData?.itemName)
     );
@@ -321,6 +326,10 @@ const Groceries = () => {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
 
+    if (name === "today_quantity") {
+      setToday_quantity(value)
+    }
+
     if (name === "itemname") {
       const selectedItem = availableItems.find((item) => item.itemname === value);
       setMaxQty(selectedItem?.total_stock_available || 0);
@@ -330,7 +339,7 @@ const Groceries = () => {
 
   const handleSubmit = async () => {
     try {
-      const { itemname, itemName, DateOfConsumed, today_quantity ,ConsumedQnty = 0, Quantity, CostPerKg, CostPerPiece, CostPerLitre,no_of_cylinder, TotalAmount } = formData;
+      const { itemname, itemName, DateOfConsumed ,ConsumedQnty = 0, Quantity, CostPerKg, CostPerPiece, CostPerLitre,no_of_cylinder, TotalAmount } = formData;
 
       let response;
 
@@ -338,14 +347,14 @@ const Groceries = () => {
         // Editing logic
         switch (selectedCategory) {
           case 'Provisions':
-            const formattedDate = new Date().toISOString().split("T")[0];
 
-            // Fetch existing consumedgrocery entry
             const { data: existingEntry, error: fetchError } = await supabase
                 .from('consumedgrocery')
-                .select('dailyconsumption, total_quantity_issued, itemname')
+                .select('dailyconsumption, total_quantity_issued, total_cost, itemname')
                 .eq('id', editId)
-                .single();
+                .maybeSingle();
+
+                console.log("Fetched rows:", existingEntry);
 
             if (fetchError && fetchError.code !== 'PGRST116') {
                 throw fetchError;
@@ -357,70 +366,52 @@ const Groceries = () => {
                     : existingEntry.dailyconsumption
                 : {};
 
+            console.log(today_quantity)
+
+            const previousQuantity = Number(updatedDailyConsumption[selectedDate] || 0);
+            const netChange = today_quantity - previousQuantity;
+
             updatedDailyConsumption[selectedDate] = String(today_quantity);
 
-            // Calculate total quantity issued
-            const totalQuantityIssued = Object.values(updatedDailyConsumption)
-                .map(qty => Number(qty))
-                .reduce((sum, qty) => sum + qty, 0);
-
-            // Fetch inventorygrocery data for this item
             const { data: inventoryData, error: inventoryError } = await supabase
                 .from('inventorygrocery')
-                .select('opening_stock_remaining, supplier1_rate, quantity_supplier2_remaining, supplier2_rate, quantity_intend1_remaining, rate_intend_1, quantity_intend2_remaining, rate_intend_2, quantity_intend3_remaining, rate_intend_3')
+                .select('opening_stock_remaining, supplier1_rate, quantity_supplier2_remaining, supplier2_rate, quantity_intend1_remaining, rate_intend_1, quantity_intend2_remaining, rate_intend_2, quantity_intend3_remaining, rate_intend_3, opening_stock, quantity_received_supplier2, quantity_received_intend_1, quantity_received_intend_2, quantity_received_intend_3')
                 .eq('itemname', existingEntry?.itemname)
                 .single();
 
             if (inventoryError) throw inventoryError;
 
-            let remainingQty = totalQuantityIssued;
+            let remainingQty = netChange;
             let updatedInventory = { ...inventoryData };
             let totalCost = 0;
 
-            // Function to deduct stock and calculate cost
-            const deductStock = (stockKey: string, rateKey: string) => {
-                if (remainingQty > 0 && updatedInventory[stockKey] > 0) {
-                    const usedQty = Math.min(remainingQty, updatedInventory[stockKey]);
-                    remainingQty -= usedQty;
-                    updatedInventory[stockKey] -= usedQty;
-                    totalCost += usedQty * inventoryData[rateKey]; // Calculate cost
+            const trackUsage = (usedKey, stockKey, rateKey) => {
+                if (remainingQty > 0) {
+                    const availableQty = updatedInventory[stockKey] - updatedInventory[usedKey];
+                    const usedNow = Math.min(remainingQty, availableQty);
+                    updatedInventory[usedKey] += usedNow;
+                    remainingQty -= usedNow;
+                    totalCost += usedNow * inventoryData[rateKey];
                 }
             };
 
-            // Reduce stock and calculate cost in priority order
-            deductStock('opening_stock_remaining', 'supplier1_rate');
-            deductStock('quantity_supplier2_remaining', 'supplier2_rate');
-            deductStock('quantity_intend1_remaining', 'rate_intend_1');
-            deductStock('quantity_intend2_remaining', 'rate_intend_2');
-            deductStock('quantity_intend3_remaining', 'rate_intend_3');
+            trackUsage('opening_stock_remaining', 'opening_stock', 'supplier1_rate');
+            trackUsage('quantity_supplier2_remaining', 'quantity_received_supplier2', 'supplier2_rate');
+            trackUsage('quantity_intend1_remaining', 'quantity_received_intend_1', 'rate_intend_1');
+            trackUsage('quantity_intend2_remaining', 'quantity_received_intend_2', 'rate_intend_2');
+            trackUsage('quantity_intend3_remaining', 'quantity_received_intend_3', 'rate_intend_3');
 
-            // Update consumedgrocery with the total quantity issued and cost
-            if (existingEntry) {
-                response = await supabase
-                    .from('consumedgrocery')
-                    .update({
-                        dailyconsumption: updatedDailyConsumption,
-                        total_quantity_issued: totalQuantityIssued,
-                        total_cost: totalCost
-                    })
-                    .eq('id', editId);
-            } else {
-                response = await supabase
-                    .from('consumedgrocery')
-                    .insert([
-                        {
-                            id: editId,
-                            monthyear: formattedDate.slice(0, 7),
-                            dailyconsumption: updatedDailyConsumption,
-                            total_quantity_issued: totalQuantityIssued,
-                            total_cost: totalCost
-                        }
-                    ]);
-            }
+            response = await supabase
+                .from('consumedgrocery')
+                .update({
+                    dailyconsumption: updatedDailyConsumption,
+                    total_quantity_issued: Object.values(updatedDailyConsumption).reduce((sum : any, qty) => sum + Number(qty), 0),
+                    total_cost: existingEntry?.total_cost + totalCost
+                })
+                .eq('id', editId);
 
             if (response.error) throw response.error;
 
-            // Update inventorygrocery with the reduced stock
             const updateInventoryResponse = await supabase
                 .from('inventorygrocery')
                 .update({
@@ -433,6 +424,7 @@ const Groceries = () => {
                 .eq('itemname', existingEntry?.itemname);
 
             if (updateInventoryResponse.error) throw updateInventoryResponse.error;
+
 
             break;
 
@@ -492,10 +484,8 @@ const Groceries = () => {
             throw new Error('Invalid category');
         }
       } else {
-        // Insert logic (already implemented in your code)
         switch (selectedCategory) {
           case 'Provisions':
-            // First, fetch the required data
             const { data: purchasedData, error: purchasedError } = await supabase
               .from('purchasedprovisions')
               .select('purchaseid, PurchasedCostPerKg, RemainingQty')
@@ -512,7 +502,6 @@ const Groceries = () => {
             const ConsumedCost = PurchasedCostPerKg * ConsumedQnty;
             const updatedRemainingQty = RemainingQty - ConsumedQnty;
 
-            // Insert into ConsumedProvisions
             response = await supabase
               .from('consumedprovisions')
               .insert([
@@ -529,7 +518,6 @@ const Groceries = () => {
 
             if (response.error) throw response.error;
 
-            // Update PurchasedProvisions table
             const updateResponse = await supabase
               .from('purchasedprovisions')
               .update({ RemainingQty: updatedRemainingQty })
@@ -603,9 +591,8 @@ const Groceries = () => {
         }
       }
 
-      fetchGroceriesData(selectedCategory); // Fetch updated data
-      handleDialogClose(); // Close dialog
-
+      fetchGroceriesData(selectedCategory);
+      handleDialogClose();
     } catch (error) {
       console.error('Error submitting data:', error);
     }
@@ -616,7 +603,7 @@ const Groceries = () => {
   return (
     <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
       {/* Header */}
-      <div className="flex items-center mb-2">
+      <div className="flex items-center mt-14 mb-2">
         <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
         <span className="ml-2 text-primary text-xl font-bold">Groceries</span>
       </div>
@@ -631,7 +618,7 @@ const Groceries = () => {
         {categoryData.map((category, index) => (
           <div
             key={index}
-            onClick={() => setSelectedCategory(category.label)} // Update selected category
+            onClick={() => setSelectedCategory(category.label)}
             className="flex items-center justify-between bg-blue-500 text-white px-4 py-3 rounded-sm cursor-pointer hover:scale-105 transition-transform"
             style={{ backgroundColor: category.color, width: "20%", height: "60px" }}
           >
@@ -658,7 +645,7 @@ const Groceries = () => {
             backgroundColor: "white",
             borderRadius: "20px",
             "& .MuiOutlinedInput-root": {
-              borderRadius: "20px", // Ensure border radius is applied to the input
+              borderRadius: "20px",
             },
           }}
           InputProps={{
@@ -711,23 +698,27 @@ const Groceries = () => {
         <div>Loading...</div>
       ) : (
         <>
-        <Box sx={{ maxHeight: "70vh",maxWidth: "min(100vw, 1160px)", overflowX: "auto" }}>
+        <Box sx={{
+          maxHeight: "110vh",
+          maxWidth: "100%",
+          overflowX: "auto",
+          padding: "8px"
+        }}>
 
         <TableContainer
         sx={{
-          maxHeight: "55vh",
+          maxHeight: "100vh",
           overflow: "auto",
           backgroundColor: 'white',
           border: "1px solid #E0E0E0",
           borderTopLeftRadius: "8px",
           borderTopRightRadius: "8px",
-
           overflowX: "auto",
         }}
         >
-          <Table>
+          <Table size="small">
             <TableHead>
-              <TableRow sx={{ backgroundColor: categoryData.find((cat) => cat.label === selectedCategory)?.color || "#F5F5F5", position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap"  }}>
+              <TableRow sx={{ backgroundColor: categoryData.find((cat) => cat.label === selectedCategory)?.color || "#F5F5F5", position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap"}}>
               {getTableHeaders().map((header, index) => (
               <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: 'white' }}>
                 {header}
@@ -737,7 +728,7 @@ const Groceries = () => {
             </TableHead>
             <TableBody >
               {paginatedData.map((row, index) => (
-                <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white",flexGrow: 1  }}>
+                <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white",flexGrow: 0.5  }}>
                   <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
 
               {selectedCategory === 'Provisions' && (
@@ -882,8 +873,10 @@ const Groceries = () => {
                 name={field.name}
                 type={field.type || "text"}
                 value={
-                  field.type === "date"
-                    ? formData[field.name] || new Date().toISOString().split("T")[0] // Default today's date
+                  field.name === "selectedDate"
+                    ? selectedDate // Set value to selectedDate
+                    : field.type === "date"
+                    ? formData[field.name] || new Date().toISOString().split("T")[0]
                     : formData[field.name] || ""
                 }
                 onChange={handleInputChange}
