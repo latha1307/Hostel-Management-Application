@@ -298,7 +298,7 @@ const StaffSalary = () => {
               borderTopRightRadius: "8px",
             }}
           >
-            <Table>
+            <Table size='small'>
               <TableHead>
                 <TableRow sx={{ backgroundColor: "#260D94", position: "sticky", top: 0, zIndex: 1 }}>
                   {["S.No", "Staff Name", "Staff Category", "Bank", "Present Days", "Salary Amount", "Date of Issued", "Action"].map(

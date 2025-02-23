@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Box, Button, Card, Grid, TextField, MenuItem, Select, Typography, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import GroceryIcon from "../assets/grocery-Icon.png";
 import EggIcon from "../assets/egg-Icon.png";
@@ -8,23 +8,28 @@ import MilkImage from "../assets/milk-Icon.png";
 import StaffSalaryIcon from "../assets/staffSalary-Icon.png";
 import DivisionIcon from "../assets/division-Icon.png";
 import PeopleIcon from "@mui/icons-material/People";
+import  supabase  from "../supabaseClient";
+import { useParams } from 'react-router-dom';
 
 const BillDistribution = () => {
-  const [items] = useState([
-    { name: "GROCERIES", icon: GroceryIcon, amount: 2500, shadowColor: "#d4af37" },
-    { name: "VEGETABLES", icon: VegetableIcon, amount: 2500, shadowColor: "#4caf50" },
-    { name: "EGG", icon: EggIcon, amount: 2500, shadowColor: "#ffcc80" },
-    { name: "MILK", icon: MilkImage, amount: 2500, shadowColor: "#64b5f6" },
-    { name: "GAS", icon: GasIcon, amount: 2500, shadowColor: "#e57373" },
-    { name: "STAFF", icon: StaffSalaryIcon, amount: 2500, shadowColor: "#7986cb" },
+  const { hostel } = useParams();
+  const [items, setItems] = useState([
+    { name: "GROCERIES",icon: GroceryIcon, amount: 0, shadowColor: "#d4af37" },
+    { name: "VEGETABLES", icon: VegetableIcon, amount: 0, shadowColor: "#4caf50" },
+    { name: "EGG", icon: EggIcon, amount: 0, shadowColor: "#ffcc80" },
+    { name: "MILK", icon: MilkImage, amount: 0, shadowColor: "#64b5f6" },
+    { name: "GAS", icon: GasIcon, amount: 0, shadowColor: "#e57373" },
+    { name: "STAFF", icon: StaffSalaryIcon, amount: 0, shadowColor: "#7986cb" },
   ]);
 
 
-  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [isEditingFoodWaste, setIsEditingFoodWaste] = useState(false);
   const [isEditingOtherWaste, setIsEditingOtherWaste] = useState(false);
   const [foodWaste, setFoodWaste] = useState(2500);
   const [otherAmount, setOtherAmount] = useState(0);
+  const [groceryAmount, setGroceryAmount] = useState(0);
   const [isOtherAdded, setIsOtherAdded] = useState(false);
   const [open, setOpen] = useState(false);
   const [studentHeadcounts] = useState(500);
@@ -32,6 +37,56 @@ const BillDistribution = () => {
   const totalSummation = items.reduce((sum, item) => sum + item.amount, 0);
   const netAmount = totalSummation - foodWaste - (isOtherAdded ? otherAmount : 0);
   const perDayAmount = netAmount / studentHeadcounts;
+
+
+  const fetchBillData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Fetch consumed grocery data
+      const { data: consumeddata, error: error1 } = await supabase
+        .from("consumedgrocery")
+        .select("total_cost")
+        .eq("hostel", hostel);
+
+      if (error1) throw error1;
+
+      // Fetch vegetable data
+      const { data: vegtabledata, error: error2 } = await supabase
+        .from("vegetables")
+        .select("TotalCost")
+        .eq("hostel", hostel);
+
+      if (error2) throw error2;
+
+      // ✅ Extract total costs
+      const totalGroceryCost = consumeddata.reduce((sum, row) => sum + row.total_cost, 0);
+      const totalVegetableCost = vegtabledata.reduce((sum, row) => sum + row.TotalCost, 0);
+
+      // ✅ Update the amounts
+      setGroceryAmount(totalGroceryCost);
+
+      setItems((prevItems) =>
+        prevItems.map((item) => {
+          if (item.name === "GROCERIES") return { ...item, amount: totalGroceryCost };
+          if (item.name === "VEGETABLES") return { ...item, amount: totalVegetableCost };
+          return item;
+        })
+      );
+    } catch (error) {
+      console.error("Error fetching bill data:", error.message);
+      setError("Error fetching bill data");
+    } finally {
+      setLoading(false);
+    }
+  }, [hostel]);
+
+
+  useEffect(() => {
+    fetchBillData();
+  }, [fetchBillData]);
+
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -83,13 +138,13 @@ const BillDistribution = () => {
 
 
 
-      
-      
-      
-      
-      
-      
-      
+
+
+
+
+
+
+
     <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
     <Card sx={{ p: 3, width: "48%", boxShadow: "0px 4px 8px red", background: "#fff" }}>
   <Typography variant="h5" fontWeight={700} display="flex" justifyContent="space-between">
@@ -154,15 +209,15 @@ const BillDistribution = () => {
 
 
 
-       
-     
-     
-     
-     
-     
-     
-     
-     
+
+
+
+
+
+
+
+
+
       <Card sx={{ p: 2, width: "48%", bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px blue" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography variant="h6" fontWeight={600}>Distribution</Typography>
@@ -186,7 +241,7 @@ const BillDistribution = () => {
         </Typography>
         <Button variant="contained" color="error" sx={{ fontSize: "0.7rem" }}>Distribute To All Students</Button>
       </Box>
-      
+
 
 
 

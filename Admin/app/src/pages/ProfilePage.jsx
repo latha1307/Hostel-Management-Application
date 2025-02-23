@@ -1,95 +1,151 @@
 import React, { useState } from "react";
-import bgImage from "./assets/blueimages.png";
-import { Card, CardContent, Button, TextField, Typography } from "@mui/material";
-import { MdPerson, MdOutlineMail, MdCall, MdLock, MdArrowBack, MdPersonAdd, MdEdit, MdSave } from "react-icons/md";
+import {
+  Container,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Card,
+  CardContent,
+  Typography,
+  IconButton,
+  Divider,
+} from "@mui/material";
+import { Edit, Save, Add, Delete, ArrowBack } from "@mui/icons-material";
+import { Link } from "react-router-dom";
 
-const App = () => {
+const AdminDetails = () => {
   const [isEditing, setIsEditing] = useState(false);
-  const [user, setUser] = useState({
-    name: "Clay Jensen",
-    role: "Administrator",
-    email: "clay.jensen@email.com",
-    phone: "(+61) (45687) (45687)",
-    password: "******"
-  });
+  const [admin, setAdmin] = useState({ name: "John Doe", email: "admin@example.com", password: "" });
+  const [admins, setAdmins] = useState([
+    { name: "Jane Smith", email: "jane@example.com" },
+    { name: "Robert Brown", email: "robert@example.com" },
+    { name: "Robert Brown", email: "robert@example.com" },
+  ]);
 
-  const handleChange = (e) => {
+  const handleEditClick = () => setIsEditing(!isEditing);
 
-    setUser({ ...user, [e.target.name]: e.target.value });
+  const handleChange = (e) => setAdmin({ ...admin, [e.target.name]: e.target.value });
+
+  const handleRemoveAdmin = (index) => {
+    const updatedAdmins = admins.filter((_, i) => i !== index);
+    setAdmins(updatedAdmins);
   };
 
   return (
-    <div
-      className="w-screen h-screen bg-cover bg-center flex justify-center items-center"
-      style={{
-        backgroundImage: `url(${bgImage})`,
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-        filter: "brightness(1.1) contrast(1.2)"
-      }}
-    >
-      <Card className="w-[90%] max-w-4xl shadow-lg">
-        <CardContent className="pt-3">
-          <div className="flex items-center justify-between pt-7">
-            <Typography variant="h5" className="font-bold text-gray-800 flex items-center space-x-2">
-              <MdPerson size={24} className="text-gray-800" />
-              {isEditing ? (
-                <TextField name="name" value={user.name} onChange={handleChange} size="small" variant="outlined" />
-              ) : (
-                <span>{user.name}</span>
-              )}
+    <Container maxWidth="md" sx={{ marginTop: 5 }}>
+      <Card
+        sx={{
+          background: "#fff",
+          padding: 3,
+          borderRadius: 3,
+          boxShadow: 5,
+        }}
+      >
+        <CardContent>
+          <div className="flex justify-start items-center">
+            <Typography variant="h5" fontWeight="bold" sx={{ color: '#00654D'}}>
+              Admin Details
             </Typography>
-            <div className="space-x-4">
-              <Button variant="contained" style={{ backgroundColor: "green", color: "white" }} size="small" startIcon={<MdPersonAdd />}>Add Admin</Button>
-              <Button variant="contained" color="primary" size="small" startIcon={isEditing ? <MdSave /> : <MdEdit />} onClick={() => setIsEditing(!isEditing)}>
-                {isEditing ? "Save" : "Edit"}
-              </Button>
-            </div>
+            <IconButton color="primary" onClick={handleEditClick}>
+              {isEditing ? <Save /> : <Edit />}
+            </IconButton>
           </div>
 
-          {/* User Info */}
-          <div className="mt-4 space-y-2">
-            <Typography variant="body2">
-              <span className="font-semibold">Role:</span>
-              {isEditing ? (
-                <TextField name="role" value={user.role} onChange={handleChange} size="small" variant="outlined" />
-              ) : (
-                ` ${user.role}`
-              )}
-            </Typography>
-            <Typography variant="body2" className="flex items-center space-x-2">
-              <MdOutlineMail />
-              {isEditing ? (
-                <TextField name="email" value={user.email} onChange={handleChange} size="small" variant="outlined" />
-              ) : (
-                <span>{user.email}</span>
-              )}
-            </Typography>
-            <Typography variant="body2" className="flex items-center space-x-2">
-              <MdCall />
-              {isEditing ? (
-                <TextField name="phone" value={user.phone} onChange={handleChange} size="small" variant="outlined" />
-              ) : (
-                <span>{user.phone}</span>
-              )}
-            </Typography>
-            {/* Password Field */}
-            <div className="flex items-center space-x-2">
-              <MdLock />
-              {isEditing ? (
-                <TextField type="password" name="password" value={user.password} onChange={handleChange} size="small" variant="outlined" />
-              ) : (
-                <input type="password" value={user.password} disabled className="bg-transparent border-none focus:outline-none" />
-              )}
+          <div className="flex gap-6 mt-4">
+            {/* Left: Admin Details */}
+            <div className="w-1/2">
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Name"
+                name="name"
+                value={admin.name}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Email"
+                name="email"
+                value={admin.email}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
+              <TextField
+                fullWidth
+                margin="normal"
+                label="Change Password"
+                type="password"
+                name="password"
+                value={admin.password}
+                onChange={handleChange}
+                disabled={!isEditing}
+              />
             </div>
-            {/* Back Button */}
-            <Button variant="contained" color="primary" onClick={() => window.history.back()} startIcon={<MdArrowBack />}>Back</Button>
+
+            {/* Vertical Divider */}
+            <Divider orientation="vertical" flexItem sx={{ bgcolor: "gray.400", width: "2px" }} />
+
+            {/* Right: Other Admins */}
+            <div className="w-1/2">
+              <div className="flex justify-between items-center mb-3">
+                <Typography variant="h6" fontWeight="bold" color="secondary">
+                  Other Admins
+                </Typography>
+                <Button
+                  variant="contained"
+                  startIcon={<Add />}
+                  color="secondary"
+                  component={Link}
+                  to="/admin/add"
+                >
+                  Add Admin
+                </Button>
+              </div>
+
+              <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: "hidden" }}>
+                <Table>
+                  <TableHead sx={{ background: "#7B1FA2" }}>
+                    <TableRow>
+                      <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Name</TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Email</TableCell>
+                      <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Actions</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {admins.map((admin, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{admin.name}</TableCell>
+                        <TableCell>{admin.email}</TableCell>
+                        <TableCell>
+                          <IconButton color="error" onClick={() => handleRemoveAdmin(index)}>
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </div>
           </div>
         </CardContent>
       </Card>
-    </div>
+
+      <div className="flex justify-start mt-5">
+        <Button variant="contained" startIcon={<ArrowBack />}>
+          Back
+        </Button>
+      </div>
+    </Container>
   );
 };
 
-export default App;
+export default AdminDetails;
