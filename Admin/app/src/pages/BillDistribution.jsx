@@ -6,6 +6,7 @@ import VegetableIcon from "../assets/vegetables-Icon.png";
 import GasIcon from "../assets/gas-Icon.png";
 import MilkImage from "../assets/milk-Icon.png";
 import StaffSalaryIcon from "../assets/staffSalary-Icon.png";
+import DivisionIcon from "../assets/division-Icon.png";
 import PeopleIcon from "@mui/icons-material/People";
 
 const BillDistribution = () => {
@@ -115,9 +116,12 @@ const BillDistribution = () => {
         <Card sx={{ p: 2, width: "48%", bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px blue" }}>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography variant="h6" fontWeight={600}>Distribution</Typography>
-            <Typography variant="h6" fontWeight={600} color="blue">/ {studentHeadcounts}</Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "blue" }}>
+  <img src={DivisionIcon} alt="Division" style={{ width: 15, height: 15}} />
+  <Typography variant="h6" fontWeight={600}>{studentHeadcounts}</Typography>
+</Box>
           </Box>
-          <Card variant="outlined" sx={{ mt: 1, p: 2, width: "93%", margin:"50px", height:"60%", borderRadius: 2, boxShadow: "0px 4px 8px purple", margin: "15px"  }}>
+          <Card variant="outlined" sx={{ mt: 3, p: 2, width: "80%", marginLeft: "10%", height:"60%", borderRadius: 2, boxShadow: "0px 4px 8px purple" }}>
             <Typography color="purple" sx={{ display: "flex", justifyContent: "space-between", fontWeight: 500 }}>
               STUDENT HEADCOUNTS <PeopleIcon />
             </Typography>
