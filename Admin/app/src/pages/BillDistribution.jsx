@@ -11,7 +11,7 @@ import PeopleIcon from "@mui/icons-material/People";
 
 const BillDistribution = () => {
   const [items] = useState([
-    { name: "GROCERIES", icon: GroceryIcon, amount: 2500, shadowColor: "#d4af37" },
+    { name: "GROCERIES ISSUED", icon: GroceryIcon, amount: 2500, shadowColor: "#d4af37" },
     { name: "VEGETABLES", icon: VegetableIcon, amount: 2500, shadowColor: "#4caf50" },
     { name: "EGG", icon: EggIcon, amount: 2500, shadowColor: "#ffcc80" },
     { name: "MILK", icon: MilkImage, amount: 2500, shadowColor: "#64b5f6" },
