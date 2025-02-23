@@ -385,45 +385,64 @@ const Groceries = () => {
             let updatedInventory = { ...inventoryData };
             let totalCost = 0;
 
-            const trackUsage = (usedKey, stockKey, rateKey) => {
-                if (remainingQty > 0) {
-                    const availableQty = updatedInventory[stockKey] - updatedInventory[usedKey];
-                    const usedNow = Math.min(remainingQty, availableQty);
-                    updatedInventory[usedKey] += usedNow;
-                    remainingQty -= usedNow;
-                    totalCost += usedNow * inventoryData[rateKey];
-                }
-            };
+            const trackUsage = (usedKey, stockKey, rateKey, isReturning = false) => {
+              if (remainingQty !== 0 && updatedInventory[stockKey] > 0) {
+                  let availableQty = updatedInventory[stockKey] - (updatedInventory[usedKey] || 0);
 
-            trackUsage('opening_stock_remaining', 'opening_stock', 'supplier1_rate');
-            trackUsage('quantity_supplier2_remaining', 'quantity_received_supplier2', 'supplier2_rate');
-            trackUsage('quantity_intend1_remaining', 'quantity_received_intend_1', 'rate_intend_1');
-            trackUsage('quantity_intend2_remaining', 'quantity_received_intend_2', 'rate_intend_2');
-            trackUsage('quantity_intend3_remaining', 'quantity_received_intend_3', 'rate_intend_3');
+                  if (availableQty > 0) {
+                      let usedNow = Math.min(Math.abs(remainingQty), availableQty); // Ensure no negative values
 
-            response = await supabase
-                .from('consumedgrocery')
-                .update({
-                    dailyconsumption: updatedDailyConsumption,
-                    total_quantity_issued: Object.values(updatedDailyConsumption).reduce((sum : any, qty) => sum + Number(qty), 0),
-                    total_cost: existingEntry?.total_cost + totalCost
-                })
-                .eq('id', editId);
+                      if (!isReturning) {
+                          updatedInventory[usedKey] = (updatedInventory[usedKey] || 0) + usedNow;
+                          totalCost += usedNow * (inventoryData[rateKey] || 0);
+                      } else {
+                          updatedInventory[usedKey] = (updatedInventory[usedKey] || 0) - usedNow; // Return stock
+                          totalCost -= usedNow * (inventoryData[rateKey] || 0);
+                      }
 
-            if (response.error) throw response.error;
+                      remainingQty += isReturning ? usedNow : -usedNow; // Adjust remainingQty
+                  }
+              }
+          };
 
-            const updateInventoryResponse = await supabase
-                .from('inventorygrocery')
-                .update({
-                    opening_stock_remaining: updatedInventory.opening_stock_remaining,
-                    quantity_supplier2_remaining: updatedInventory.quantity_supplier2_remaining,
-                    quantity_intend1_remaining: updatedInventory.quantity_intend1_remaining,
-                    quantity_intend2_remaining: updatedInventory.quantity_intend2_remaining,
-                    quantity_intend3_remaining: updatedInventory.quantity_intend3_remaining
-                })
-                .eq('itemname', existingEntry?.itemname);
 
-            if (updateInventoryResponse.error) throw updateInventoryResponse.error;
+          // If quantity is being reduced, return the stock
+          const isReturning = netChange < 0;
+
+          trackUsage('opening_stock_remaining', 'opening_stock', 'supplier1_rate', isReturning);
+          trackUsage('quantity_supplier2_remaining', 'quantity_received_supplier2', 'supplier2_rate', isReturning);
+          trackUsage('quantity_intend1_remaining', 'quantity_received_intend_1', 'rate_intend_1', isReturning);
+          trackUsage('quantity_intend2_remaining', 'quantity_received_intend_2', 'rate_intend_2', isReturning);
+          trackUsage('quantity_intend3_remaining', 'quantity_received_intend_3', 'rate_intend_3', isReturning);
+
+          // Ensure total cost updates correctly
+          const updatedTotalCost = existingEntry?.total_cost + (netChange < 0 ? -Math.abs(totalCost) : totalCost);
+
+          // ✅ Update consumed grocery
+          response = await supabase
+              .from('consumedgrocery')
+              .update({
+                  dailyconsumption: updatedDailyConsumption,
+                  total_quantity_issued: Object.values(updatedDailyConsumption).reduce((sum:any, qty) => sum + Number(qty), 0),
+                  total_cost: updatedTotalCost
+              })
+              .eq('id', editId);
+
+          if (response.error) throw response.error;
+
+          // ✅ Update inventory stocks
+          const updateInventoryResponse = await supabase
+              .from('inventorygrocery')
+              .update({
+                  opening_stock_remaining: updatedInventory.opening_stock_remaining,
+                  quantity_supplier2_remaining: updatedInventory.quantity_supplier2_remaining,
+                  quantity_intend1_remaining: updatedInventory.quantity_intend1_remaining,
+                  quantity_intend2_remaining: updatedInventory.quantity_intend2_remaining,
+                  quantity_intend3_remaining: updatedInventory.quantity_intend3_remaining
+              })
+              .eq('itemname', existingEntry?.itemname);
+
+          if (updateInventoryResponse.error) throw updateInventoryResponse.error;
 
 
             break;
