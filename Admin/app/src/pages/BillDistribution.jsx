@@ -12,9 +12,8 @@ import  supabase  from "../supabaseClient";
 import { useParams } from 'react-router-dom';
 
 const BillDistribution = () => {
-  const { hostel } = useParams();
   const [items, setItems] = useState([
-    { name: "GROCERIES",icon: GroceryIcon, amount: 0, shadowColor: "#d4af37" },
+    { name: "GROCERIES ISSUED", icon: GroceryIcon, amount: 0, shadowColor: "#d4af37" },
     { name: "VEGETABLES", icon: VegetableIcon, amount: 0, shadowColor: "#4caf50" },
     { name: "EGG", icon: EggIcon, amount: 0, shadowColor: "#ffcc80" },
     { name: "MILK", icon: MilkImage, amount: 0, shadowColor: "#64b5f6" },
@@ -22,12 +21,12 @@ const BillDistribution = () => {
     { name: "STAFF", icon: StaffSalaryIcon, amount: 0, shadowColor: "#7986cb" },
   ]);
 
-
+  const { hostel } = useParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [isEditingFoodWaste, setIsEditingFoodWaste] = useState(false);
   const [isEditingOtherWaste, setIsEditingOtherWaste] = useState(false);
-  const [foodWaste, setFoodWaste] = useState(2500);
+  const [foodWaste, setFoodWaste] = useState(0);
   const [otherAmount, setOtherAmount] = useState(0);
   const [groceryAmount, setGroceryAmount] = useState(0);
   const [isOtherAdded, setIsOtherAdded] = useState(false);
@@ -69,7 +68,7 @@ const BillDistribution = () => {
 
       setItems((prevItems) =>
         prevItems.map((item) => {
-          if (item.name === "GROCERIES") return { ...item, amount: totalGroceryCost };
+          if (item.name === "GROCERIES ISSUED") return { ...item, amount: totalGroceryCost };
           if (item.name === "VEGETABLES") return { ...item, amount: totalVegetableCost };
           return item;
         })
