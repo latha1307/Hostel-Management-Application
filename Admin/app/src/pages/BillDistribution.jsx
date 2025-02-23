@@ -21,7 +21,8 @@ const BillDistribution = () => {
 
 
   
-  
+  const [isEditingFoodWaste, setIsEditingFoodWaste] = useState(false);
+  const [isEditingOtherWaste, setIsEditingOtherWaste] = useState(false);
   const [foodWaste, setFoodWaste] = useState(2500);
   const [otherAmount, setOtherAmount] = useState(0);
   const [isOtherAdded, setIsOtherAdded] = useState(false);
@@ -82,52 +83,101 @@ const BillDistribution = () => {
 
 
 
-      <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-      <Card sx={{ p: 2, width: "48%", boxShadow: "0px 4px 8px red" }}>
-  <Typography variant="h6" fontWeight={600} display="flex" justifyContent="space-between">
+      
+      
+      
+      
+      
+      
+      
+    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+    <Card sx={{ p: 3, width: "48%", boxShadow: "0px 4px 8px red", background: "#fff" }}>
+  <Typography variant="h5" fontWeight={700} display="flex" justifyContent="space-between">
     <span>Reduction</span>
     <span style={{ color: "red" }}>- ₹{foodWaste + (isOtherAdded ? otherAmount : 0)}</span>
   </Typography>
-  <TextField 
-    fullWidth 
-    type="number" 
-    label="Food Waste" 
-    value={foodWaste} 
-    onChange={(e) => setFoodWaste(Number(e.target.value))} 
-    sx={{ mt: 3 }} 
-  />
+
+  {/* Food Waste - Click to Edit */}
+  <Box sx={{ display: "flex", alignItems: "center", mt: 3, justifyContent: "space-between" }}>
+    <Typography variant="h6" fontWeight={500} sx={{ color: "purple" }}>Food Waste:</Typography>
+    {isEditingFoodWaste ? (
+      <TextField
+        type="number"
+        value={foodWaste}
+        onChange={(e) => setFoodWaste(Number(e.target.value))}
+        onBlur={() => setIsEditingFoodWaste(false)}
+        autoFocus
+        sx={{ width: "120px", fontSize: "1.2rem" }}
+      />
+    ) : (
+      <Typography
+        variant="h5"
+        fontWeight={700}
+        sx={{ textDecoration: "underline", cursor: "pointer", color: "black" }}
+        onClick={() => setIsEditingFoodWaste(true)}
+      >
+        ₹ {foodWaste}
+      </Typography>
+    )}
+  </Box>
+
+  {/* Other Waste - Click to Edit */}
   {isOtherAdded && (
-    <TextField 
-      fullWidth 
-      type="number" 
-      label="Other Reduction" 
-      value={otherAmount} 
-      onChange={(e) => setOtherAmount(Number(e.target.value))}
-      sx={{ mt: 1 }}
-    />
+    <Box sx={{ display: "flex", alignItems: "center", mt: 2, justifyContent: "space-between" }}>
+      <Typography variant="h6" fontWeight={500} sx={{ color: "purple" }}>Other Reduction:</Typography>
+      {isEditingOtherWaste ? (
+        <TextField
+          type="number"
+          value={otherAmount}
+          onChange={(e) => setOtherAmount(Number(e.target.value))}
+          onBlur={() => setIsEditingOtherWaste(false)}
+          autoFocus
+          sx={{ width: "120px", fontSize: "1.2rem" }}
+        />
+      ) : (
+        <Typography
+          variant="h5"
+          fontWeight={700}
+          sx={{ textDecoration: "underline", cursor: "pointer", color: "black" }}
+          onClick={() => setIsEditingOtherWaste(true)}
+        >
+          ₹ {otherAmount}
+        </Typography>
+      )}
+    </Box>
   )}
-  <Button variant="contained" color="secondary" onClick={handleOpen} sx={{ mt: 2 }}>
-    {isOtherAdded ? "Edit Other Reduction" : "Add Other"}
+
+  <Button variant="contained" color="primary" onClick={handleOpen} sx={{ mt: 3 }}>
+    {isOtherAdded ? "Edit Other" : "Add Other"}
   </Button>
 </Card>
 
 
+
        
-        <Card sx={{ p: 2, width: "48%", bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px blue" }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+     
+     
+     
+     
+     
+     
+     
+     
+      <Card sx={{ p: 2, width: "48%", bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px blue" }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography variant="h6" fontWeight={600}>Distribution</Typography>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "blue" }}>
-  <img src={DivisionIcon} alt="Division" style={{ width: 15, height: 15}} />
-  <Typography variant="h6" fontWeight={600}>{studentHeadcounts}</Typography>
-</Box>
-          </Box>
-          <Card variant="outlined" sx={{ mt: 3, p: 2, width: "80%", marginLeft: "10%", height:"60%", borderRadius: 2, boxShadow: "0px 4px 8px purple" }}>
+              <img src={DivisionIcon} alt="Division" style={{ width: 15, height: 15}} />
+              <Typography variant="h6" fontWeight={600}>{studentHeadcounts}</Typography>
+            </Box>
+        </Box>
+      <Card variant="outlined" sx={{ mt: 3, p: 2, width: "80%", marginLeft: "10%", height:"60%", borderRadius: 2, boxShadow: "0px 4px 8px purple" }}>
             <Typography color="purple" sx={{ display: "flex", justifyContent: "space-between", fontWeight: 500 }}>
               STUDENT HEADCOUNTS <PeopleIcon />
             </Typography>
             <Typography variant="h5" fontWeight={600} sx={{ margin:"5%"}} color="text.secondary">{studentHeadcounts}</Typography>
           </Card>
-        </Card>
+      </Card>
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2, alignItems: "center" }}>
