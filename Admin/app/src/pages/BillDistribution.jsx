@@ -16,9 +16,9 @@ const BillDistribution = () => {
     { name: "GROCERIES ISSUED", icon: GroceryIcon, amount: 0, shadowColor: "#d4af37" },
     { name: "VEGETABLES", icon: VegetableIcon, amount: 0, shadowColor: "#4caf50" },
     { name: "EGG", icon: EggIcon, amount: 0, shadowColor: "#ffcc80" },
-    { name: "MILK", icon: MilkImage, amount: 0, shadowColor: "#64b5f6" },
-    { name: "GAS", icon: GasIcon, amount: 0, shadowColor: "#e57373" },
-    { name: "STAFF", icon: StaffSalaryIcon, amount: 0, shadowColor: "#7986cb" },
+    { name: "MILK", icon: MilkImage, amount: 50380, shadowColor: "#64b5f6" },
+    { name: "GAS", icon: GasIcon, amount: 84307, shadowColor: "#e57373" },
+    { name: "STAFF", icon: StaffSalaryIcon, amount: 112150, shadowColor: "#7986cb" },
   ]);
 
   const { hostel } = useParams();
@@ -31,8 +31,8 @@ const BillDistribution = () => {
   const [groceryAmount, setGroceryAmount] = useState(0);
   const [isOtherAdded, setIsOtherAdded] = useState(false);
   const [open, setOpen] = useState(false);
-  const [studentHeadcounts] = useState(500);
-  const [selectedDate, setSelectedDate] = useState("January 2025");
+  const [studentHeadcounts] = useState(7784);
+  const [selectedDate, setSelectedDate] = useState("December 2024");
   const totalSummation = items.reduce((sum, item) => sum + item.amount, 0);
   const netAmount = totalSummation - foodWaste - (isOtherAdded ? otherAmount : 0);
   const perDayAmount = netAmount / studentHeadcounts;
@@ -59,9 +59,17 @@ const BillDistribution = () => {
 
       if (error2) throw error2;
 
+      const { data: eggdata, error: error3 } = await supabase
+        .from("egg")
+        .select("TotalCost")
+        .eq("hostel", hostel);
+
+      if (error3) throw error3;
+
       // ✅ Extract total costs
-      const totalGroceryCost = consumeddata.reduce((sum, row) => sum + row.total_cost, 0);
+      const totalGroceryCost = consumeddata.reduce((sum, row) => parseInt(sum + row.total_cost), 0);
       const totalVegetableCost = vegtabledata.reduce((sum, row) => sum + row.TotalCost, 0);
+      const totalEggCost = eggdata.reduce((sum, row) => sum + row.TotalCost, 0);
 
       // ✅ Update the amounts
       setGroceryAmount(totalGroceryCost);
@@ -70,6 +78,7 @@ const BillDistribution = () => {
         prevItems.map((item) => {
           if (item.name === "GROCERIES ISSUED") return { ...item, amount: totalGroceryCost };
           if (item.name === "VEGETABLES") return { ...item, amount: totalVegetableCost };
+          if (item.name === "EGG") return { ...item, amount: totalEggCost };
           return item;
         })
       );
@@ -96,14 +105,14 @@ const BillDistribution = () => {
   };
 
   return (
-    <Box sx={{ p: 2, textAlign: "center" }}>
+    <Box sx={{ p: 10, paddingTop: 1, textAlign: "center" }}>
       <Typography variant="h5" color="purple" fontWeight={600} gutterBottom>
         BILL DISTRIBUTION
       </Typography>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <Select value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} sx={{ bgcolor: "#fff" }}>
-          {["January 2024", "February 2024", "March 2024", "April 2024", "May 2024", "June 2024", "July 2024", "August 2024", "September 2024", "October 2024", "November 2024", "December 2024", "January 2025", "February 2025", "March 2025", "April 2025", "May 2025", "June 2025", "July 2025", "August 2025", "September 2025", "October 2025", "November 2025", "December 2025"].map((date) => (
+          {["December 2024"].map((date) => (
             <MenuItem key={date} value={date}>{date}</MenuItem>
           ))}
         </Select>
