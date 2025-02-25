@@ -16,14 +16,15 @@ import {
   TableRow,
   IconButton,
   InputAdornment,
+  Collapse,
+  Typography
 } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import Autocomplete from '@mui/material/Autocomplete';
 import EditIcon from "@mui/icons-material/Edit";
 import { Link } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
-import CancelIcon from "@mui/icons-material/Cancel";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import SaveIcon from "@mui/icons-material/Save";
 import ConsumedProvisionsImage from "../../assets/consumed_provisions.png";
 import VegetableImage from "../../assets/vegetable.png";
 import EggImage from "../../assets/egg.png";
@@ -31,6 +32,9 @@ import MilkImage from "../../assets/milk.png";
 import GasImage from "../../assets/gas.png";
 import  supabase  from "../../supabaseClient";
 import { useParams } from 'react-router-dom';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import dayjs from "dayjs";
 
 interface GroceryItem {
   itemname: string;
@@ -53,7 +57,7 @@ interface GroceryItem {
   id: number;
   Quantity: number;
   no_of_cylinder: number;
-  dailyconsumption: JSON;
+  dailyconsumption: Record<string, string>;
 }
 
 const categoryData = [
@@ -98,13 +102,20 @@ const Groceries = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState<FormData>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [editId, setEditId] = useState(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [availableItems, setAvailableItems] = useState<PurchasedItem[]>([]);
   const [maxQty, setMaxQty] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
   const [today_quantity, setToday_quantity] = useState(0);
+  const [collapseOpen, setcollapseOpen] = useState<Record<number, boolean>>({});
+  const [editMode, setEditMode] = useState<Record<number, boolean>>({});
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [dailyConsumptionData, setDailyConsumptionData] = useState({});
+  const [formattedData, setFormattedData] = useState<{ date: string; value: number }[]>([]);
+
+
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -213,7 +224,7 @@ const Groceries = () => {
   const getTableHeaders = () => {
     switch (selectedCategory) {
       case 'Provisions':
-        return ['S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Issued units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued',"Quantity Entered?", 'Action'];
+        return ['View/Edit Item', 'S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Issued units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued'];
       case 'Vegetables':
         return ['S.No', 'Bill Date', 'Name', 'Quantity', 'Cost Per Kg', 'Total Amount', 'Action'];
       case 'Egg':
@@ -314,6 +325,8 @@ const Groceries = () => {
     setEditId(null);
   };
 
+
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -335,6 +348,112 @@ const Groceries = () => {
       setMaxQty(selectedItem?.total_stock_available || 0);
     }
   };
+
+  const handleConsumptionChange = (date: string, value: string) => {
+    setDailyConsumptionData((prevData) => ({
+      ...prevData,
+      [date]: value === "" || value === "null" ? null : Number(value),
+    }));
+  };
+
+
+  const handleSaveChanges = async (updatedValues: Record<string, number>) => {
+    try {
+        console.log(editId)
+        const { data: existingEntry, error: fetchError } = await supabase
+            .from('consumedgrocery')
+            .select('dailyconsumption, total_quantity_issued, total_cost, itemname')
+            .eq('id', editId)
+            .maybeSingle();
+
+        if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+
+        console.log(existingEntry)
+
+        let updatedDailyConsumption = existingEntry?.dailyconsumption
+            ? typeof existingEntry.dailyconsumption === 'string'
+                ? JSON.parse(existingEntry.dailyconsumption)
+                : existingEntry.dailyconsumption
+            : {};
+
+            for (const [date, quantity] of Object.entries(updatedValues)) {
+            updatedDailyConsumption[date] = String(quantity);
+        }
+
+
+
+        const totalQuantityIssued: any = Object.values(updatedDailyConsumption)
+            .reduce((sum: any, qty) => sum + Number(qty), 0);
+
+        console.log(totalQuantityIssued)
+
+        // ✅ Fetch inventory data for cost calculations
+        const { data: inventoryData, error: inventoryError } = await supabase
+            .from('inventorygrocery')
+            .select('opening_stock, supplier1_rate, quantity_received_supplier2, supplier2_rate, quantity_received_intend_1, rate_intend_1, quantity_received_intend_2, rate_intend_2, quantity_received_intend_3, rate_intend_3')
+            .eq('itemname', existingEntry?.itemname)
+            .single();
+
+        if (inventoryError) throw inventoryError;
+
+let remainingQty: number = totalQuantityIssued;
+let totalCost: number = 0;
+
+// Step 1: Deduct from Opening Stock
+if (remainingQty > 0 && inventoryData.opening_stock > 0) {
+    let usedQty = Math.min(remainingQty, inventoryData.opening_stock);
+    totalCost += usedQty * inventoryData.supplier1_rate;
+    remainingQty -= usedQty;
+}
+
+// Step 2: Deduct from Supplier 2 Stock
+if (remainingQty > 0 && inventoryData.quantity_received_supplier2 > 0) {
+    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_supplier2);
+    totalCost += usedQty * inventoryData.supplier2_rate;
+    remainingQty -= usedQty;
+}
+
+// Step 3: Deduct from Indent 1 Stock
+if (remainingQty > 0 && inventoryData.quantity_received_intend_1 > 0) {
+    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_1);
+    totalCost += usedQty * inventoryData.rate_intend_1;
+    remainingQty -= usedQty;
+}
+
+// Step 4: Deduct from Indent 2 Stock
+if (remainingQty > 0 && inventoryData.quantity_received_intend_2 > 0) {
+    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_2);
+    totalCost += usedQty * inventoryData.rate_intend_2;
+    remainingQty -= usedQty;
+}
+
+// Step 5: Deduct from Indent 3 Stock
+if (remainingQty > 0 && inventoryData.quantity_received_intend_3 > 0) {
+    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_3);
+    totalCost += usedQty * inventoryData.rate_intend_3;
+    remainingQty -= usedQty;
+}
+
+// ✅ Update consumed grocery with new total quantity & cost
+const { error: updateGroceryError } = await supabase
+    .from('consumedgrocery')
+    .update({
+        dailyconsumption: updatedDailyConsumption,
+        total_quantity_issued: totalQuantityIssued,
+        total_cost: totalCost
+    })
+    .eq('id', editId);
+
+if (updateGroceryError) throw updateGroceryError;
+
+console.log("✅ Changes saved successfully!");
+
+    } catch (error) {
+        console.error("❌ Error saving changes:", error);
+    }
+};
+
+
 
 
   const handleSubmit = async () => {
@@ -617,7 +736,30 @@ const Groceries = () => {
     }
   };
 
+  const handleView = (row) => {
+    if (!row) return;
+    setSelectedRow(row);
+    setDailyConsumptionData(row.dailyconsumption || {});
+  };
 
+  const generateMonthDates = (selectedDate) => {
+    const daysInMonth = dayjs(selectedDate).daysInMonth();
+    return Array.from({ length: daysInMonth }, (_, i) =>
+      dayjs(selectedDate).startOf("month").add(i, "day").format("YYYY-MM-DD")
+    );
+  };
+
+  useEffect(() => {
+    if (!selectedRow) return;
+
+    const monthDates = generateMonthDates(selectedDate);
+    const newFormattedData = monthDates.map((date) => ({
+      date,
+      value: dailyConsumptionData[date] ? parseInt(dailyConsumptionData[date], 10) : 0,
+    }));
+
+    setFormattedData(newFormattedData);
+  }, [dailyConsumptionData, selectedDate]);
 
   return (
     <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
@@ -735,88 +877,236 @@ const Groceries = () => {
           overflowX: "auto",
         }}
         >
-          <Table size="small">
-            <TableHead>
-              <TableRow sx={{ backgroundColor: categoryData.find((cat) => cat.label === selectedCategory)?.color || "#F5F5F5", position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap"}}>
+        <Table size="small">
+          <TableHead>
+            <TableRow
+              sx={{
+                backgroundColor:
+                  categoryData.find((cat) => cat.label === selectedCategory)?.color ||
+                  "#F5F5F5",
+                position: "sticky",
+                top: 0,
+                zIndex: 1,
+                whiteSpace: "nowrap",
+              }}
+            >
               {getTableHeaders().map((header, index) => (
-              <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: 'white' }}>
-                {header}
-              </TableCell>
-            ))}
-              </TableRow>
-            </TableHead>
-            <TableBody >
-              {paginatedData.map((row, index) => (
-                <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white",flexGrow: 0.5  }}>
-                  <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
-
-              {selectedCategory === 'Provisions' && (
-                <>
-                  <TableCell align="center">{row.itemname}</TableCell>
-                  <TableCell align="center">{row.monthyear}</TableCell>
-                  <TableCell align="center">{row.unit}</TableCell>
-                  <TableCell align="center">
-                    {row?.dailyconsumption
-                      ? (typeof row.dailyconsumption === "string"
-                          ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
-                          : row.dailyconsumption[selectedDate] ?? "0")
-                      : "0"}
-                  </TableCell>
-                  <TableCell align="center">{row.total_quantity_issued}</TableCell>
-                  <TableCell align="center">{row.total_cost}</TableCell>
-                  <TableCell align="center">
-                    {row?.dailyconsumption && row?.dailyconsumption[selectedDate] !== undefined
-                      ? (row.dailyconsumption[selectedDate] === 0
-                          ? <CancelIcon color="error" />
-                          : <CheckCircleIcon color="success" />)
-                      : <CancelIcon color="error" />}
-                  </TableCell>
-
-
-                </>
-              )}
-              {selectedCategory === 'Vegetables' && (
-                <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.itemName}</TableCell>
-                  <TableCell align="center">{row.Quantity}</TableCell>
-                  <TableCell align="center">{row.CostPerKg}</TableCell>
-                  <TableCell align="center">{row.TotalCost}</TableCell>
-                </>
-              )}
-              {selectedCategory === 'Egg' && (
-                <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.Quantity}</TableCell>
-                  <TableCell align="center">{row.CostPerPiece}</TableCell>
-                  <TableCell align="center">{row.TotalCost}</TableCell>
-                </>
-              )}
-              {selectedCategory === 'Milk' && (
-                <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.Quantity}</TableCell>
-                  <TableCell align="center">{row.CostPerLitre}</TableCell>
-                  <TableCell align="center">{row.TotalCost}</TableCell>
-                </>
-              )}
-              {selectedCategory === 'Gas' && (
-                <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.no_of_cylinder}</TableCell>
-                  <TableCell align="center">{row.TotalAmount}</TableCell>
-                </>
-              )}
-
-                  <TableCell align="center">
-                    <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
-                      <EditIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
+                <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
+                  {header}
+                </TableCell>
               ))}
-            </TableBody>
-          </Table>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+          {paginatedData.map((row, index) => {
+    const isRowOpen = collapseOpen[row.id] || false;
+    const isEditRow = editMode[row.id] || false;
+
+    return (
+      <React.Fragment key={row.id}>
+        {/* Main Row */}
+        <TableRow sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
+          <TableCell>
+          <IconButton
+            aria-label="expand row"
+            size="small"
+            onClick={() => {
+              setcollapseOpen((prev) => {
+                const newCollapseState = Object.keys(prev).reduce((acc, key) => {
+                  acc[key] = false; // Collapse all rows
+                  return acc;
+                }, {} as Record<string, boolean>);
+                return { ...newCollapseState, [row.id]: !isRowOpen }; // Expand only the clicked row
+              });
+              handleView(row);
+              setEditId(row.id);
+            }}
+          >
+            {isRowOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+
+            <IconButton
+              color="primary"
+              onClick={() => setEditMode((prev) => ({ ...prev, [row.id]: !isEditRow }))}
+            >
+              <EditIcon />
+            </IconButton>
+          </TableCell>
+          <TableCell align="left">{index + 1 + page * rowsPerPage}</TableCell>
+
+          {/* Category-specific columns */}
+          {selectedCategory === "Provisions" && (
+            <>
+              <TableCell align="left">{row.itemname}</TableCell>
+              <TableCell align="right">{row.monthyear}</TableCell>
+              <TableCell align="right">{row.unit}</TableCell>
+              <TableCell align="right">
+                {row?.dailyconsumption
+                  ? (typeof row.dailyconsumption === "string"
+                      ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
+                      : row.dailyconsumption[selectedDate] ?? "0")
+                  : "0"}
+              </TableCell>
+              <TableCell align="right">{row.total_quantity_issued}</TableCell>
+              <TableCell align="right">{row.total_cost}</TableCell>
+            </>
+          )}
+
+          {/* Other categories (Vegetables, Egg, Milk, Gas) */}
+          {selectedCategory === "Vegetables" && (
+            <>
+              <TableCell align="center">{row.DateOfConsumed}</TableCell>
+              <TableCell align="center">{row.itemName}</TableCell>
+              <TableCell align="center">{row.Quantity}</TableCell>
+              <TableCell align="center">{row.CostPerKg}</TableCell>
+              <TableCell align="center">{row.TotalCost}</TableCell>
+            </>
+          )}
+          {selectedCategory === "Egg" && (
+            <>
+              <TableCell align="center">{row.DateOfConsumed}</TableCell>
+              <TableCell align="center">{row.Quantity}</TableCell>
+              <TableCell align="center">{row.CostPerPiece}</TableCell>
+              <TableCell align="center">{row.TotalCost}</TableCell>
+            </>
+          )}
+          {selectedCategory === "Milk" && (
+            <>
+              <TableCell align="center">{row.DateOfConsumed}</TableCell>
+              <TableCell align="center">{row.Quantity}</TableCell>
+              <TableCell align="center">{row.CostPerLitre}</TableCell>
+              <TableCell align="center">{row.TotalCost}</TableCell>
+            </>
+          )}
+          {selectedCategory === "Gas" && (
+            <>
+              <TableCell align="center">{row.DateOfConsumed}</TableCell>
+              <TableCell align="center">{row.no_of_cylinder}</TableCell>
+              <TableCell align="center">{row.TotalAmount}</TableCell>
+            </>
+          )}
+        </TableRow>
+
+        {/* Collapsible Row */}
+        {isRowOpen && (
+          <TableRow>
+            <TableCell colSpan={10} sx={{ padding: 0 }}>
+              <Collapse in={isRowOpen} timeout="auto" unmountOnExit>
+                <Box
+                  sx={{
+                    padding: 2,
+                    backgroundColor: "#F9FAFB", // Light gray background
+                    borderBottomLeftRadius: "8px",
+                    borderBottomRightRadius: "8px",
+                    boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                    border: "1px solid #E0E0E0",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    sx={{
+                      fontWeight: "bold",
+                      color: "#333",
+                      marginBottom: "8px",
+                      textAlign: "center",
+                    }}
+                  >
+                    Daily Issued Information
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                      gap: 2,
+                      padding: "8px",
+                    }}
+                  >
+                    {formattedData.map(({ date, value }) => (
+                      <Box
+                        key={date}
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          padding: "8px",
+                          borderRadius: "8px",
+                          backgroundColor: "white",
+                          boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                          transition: "0.3s",
+                          "&:hover": {
+                            transform: "scale(1.05)",
+                            boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                          },
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          sx={{ color: "#555", fontWeight: "bold" }}
+                        >
+                          {dayjs(date).format("DD MMM")}
+                        </Typography>
+                        <TextField
+                          size="small"
+                          value={value}
+                          onChange={(e) => handleConsumptionChange(date, e.target.value)}
+                          disabled={!isEditRow}
+                          sx={{
+                            width: "80px",
+                            backgroundColor: "white",
+                            borderRadius: "5px",
+                            "&.Mui-disabled": {
+                              backgroundColor: "rgba(255,255,255,0.2)",
+                            },
+                          }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+
+                  {/* Save Button - Only visible when editing */}
+                  {isEditRow && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginTop: "16px",
+                      }}
+                    >
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<SaveIcon />}
+                        sx={{
+                          borderRadius: "8px",
+                          textTransform: "none",
+                          padding: "6px 16px",
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          backgroundColor: "#1976D2",
+                          "&:hover": {
+                            backgroundColor: "#1565C0",
+                          },
+                        }}
+                        onClick={() => handleSaveChanges(dailyConsumptionData)}
+                      >
+                        Save Changes
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              </Collapse>
+            </TableCell>
+          </TableRow>
+        )}
+      </React.Fragment>
+    )
+          })}
+        </TableBody>
+
+        </Table>
+
 
         </TableContainer>
         <TablePagination
@@ -920,3 +1210,5 @@ const Groceries = () => {
 };
 
 export default Groceries;
+
+
