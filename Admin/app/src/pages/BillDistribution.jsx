@@ -13,7 +13,7 @@ import { useParams } from 'react-router-dom';
 
 const BillDistribution = () => {
   const [items, setItems] = useState([
-    { name: "GROCERIES ISSUED", icon: GroceryIcon, amount: 0, shadowColor: "#d4af37" },
+    { name: "GROCERIES ISSUED", icon: GroceryIcon, amount: 0, shadowColor: "#d4af37"},
     { name: "VEGETABLES", icon: VegetableIcon, amount: 0, shadowColor: "#4caf50" },
     { name: "EGG", icon: EggIcon, amount: 0, shadowColor: "#ffcc80" },
     { name: "MILK", icon: MilkImage, amount: 0, shadowColor: "#64b5f6" },
@@ -123,13 +123,13 @@ const BillDistribution = () => {
   };
 
   return (
-    <Box sx={{ p: 10, paddingTop: 1, textAlign: "center" }}>
-      <Typography variant="h5" color="purple" fontWeight={600} gutterBottom>
+    <Box className="dark:text-gray-200" sx={{ p: 10, paddingTop: 1, textAlign: "center" }}>
+      <Typography className="dark:text-gray-200" variant="h5" color="purple" fontWeight={600} gutterBottom>
         BILL DISTRIBUTION
       </Typography>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Select value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} sx={{ bgcolor: "#fff" }}>
+        <Select className='dark:bg-gray-700 dark:text-gray-200' value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} sx={{ bgcolor: "#fff" }}>
           {["December 2024"].map((date) => (
             <MenuItem key={date} value={date}>{date}</MenuItem>
           ))}
@@ -137,10 +137,10 @@ const BillDistribution = () => {
         <Button variant="contained" color="primary" sx={{ fontSize: "0.7rem" }}>View History</Button>
       </Box>
 
-      <Card sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px green", mb: 2 }}>
+      <Card  className='dark:bg-gray-700 dark:text-gray-200' sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px green", mb: 2 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Typography variant="h6" fontWeight={600}>Summation</Typography>
-          <Typography variant="h6" fontWeight={600} color="green">
+          <Typography className="dark:bg-gray-200 dark:rounded dark:p-1" variant="h6" fontWeight={600} color="green">
             + <span style={{ color: "green" }}>₹</span> {totalSummation}
           </Typography>
         </Box>
@@ -148,13 +148,13 @@ const BillDistribution = () => {
         <Grid container spacing={2} sx={{ mt: 1 }}>
           {items.map((item, index) => (
             <Grid item xs={6} md={4} key={index}>
-              <Card variant="outlined" sx={{ p: 2, bgcolor: "#ffffff", borderRadius: 2, boxShadow: `0px 4px 8px ${item.shadowColor}`, margin: "10px" }}>
+              <Card className='dark:bg-gray-700 dark:text-gray-200' variant="outlined" sx={{ p: 2, bgcolor: "#ffffff", borderRadius: 2, boxShadow: `0px 4px 8px ${item.shadowColor}`, margin: "10px" }}>
                 <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <Typography variant="h6" fontWeight= "Medium" color="purple">{item.name}</Typography>
+                  <Typography variant="h6" fontWeight= "Medium" color="purple" className="dark:text-gray-200" >{item.name}</Typography>
                   <img src={item.icon} alt={item.name} style={{ width: 35, height: 35 }} />
                 </Box>
-                <Typography variant="h5" fontWeight={600} color="text.secondary" sx={{ textAlign: "left", mt: 1 }}>
-                  <span style={{ color: "purple" }}>₹</span> {item.amount}
+                <Typography className="dark:text-gray-200" variant="h5" fontWeight={600} color="text.secondary" sx={{ textAlign: "left", mt: 1 }}>
+                  <span style={{ color: "purple"}}>₹</span> {item.amount}
                 </Typography>
               </Card>
             </Grid>
@@ -167,20 +167,16 @@ const BillDistribution = () => {
 
 
 
-
-
-
-
-    <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-    <Card sx={{ p: 3, width: "48%", boxShadow: "0px 4px 8px red", background: "#fff" }}>
+  <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+    <Card className='dark:bg-gray-700 dark:text-gray-200' sx={{ p: 3, width: "48%", boxShadow: "0px 4px 8px red", background: "#fff" }}>
   <Typography variant="h5" fontWeight={700} display="flex" justifyContent="space-between">
     <span>Reduction</span>
-    <span style={{ color: "red" }}>- ₹{foodWaste + (isOtherAdded ? otherAmount : 0)}</span>
+    <span className="dark:bg-gray-200 dark:rounded dark:p-1" style={{ color: "red" }}>- ₹{foodWaste + (isOtherAdded ? otherAmount : 0)}</span>
   </Typography>
 
   {/* Food Waste - Click to Edit */}
   <Box sx={{ display: "flex", alignItems: "center", mt: 3, justifyContent: "space-between" }}>
-    <Typography variant="h6" fontWeight={500} sx={{ color: "purple" }}>Food Waste:</Typography>
+    <Typography className="dark:text-gray-200" variant="h6" fontWeight={500} sx={{ color: "purple" }}>Food Waste:</Typography>
     {isEditingFoodWaste ? (
       <TextField
         type="number"
@@ -188,10 +184,12 @@ const BillDistribution = () => {
         onChange={(e) => setFoodWaste(Number(e.target.value))}
         onBlur={() => setIsEditingFoodWaste(false)}
         autoFocus
+        className='dark:bg-gray-100' 
         sx={{ width: "120px", fontSize: "1.2rem" }}
       />
     ) : (
       <Typography
+       className="dark:text-gray-200"
         variant="h5"
         fontWeight={700}
         sx={{ textDecoration: "underline", cursor: "pointer", color: "black" }}
@@ -205,7 +203,7 @@ const BillDistribution = () => {
   {/* Other Waste - Click to Edit */}
   {isOtherAdded && (
     <Box sx={{ display: "flex", alignItems: "center", mt: 2, justifyContent: "space-between" }}>
-      <Typography variant="h6" fontWeight={500} sx={{ color: "purple" }}>Other Reduction:</Typography>
+      <Typography className="dark:text-gray-200" variant="h6" fontWeight={500} sx={{ color: "purple" }}>Other Reduction:</Typography>
       {isEditingOtherWaste ? (
         <TextField
           type="number"
@@ -213,10 +211,12 @@ const BillDistribution = () => {
           onChange={(e) => setOtherAmount(Number(e.target.value))}
           onBlur={() => setIsEditingOtherWaste(false)}
           autoFocus
-          sx={{ width: "120px", fontSize: "1.2rem" }}
+          className='dark:bg-gray-100' 
+          sx={{ width: "120px", fontSize: "1.2rem", color: 'black' }}
         />
       ) : (
         <Typography
+          className="dark:text-gray-200"
           variant="h5"
           fontWeight={700}
           sx={{ textDecoration: "underline", cursor: "pointer", color: "black" }}
@@ -237,42 +237,41 @@ const BillDistribution = () => {
 
 
 
-
-
-
-
-
-
-
-      <Card sx={{ p: 2, width: "48%", bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px blue" }}>
+    <Card  className='dark:bg-gray-700 dark:text-gray-200' sx={{ p: 2, width: "48%", bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px blue" }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <Typography variant="h6" fontWeight={600}>Distribution</Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, color: "blue" }}>
+            <Box className="dark:bg-gray-200 dark:rounded dark:p-1" sx={{ display: "flex", alignItems: "center", gap: 1, color: "blue" }}>
               <img src={DivisionIcon} alt="Division" style={{ width: 15, height: 15}} />
               <Typography variant="h6" fontWeight={600}>{studentHeadcounts}</Typography>
             </Box>
         </Box>
-      <Card variant="outlined" sx={{ mt: 3, p: 2, width: "80%", marginLeft: "10%", height:"60%", borderRadius: 2, boxShadow: "0px 4px 8px purple" }}>
-            <Typography color="purple" sx={{ display: "flex", justifyContent: "space-between", fontWeight: 500 }}>
+      <Card className='dark:bg-gray-700 dark:text-gray-200' variant="outlined" sx={{ mt: 3, p: 2, width: "80%", marginLeft: "10%", height:"60%", borderRadius: 2, boxShadow: "0px 4px 8px purple" }}>
+            <Typography className="dark:text-gray-200" color="purple" sx={{ display: "flex", justifyContent: "space-between", fontWeight: 500 }}>
               STUDENT HEADCOUNTS <PeopleIcon />
             </Typography>
-            <Typography variant="h5" fontWeight={600} sx={{ margin:"5%"}} color="text.secondary">{studentHeadcounts}</Typography>
+            <Typography className="dark:text-gray-200" variant="h5" fontWeight={600} sx={{ margin:"5%"}} color="text.secondary">{studentHeadcounts}</Typography>
           </Card>
       </Card>
       </Box>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2, alignItems: "center" }}>
-        <Typography variant="subtitle2" sx={{ color: "green", bgcolor: "#e6ffe6", p: 1, borderRadius: 1 }}>
+        <Typography variant="subtitle2" sx={{ marginTop:"10px", height: "4%", color: "green", bgcolor: "#e6ffe6", p: 1, borderRadius: 1 }}>
           Per day Amount : <span style={{ color: "green" }}>₹</span> {perDayAmount.toFixed(2)}
         </Typography>
-        <Button variant="contained" color="error" sx={{ fontSize: "0.7rem" }}>Distribute To All Students</Button>
+        <Button 
+  variant="contained" 
+  color="error" 
+  sx={{ fontSize: "1rem",marginTop:"10px", height: "4%", height: "40px" }}
+>
+  Distribute To All Students
+</Button>
       </Box>
 
 
 
 
       <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>{isOtherAdded ? "Edit Other Reduction" : "Add Other Reduction"}</DialogTitle>
+        <DialogTitle className="dark:text-gray-200">{isOtherAdded ? "Edit Other Reduction" : "Add Other Reduction"}</DialogTitle>
         <DialogContent>
           <TextField fullWidth type="number" label="Other Reduction Amount" value={otherAmount} onChange={(e) => setOtherAmount(Number(e.target.value))} sx={{ mt: 2 }} />
         </DialogContent>
