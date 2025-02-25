@@ -461,11 +461,11 @@ const handleMonthSubmit = async () => {
     reader.readAsArrayBuffer(file);
   };
   return (
-    <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
+    <div className="max-h-screen bg-gray-100 dark:bg-gray-800 p-1 -mt-10 max-w-screen">
       <div className="flex items-center mt-8 mb-2">
-        <span className=" text-primary text-xl font-bold"> Stocks in Inventory</span>
+        <span className=" text-gray-900 dark:text-gray-100 text-xl font-bold"> Stocks in Inventory</span>
       </div>
-      <p className="text-tertiary font-medium mb-4">Manage mess / Inventory</p>
+      <p className="text-gray-500 font-medium mb-4">Manage mess / Inventory</p>
       <div className='flex space-x-3 m-3 -ml-0'>
       <Button
             variant="contained"
@@ -500,49 +500,67 @@ const handleMonthSubmit = async () => {
           </label>
       </div>
             <div className="flex justify-between">
-        <Box display="flex" alignItems="center" mb={2} gap={2}>
-          {/* Search Field */}
-          <TextField
-            variant="outlined"
-            size="small"
-            placeholder="Search"
-            value={searchQuery}
-            onChange={handleSearch}
-            sx={{
-              width: "60%",
-              backgroundColor: "#f9f9f9",
-              borderRadius: "10px",
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "10px",
-              },
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SearchIcon style={{ color: "#007bff" }} />
-                </InputAdornment>
-              ),
-            }}
-          />
+            <Box display="flex" alignItems="center" mb={2} gap={2}>
+  {/* Search Field */}
+  <TextField
+  variant="outlined"
+  size="small"
+  placeholder="Search"
+  value={searchQuery}
+  onChange={handleSearch}
+  className="dark:bg-gray-700 dark:text-gray-200"
+  sx={{
+    width: "60%",
+    backgroundColor: "white",
+    borderRadius: "10px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "10px",
+      "&.Mui-focused": {
+        borderColor: "#60A5FA", // Light blue in dark mode
+        "& fieldset": { borderColor: "#60A5FA !important" }, // Ensures outline changes in dark mode
+      },
+    },
+    "&.dark .MuiOutlinedInput-root": {
+      backgroundColor: "#374151", // Darker background for dark mode
+    },
+  }}
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <SearchIcon
+          className="dark:text-gray-400 dark:focus:outline-none"
+          sx={{
+            color: "#007bff",
+            "&.dark": { color: "#CBD5E0" },
+             // Light gray in dark mode
+          }}
+        />
+      </InputAdornment>
+    ),
+  }}
+/>
 
+  {/* Add New Month Button */}
+  <Button
+    variant="contained"
+    size="small"
+    startIcon={<AddIcon />}
+    onClick={handleNewMonth}
+    sx={{
+      backgroundColor: "#28a745",
+      color: "white",
+      "&:hover": { backgroundColor: "#218838" },
+      "&.dark": {
+        backgroundColor: "#374151", // Gray-700 for dark mode
+        color: "#F9FAFB", // Light text for contrast
+        "&:hover": { backgroundColor: "#4B5563" }, // Gray-600 on hover
+      },
+    }}
+  >
+    Add Month
+  </Button>
+</Box>
 
-          {/* Add New Month Button */}
-          <Button
-            variant="contained"
-            size="small"
-            startIcon={<AddIcon />}
-            onClick={handleNewMonth}
-            sx={{
-              backgroundColor: "#28a745",
-              color: "white",
-              "&:hover": { backgroundColor: "#218838" },
-            }}
-          >
-            Add Month
-          </Button>
-
-
-        </Box>
 
         {/* Add Item Button */}
         <Button
@@ -565,7 +583,7 @@ const handleMonthSubmit = async () => {
       {error && <div className="text-red-600">{error}</div>}
 
       {loading ? (
-        <div>Loading...</div>
+        <div className="dark:text-gray-50">Loading...</div>
       ) : (
         <>
           <Box sx={{ maxHeight: "110vh", maxWidth: '100%', overflowX: "auto", padding: "8px" }}>
@@ -582,8 +600,8 @@ const handleMonthSubmit = async () => {
           >
             <Table size='small'>
               <TableHead>
-                <TableRow sx={{ backgroundColor: '#7d1818', position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap" }}>
-                  {["S.No", "Item Description", "Unit", "Month Year", "Opening stock", "Quantity Received (Indent Order 1)", "Rate (Order 1)", "Quantity Received (Indent Order 2)", "Rate (Order 2)", "Quantity Received (Indent Order 3)", "Rate (Order 3)", "Supplier 1 Rate in Rs.", "Supplier 2 Rate", "Quantity Received From Supplier 2", "Quantity Issued Boys", "Quantity Issued Girls", "Total Quantity Issued in Units", "Total Quantity Issued in Rupees", "Closing Stock Balance as on till date", "Stock Remaining in Rupees", "Action"]
+                <TableRow className='dark:bg-gray-800'  sx={{ backgroundColor: '#7d1818', position: "sticky", top: 0, zIndex: 2, whiteSpace: "nowrap" }}>
+                  {[ "Action", "S.No", "Item Description", "Unit", "Month Year", "Opening stock", "Quantity Received (Indent Order 1)", "Rate (Order 1)", "Quantity Received (Indent Order 2)", "Rate (Order 2)", "Quantity Received (Indent Order 3)", "Rate (Order 3)", "Supplier 1 Rate in Rs.", "Supplier 2 Rate", "Quantity Received From Supplier 2", "Quantity Issued Boys", "Quantity Issued Girls", "Total Quantity Issued in Units", "Total Quantity Issued in Rupees", "Closing Stock Balance as on till date", "Stock Remaining in Rupees"]
                     .map((header, index) => (
                       <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
                         {header}
@@ -594,35 +612,36 @@ const handleMonthSubmit = async () => {
               </TableHead>
               <TableBody>
                 {filteredData.map((row, index) => (
-                  <TableRow key={row.id} sx={{ backgroundColor: 'white' }}>
-                    <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell align="center">{row.itemname}</TableCell>
-                    <TableCell align="center">{row.unit}</TableCell>
-                    <TableCell align="center">{row.monthyear}</TableCell>
-                    <TableCell align="center">{row.opening_stock}</TableCell>
-                    <TableCell align="center">{row.quantity_received_intend_1}</TableCell>
-                    <TableCell align="center">{row.rate_intend_1}</TableCell>
-                    <TableCell align="center">{row.quantity_received_intend_2}</TableCell>
-                    <TableCell align="center">{row.rate_intend_2}</TableCell>
-                    <TableCell align="center">{row.quantity_received_intend_3}</TableCell>
-                    <TableCell align="center">{row.rate_intend_3}</TableCell>
-                    <TableCell align="center">{row.supplier1_rate}</TableCell>
-                    <TableCell align="center">{row.supplier2_rate}</TableCell>
-                    <TableCell align="center">{row.quantity_received_supplier2}</TableCell>
-                    <TableCell align="center">{row.quantity_issued_boys}</TableCell>
-                    <TableCell align="center">{row.quantity_issued_girls}</TableCell>
-                    <TableCell align="center">{row.total_quantity_issued_units}</TableCell>
-                    <TableCell align="center">{row.total_quantity_issued_rupees}</TableCell>
-                    <TableCell align="center">{row.closing_balance_till_date}</TableCell>
-                    <TableCell align="center">{row.stock_remaining}</TableCell>
-
-
-
-                    <TableCell align="center">
-                      <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
-                        <EditIcon />
+                  <TableRow key={row.id}  className='dark:bg-gray-700 dark:text-gray-100' sx={{ backgroundColor: 'white' }}>
+                    <TableCell align="center" >
+                      <IconButton color="primary" className="dark:hover:bg-slate-600" onClick={() => handleDialogOpen(row)}>
+                        <EditIcon className='dark:text-gray-900 '/>
                       </IconButton>
                     </TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{page * rowsPerPage + index + 1 }.</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.itemname}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.unit}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.monthyear}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.opening_stock}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.quantity_received_intend_1}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.rate_intend_1}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.quantity_received_intend_2}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.rate_intend_2}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.quantity_received_intend_3}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.rate_intend_3}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.supplier1_rate}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.supplier2_rate}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.quantity_received_supplier2}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.quantity_issued_boys}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.quantity_issued_girls}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.total_quantity_issued_units}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.total_quantity_issued_rupees}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.closing_balance_till_date}</TableCell>
+                    <TableCell align="center" className=' dark:text-gray-200'>{row.stock_remaining}</TableCell>
+
+
+
+
                   </TableRow>
                 ))}
               </TableBody>
@@ -630,6 +649,7 @@ const handleMonthSubmit = async () => {
 
           </TableContainer>
           <TablePagination
+            className='dark:bg-gray-700 dark:text-gray-200'
             sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
             rowsPerPageOptions={[10, 20, 50]}
             component="div"

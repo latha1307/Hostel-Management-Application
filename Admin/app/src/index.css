@@ -1,15 +1,13 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
-
-body {
-  background-color: #F4F7FE;
-  margin: 0;
-  font-family: Arial, sans-serif;
-  color: #333;
+* {
+  @apply transition-colors duration-200
 }
+
 
 
 html, body {

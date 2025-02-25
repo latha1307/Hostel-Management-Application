@@ -16,9 +16,9 @@ const BillDistribution = () => {
     { name: "GROCERIES ISSUED", icon: GroceryIcon, amount: 0, shadowColor: "#d4af37" },
     { name: "VEGETABLES", icon: VegetableIcon, amount: 0, shadowColor: "#4caf50" },
     { name: "EGG", icon: EggIcon, amount: 0, shadowColor: "#ffcc80" },
-    { name: "MILK", icon: MilkImage, amount: 50380, shadowColor: "#64b5f6" },
+    { name: "MILK", icon: MilkImage, amount: 0, shadowColor: "#64b5f6" },
     { name: "GAS", icon: GasIcon, amount: 84307, shadowColor: "#e57373" },
-    { name: "STAFF", icon: StaffSalaryIcon, amount: 112150, shadowColor: "#7986cb" },
+    { name: "STAFF", icon: StaffSalaryIcon, amount: 0, shadowColor: "#7986cb" },
   ]);
 
   const { hostel } = useParams();
@@ -66,10 +66,26 @@ const BillDistribution = () => {
 
       if (error3) throw error3;
 
+      const { data: milkdata, error: error4 } = await supabase
+        .from("milk")
+        .select("TotalCost")
+        .eq("hostel", hostel);
+
+      if (error4) throw error4;
+
+      const { data: staffdata, error: error5 } = await supabase
+      .from("staffsalary")
+      .select("SalaryAmount")
+      .eq("hostel", hostel);
+
+    if (error5) throw error5;
+
       // ✅ Extract total costs
       const totalGroceryCost = consumeddata.reduce((sum, row) => parseInt(sum + row.total_cost), 0);
       const totalVegetableCost = vegtabledata.reduce((sum, row) => sum + row.TotalCost, 0);
       const totalEggCost = eggdata.reduce((sum, row) => sum + row.TotalCost, 0);
+      const totalMilkCost = milkdata.reduce((sum, row) => sum + row.TotalCost, 0);
+      const totalStaffCost = staffdata.reduce((sum, row) => sum + row.SalaryAmount, 0);
 
       // ✅ Update the amounts
       setGroceryAmount(totalGroceryCost);
@@ -79,6 +95,8 @@ const BillDistribution = () => {
           if (item.name === "GROCERIES ISSUED") return { ...item, amount: totalGroceryCost };
           if (item.name === "VEGETABLES") return { ...item, amount: totalVegetableCost };
           if (item.name === "EGG") return { ...item, amount: totalEggCost };
+          if (item.name === "MILK") return { ...item, amount: totalMilkCost };
+          if (item.name === "STAFF") return { ...item, amount: totalStaffCost };
           return item;
         })
       );
