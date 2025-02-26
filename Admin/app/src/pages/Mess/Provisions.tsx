@@ -184,12 +184,31 @@ const handleMonthSubmit = async () => {
 
       if (groceriesError) throw groceriesError;
 
+      const { data: vegetablesList, error: vegetablesError } = await supabase
+      .from("vegetables_list")
+      .select("itemname");
+
+  if (vegetablesError) throw vegetablesError;
       // 2. Insert new rows into inventorygrocery table
       const inventoryData = groceriesList.map(item => ({
           monthyear: monthYear,
           itemname: item.itemname,
           unit: item.unit
       }));
+
+      const vegetablesBoysData = vegetablesList.map(item => ({
+        monthyear: monthYear,
+        itemname: item.itemname,
+        hostel: 'Boys'
+    }));
+
+    const vegetablesGirlsData = vegetablesList.map(item => ({
+      monthyear: monthYear,
+      itemname: item.itemname,
+      hostel: 'Girls'
+  }));
+
+
 
       const inventoryBoysData = groceriesList.map(item => ({
         monthyear: monthYear,
@@ -209,6 +228,11 @@ const handleMonthSubmit = async () => {
       const { error: insertError } = await supabase.from("inventorygrocery").insert(inventoryData);
       if (insertError) throw insertError;
 
+      const { error: insertVegetableBoysError } = await supabase.from("vegetables").insert(vegetablesBoysData);
+      if (insertVegetableBoysError) throw insertVegetableBoysError;
+
+      const { error: insertVegetableGirlsError } = await supabase.from("vegetables").insert(vegetablesGirlsData);
+      if (insertVegetableGirlsError) throw insertVegetableGirlsError;
 
       const { error: insertBoysError } = await supabase.from("consumedgrocery").insert(inventoryBoysData);
       if (insertBoysError) throw insertBoysError
