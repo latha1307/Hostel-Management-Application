@@ -61,12 +61,13 @@ interface GroceryItem {
 }
 
 const categoryData = [
-  { label: "Provisions", image: ConsumedProvisionsImage, color: "#A07444" },
-  { label: "Vegetables", image: VegetableImage, color: "#43A047" },
-  { label: "Egg", image: EggImage, color: "#F9A825" },
-  { label: "Milk", image: MilkImage, color: "#03A9F4" },
-  { label: "Gas", image: GasImage, color: "#D32F2F" },
+  { label: "Provisions", image: ConsumedProvisionsImage, color: "#8B5A2B", darkColor: "#6B4226" },
+  { label: "Vegetables", image: VegetableImage, color: "#388E3C", darkColor: "#2E7D32" },
+  { label: "Egg", image: EggImage, color: "#F57F17", darkColor: "#E65100" },
+  { label: "Milk", image: MilkImage, color: "#0288D1", darkColor: "#01579B" },
+  { label: "Gas", image: GasImage, color: "#C62828", darkColor: "#B71C1C" },
 ];
+
 
 interface PurchasedItem {
   itemname: string;
@@ -114,6 +115,7 @@ const Groceries = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [dailyConsumptionData, setDailyConsumptionData] = useState({});
   const [formattedData, setFormattedData] = useState<{ date: string; value: number }[]>([]);
+    const [monthYear, setMonthYear] = useState<string | null>(null);
 
 
 
@@ -199,6 +201,10 @@ const Groceries = () => {
     }
   }, [groceriesData, selectedDate]);
 
+useEffect(() => {
+  setMonthYear(dayjs().format("YYYY-MM"));
+}, []);
+
 
   useEffect(() => {
     const fetchPurchasedItems = async () => {
@@ -244,8 +250,6 @@ const Groceries = () => {
         return [
           { label: "Billing Month", name: "monthyear" },
           { label: "Item Name", name: "itemname" },
-          { label: "Entry Date", name: "selectedDate", type: "date" },
-          { label: "Add Issued Units", name: "today_quantity", type: "number" },
         ];
 
       case 'Vegetables':
@@ -624,21 +628,21 @@ console.log("✅ Changes saved successfully!");
       } else {
         switch (selectedCategory) {
           case 'Provisions':
-            const { data: purchasedData, error: purchasedError } = await supabase
-              .from('purchasedprovisions')
-              .select('purchaseid, PurchasedCostPerKg, RemainingQty')
+            const { data: inventoryData, error: inventoryError } = await supabase
+              .from('inventorygrocery')
+              .select('unit')
               .eq('itemname', itemname)
+              .eq('monthyear', monthYear)
               .limit(1);
 
-            if (purchasedError) throw purchasedError;
+            if (inventoryError) throw inventoryError;
 
-            if (!purchasedData || purchasedData.length === 0) {
+            if (!inventoryData || inventoryData.length === 0) {
               throw new Error('Item not found in PurchasedProvisions');
             }
 
-            const { purchaseid, PurchasedCostPerKg, RemainingQty } = purchasedData[0];
-            const ConsumedCost = PurchasedCostPerKg * ConsumedQnty;
-            const updatedRemainingQty = RemainingQty - ConsumedQnty;
+            // Extract unit from first record
+            const unit = inventoryData[0]?.unit;
 
             response = await supabase
               .from('consumedprovisions')
@@ -646,22 +650,13 @@ console.log("✅ Changes saved successfully!");
                 {
                   hostel,
                   itemname,
-                  purchaseid,
-                  ConsumedQnty,
-                  ConsumedCost,
-                  RemainingQty: updatedRemainingQty,
-                  DateOfConsumed,
+                  monthyear: monthYear,
+                  unit, // Use extracted unit
                 },
               ]);
 
             if (response.error) throw response.error;
 
-            const updateResponse = await supabase
-              .from('purchasedprovisions')
-              .update({ RemainingQty: updatedRemainingQty })
-              .eq('purchaseid', purchaseid);
-
-            if (updateResponse.error) throw updateResponse.error;
             break;
 
           case 'Vegetables':
@@ -762,13 +757,13 @@ console.log("✅ Changes saved successfully!");
   }, [dailyConsumptionData, selectedDate]);
 
   return (
-    <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
+    <div className="max-h-screen max-w-screen bg-gray-100 dark:bg-gray-800 p-1 -mt-16">
       {/* Header */}
       <div className="flex items-center mt-14 mb-2">
-        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
-        <span className="ml-2 text-primary text-xl font-bold">Groceries</span>
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-gray-900 dark:text-gray-100 cursor-pointer" /></Link>
+        <span className="ml-2 text-gray-900 dark:text-gray-100 text-xl font-bold">Groceries</span>
       </div>
-      <div className="text-tertiary font-medium mb-4">
+      <div className="text-gray-400 font-medium mb-4">
         <div className="text-sm mb-4">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
         </div>
@@ -780,7 +775,7 @@ console.log("✅ Changes saved successfully!");
           <div
             key={index}
             onClick={() => setSelectedCategory(category.label)}
-            className="flex items-center justify-between bg-blue-500 text-white px-4 py-3 rounded-sm cursor-pointer hover:scale-105 transition-transform"
+            className="flex items-center justify-between bg-blue-500 text-white px-4 py-3 rounded-lg cursor-pointer hover:scale-105 transition-transform"
             style={{ backgroundColor: category.color, width: "20%", height: "60px" }}
           >
             <span className="font-bold text-sm">{category.label}</span>
@@ -791,7 +786,7 @@ console.log("✅ Changes saved successfully!");
 
       {/* Table Title */}
       <div className="flex items-center justify-center mb-1">
-        <span className="ml-2 text-primary text-xl font-bold">{selectedCategory}</span>
+        <span className="ml-2 text-gray-900 dark:text-gray-100 text-xl font-bold">{selectedCategory}</span>
       </div>
 
       {/* Search and Filter Section */}
@@ -809,6 +804,7 @@ console.log("✅ Changes saved successfully!");
               borderRadius: "20px",
             },
           }}
+          className="dark:bg-gray-600 dark:text:gray"
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -905,18 +901,19 @@ console.log("✅ Changes saved successfully!");
     return (
       <React.Fragment key={row.id}>
         {/* Main Row */}
-        <TableRow sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
+        <TableRow className="dark:bg-gray-700 dark:text-gray-100" sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
           <TableCell>
           <IconButton
             aria-label="expand row"
             size="small"
+            className="dark:text-gray-100"
             onClick={() => {
               setcollapseOpen((prev) => {
                 const newCollapseState = Object.keys(prev).reduce((acc, key) => {
-                  acc[key] = false; // Collapse all rows
+                  acc[key] = false;
                   return acc;
                 }, {} as Record<string, boolean>);
-                return { ...newCollapseState, [row.id]: !isRowOpen }; // Expand only the clicked row
+                return { ...newCollapseState, [row.id]: !isRowOpen };
               });
               handleView(row);
               setEditId(row.id);
@@ -927,28 +924,29 @@ console.log("✅ Changes saved successfully!");
 
             <IconButton
               color="primary"
+              className="dark:hover:bg-slate-600"
               onClick={() => setEditMode((prev) => ({ ...prev, [row.id]: !isEditRow }))}
             >
-              <EditIcon />
+              <EditIcon className='dark:text-gray-900' />
             </IconButton>
           </TableCell>
-          <TableCell align="left">{index + 1 + page * rowsPerPage}</TableCell>
+          <TableCell align="left" className="dark:text-gray-100">{index + 1 + page * rowsPerPage}.</TableCell>
 
           {/* Category-specific columns */}
           {selectedCategory === "Provisions" && (
             <>
-              <TableCell align="left">{row.itemname}</TableCell>
-              <TableCell align="right">{row.monthyear}</TableCell>
-              <TableCell align="right">{row.unit}</TableCell>
-              <TableCell align="right">
+              <TableCell align="left" className="dark:text-gray-100">{row.itemname}</TableCell>
+              <TableCell align="right"  className="dark:text-gray-100">{row.monthyear}</TableCell>
+              <TableCell align="right"  className="dark:text-gray-100">{row.unit}</TableCell>
+              <TableCell align="right"  className="dark:text-gray-100">
                 {row?.dailyconsumption
                   ? (typeof row.dailyconsumption === "string"
                       ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
                       : row.dailyconsumption[selectedDate] ?? "0")
                   : "0"}
               </TableCell>
-              <TableCell align="right">{row.total_quantity_issued}</TableCell>
-              <TableCell align="right">{row.total_cost}</TableCell>
+              <TableCell align="right" className="dark:text-gray-100">{row.total_quantity_issued}</TableCell>
+              <TableCell align="right" className="dark:text-gray-100">{row.total_cost}</TableCell>
             </>
           )}
 
@@ -995,13 +993,19 @@ console.log("✅ Changes saved successfully!");
                 <Box
                   sx={{
                     padding: 2,
-                    backgroundColor: "#F9FAFB", // Light gray background
+                    backgroundColor: "#F9FAFB",
                     borderBottomLeftRadius: "8px",
                     borderBottomRightRadius: "8px",
                     boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
                     border: "1px solid #E0E0E0",
                     marginBottom: "4px",
+                    "&.dark": {
+                      boxShadow: "0px 2px 6px rgba(255, 255, 255, 0.2)",
+                      backgroundColor: "#2E2E2E",
+                      border: '1px solid #555'
+                    }
                   }}
+                  className="dark:bg-slate-800 "
                 >
                   <Typography
                     variant="subtitle1"
@@ -1010,7 +1014,9 @@ console.log("✅ Changes saved successfully!");
                       color: "#333",
                       marginBottom: "8px",
                       textAlign: "center",
+
                     }}
+                    className="dark:text-gray-100"
                   >
                     Daily Issued Information
                   </Typography>
@@ -1038,12 +1044,13 @@ console.log("✅ Changes saved successfully!");
                           "&:hover": {
                             transform: "scale(1.05)",
                             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-                          },
+                          }
                         }}
+                        className="dark:bg-slate-600 "
                       >
                         <Typography
                           variant="caption"
-                          sx={{ color: "#555", fontWeight: "bold" }}
+                          sx={{ color: "#555", "&.dark": { color: "#CCC"}, fontWeight: "bold" }}
                         >
                           {dayjs(date).format("DD MMM")}
                         </Typography>
@@ -1058,8 +1065,22 @@ console.log("✅ Changes saved successfully!");
                             borderRadius: "5px",
                             "&.Mui-disabled": {
                               backgroundColor: "rgba(255,255,255,0.2)",
+                              "&.dark": {
+                                backgroundColor: "#444"
+                              }
+                            },
+                            "&.dark": {
+                              backgroundColor: "#555" ,
+                              color: "#FFF"
+                            },
+                            input: {
+                              color: "#000",
+                              "&.dark": {
+                                color: "#FFF"
+                              }
                             },
                           }}
+                          className="dark:bg-gray-200 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-400"
                         />
                       </Box>
                     ))}
@@ -1085,8 +1106,14 @@ console.log("✅ Changes saved successfully!");
                           fontSize: "14px",
                           fontWeight: "bold",
                           backgroundColor: "#1976D2",
+                          "&.dark":{
+                            backgroundColor: "#1565C0",
+                          },
                           "&:hover": {
                             backgroundColor: "#1565C0",
+                            "&.dark": {
+                              backgroundColor: "#1258A7",
+                            }
                           },
                         }}
                         onClick={() => handleSaveChanges(dailyConsumptionData)}
@@ -1110,7 +1137,8 @@ console.log("✅ Changes saved successfully!");
 
         </TableContainer>
         <TablePagination
-          sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
+        className="dark:bg-gray-700 dark:text-gray-100"
+        sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
         rowsPerPageOptions={[10, 25, 50]}
         component="div"
         count={groceriesData.length}
@@ -1125,85 +1153,45 @@ console.log("✅ Changes saved successfully!");
       </>
       )}
       <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>{isEditing ? "Edit Item" : "Add Item"}</DialogTitle>
-        <DialogContent>
-          {getDialogFields().map((field, index) => (
-            field.name === "itemname" && field.label === "Item Name" ? (
-              <Autocomplete
-                key={index}
-                options={availableItems.map(item => item.itemname)}
-                value={formData.itemname || ""}
-                onChange={(event, newValue) => {
-                  handleInputChange({
-                    target: {
-                      name: "itemname",
-                      value: newValue || ""
-                    }
-                  });
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Item Name"
-                    fullWidth
-                    margin="dense"
-                  />
-                )}
-                disabled={isEditing}
-              />
-            ) : field.name === "ConsumedQnty" ? (
-              <TextField
-                key={index}
-                fullWidth
-                label={field.label}
-                name={field.name}
-                type="number"
-                value={formData[field.name] || ""}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value, 10);
-                      if (value > maxQty) {
-                        alert("Consumed quantity cannot exceed remaining quantity.");
-                      }
+  <DialogTitle>Add Item</DialogTitle>
+  <DialogContent>
+    {/* Billing Month - Disabled Field */}
+    <TextField
+      fullWidth
+      label="Billing Month"
+      name="monthyear"
+      value={monthYear} // Automatically set to current YYYY-MM
+      margin="dense"
+      disabled
+    />
 
+    {/* Item Name - Autocomplete Dropdown */}
+    <Autocomplete
+      options={availableItems.map((item) => item.itemname)}
+      value={formData.itemname || ""}
+      onChange={(event, newValue) => {
+        handleInputChange({
+          target: {
+            name: "itemname",
+            value: newValue || "",
+          },
+        });
+      }}
+      renderInput={(params) => (
+        <TextField {...params} label="Item Name" fullWidth margin="dense" />
+      )}
+      disabled={isEditing}
+    />
+  </DialogContent>
 
-                  handleInputChange(e);
-                }}
-                margin="dense"
-                  inputProps={{
-                    max: maxQty,
-                  }}
-                  helperText={`Max: ${maxQty} kg or Lit`}
-              />
-            ) : (
-              <TextField
-                key={index}
-                fullWidth
-                label={field.label}
-                name={field.name}
-                type={field.type || "text"}
-                value={
-                  field.name === "selectedDate"
-                    ? selectedDate // Set value to selectedDate
-                    : field.type === "date"
-                    ? formData[field.name] || new Date().toISOString().split("T")[0]
-                    : formData[field.name] || ""
-                }
-                onChange={handleInputChange}
-                margin="dense"
-                InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
-                disabled={field.name === "selectedDate" || field.name === "monthyear"}
-              />
-            )
-          ))}
-        </DialogContent>
+  <DialogActions>
+    <Button onClick={handleDialogClose}>Cancel</Button>
+    <Button onClick={handleSubmit} variant="contained" color="primary">
+      Add
+    </Button>
+  </DialogActions>
+</Dialog>
 
-        <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
-            {isEditing ? "Update" : "Add"}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
     </div>
   );
