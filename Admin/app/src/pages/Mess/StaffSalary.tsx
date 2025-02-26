@@ -233,10 +233,10 @@ const StaffSalary = () => {
   const paginatedData = salaryData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
+    <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen dark:text-gray-200 dark:bg-gray-800">
       <div className="flex items-center mt-8 mb-4">
-        <ArrowBack className="text-primary cursor-pointer" />
-        <span className="ml-2 text-primary text-xl font-bold"> Staff Salaries </span>
+        <ArrowBack className="dark:text-gray-200 text-primary cursor-pointer" />
+        <span className="dark:text-gray-200 ml-2 text-primary text-xl font-bold"> Staff Salaries </span>
       </div>
       <div className="text-sm mb-4">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Staff Salaries
@@ -244,26 +244,42 @@ const StaffSalary = () => {
 
       <div className="flex justify-between">
         <Box display="flex" alignItems="center" mb={2} gap={2}>
-          <TextField
-            variant="outlined"
-            size="small"
-            placeholder="Search"
-            sx={{
-              width: "60%",
-              backgroundColor: "white",
-              borderRadius: "20px",
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "20px",
-              },
-            }}
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SearchIcon />
-                </InputAdornment>
-              ),
-            }}
-          />
+        <TextField
+  variant="outlined"
+  size="small"
+  placeholder="Search"
+  className="dark:bg-gray-800 dark:text-gray-200"
+  sx={{
+    width: "60%",
+    backgroundColor: "white",
+    borderRadius: "20px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "20px",
+      color: "inherit", // Ensures text color inherits from parent
+      "& fieldset": {
+        borderColor: "gray", // Apply gray border color
+      },
+      "&:hover fieldset": {
+        borderColor: "#b0b0b0", // Slightly lighter gray on hover
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "#808080", // Darker gray when focused
+      },
+    },
+    "& .MuiInputAdornment-root": {
+      color: "gray", // Search icon color
+    }
+  }}
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <SearchIcon className="dark:text-gray-200" />
+      </InputAdornment>
+    ),
+  }}
+/>
+
+
           <Button
             variant="contained"
             startIcon={<FilterListIcon />}
@@ -289,6 +305,7 @@ const StaffSalary = () => {
       ) : (
         <>
           <TableContainer
+            className='dark:bg-gray-800 dark:text-gray-200'
             sx={{
               height: "400px",
               overflow: "auto",
@@ -299,8 +316,8 @@ const StaffSalary = () => {
             }}
           >
             <Table size='small'>
-              <TableHead>
-                <TableRow sx={{ backgroundColor: "#260D94", position: "sticky", top: 0, zIndex: 1 }}>
+              <TableHead >
+                <TableRow className='dark:bg-gray-800 dark:text-gray-200' sx={{ backgroundColor: "#260D94", position: "sticky", top: 0, zIndex: 1 }}>
                   {["S.No", "Staff Name", "Staff Category", "Bank", "Present Days", "Salary Amount", "Date of Issued", "Action"].map(
                     (header, index) => (
                       <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
@@ -310,17 +327,17 @@ const StaffSalary = () => {
                   )}
                 </TableRow>
               </TableHead>
-              <TableBody>
+              <TableBody className='dark:bg-gray-800 dark:text-gray-200'>
                 {paginatedData.map((row, index) => (
                   <TableRow key={row.SalaryID} sx={{ backgroundColor: 'white' }}>
-                    <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
-                    <TableCell align="center">{row.StaffName}</TableCell>
-                    <TableCell align="center">{row.StaffCategory}</TableCell>
-                    <TableCell align="center">{row.bank}</TableCell>
-                    <TableCell align="center">{row.PresentDays}</TableCell>
-                    <TableCell align="center">{row.SalaryAmount}</TableCell>
-                    <TableCell align="center">{formatDate(row.DateOfIssued)}</TableCell>
-                    <TableCell align="center">
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">{page * rowsPerPage + index + 1}</TableCell>
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">{row.StaffName}</TableCell>
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">{row.StaffCategory}</TableCell>
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">{row.bank}</TableCell>
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">{row.PresentDays}</TableCell>
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">{row.SalaryAmount}</TableCell>
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">{formatDate(row.DateOfIssued)}</TableCell>
+                    <TableCell className='dark:bg-gray-800 dark:text-gray-200' align="center">
                       <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
                         <EditIcon />
                       </IconButton>
@@ -335,6 +352,7 @@ const StaffSalary = () => {
           </TableContainer>
 
           <TablePagination
+            className='dark:bg-gray-800 dark:text-gray-200'
             sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
