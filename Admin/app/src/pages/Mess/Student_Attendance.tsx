@@ -233,12 +233,12 @@ const StaffSalary = () => {
   const paginatedData = salaryData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
-      <div className="flex items-center mb-4">
-        <ArrowBack className="text-primary cursor-pointer" />
-        <span className="ml-2 text-primary text-xl font-bold"> Student Attendance  </span>
+    <div className="dark:bg-gray-800 dark:text-gray-200 max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
+      <div className="flex items-center mb-4 dark:bg-gray-800 dark:text-gray-200">
+        <ArrowBack className="dark:bg-gray-800 dark:text-gray-200 text-primary cursor-pointer" />
+        <span className="ml-2 text-primary text-xl font-bold dark:bg-gray-800 dark:text-gray-200"> Student Attendance  </span>
       </div>
-      <div className="text-sm mb-4">
+      <div className="text-sm mb-4 dark:bg-gray-800 dark:text-gray-200">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Student Attendance
       </div>
 

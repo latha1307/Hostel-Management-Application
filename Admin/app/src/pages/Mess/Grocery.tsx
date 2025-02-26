@@ -620,15 +620,15 @@ const Groceries = () => {
 
 
   return (
-    <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
+    <div className="dark:bg-gray-800 dark:text-gray-200  max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
       {/* Header */}
       <div className="flex items-center mt-14 mb-2">
-        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
-        <span className="ml-2 text-primary text-xl font-bold">Groceries</span>
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="dark:bg-gray-800 dark:text-gray-200 text-primary cursor-pointer" /></Link>
+        <span className="dark:bg-gray-800 dark:text-gray-200 ml-2 text-primary text-xl font-bold">Groceries</span>
       </div>
-      <div className="text-tertiary font-medium mb-4">
+      <div className="text-tertiary font-medium mb-4 dark:bg-gray-800 dark:text-gray-200">
         <div className="text-sm mb-4">
-          <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
+          <Link className="dark:bg-gray-800 dark:text-gray-200" to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
         </div>
       </div>
 
@@ -641,55 +641,89 @@ const Groceries = () => {
             className="flex items-center justify-between bg-blue-500 text-white px-4 py-3 rounded-sm cursor-pointer hover:scale-105 transition-transform"
             style={{ backgroundColor: category.color, width: "20%", height: "60px" }}
           >
-            <span className="font-bold text-sm">{category.label}</span>
+            <span className="font-bold text-sm dark:text:gray-200">{category.label}</span>
             <img src={category.image} alt={category.label} className="w-10 h-10 rounded-lg" />
           </div>
         ))}
       </div>
 
       {/* Table Title */}
-      <div className="flex items-center justify-center mb-1">
+      <div className="flex items-center justify-center mb-1 dark:bg-gray-800 dark:text-gray-200">
         <span className="ml-2 text-primary text-xl font-bold">{selectedCategory}</span>
       </div>
 
       {/* Search and Filter Section */}
       <div className="flex justify-between">
       <Box display="flex" alignItems="center" mb={1} gap={2}>
-        <TextField
-          variant="outlined"
-          size="small"
-          placeholder="Search"
-          sx={{
-            width: "60%",
-            backgroundColor: "white",
-            borderRadius: "20px",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "20px",
-            },
-          }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
+      <TextField
+  className="dark:bg-gray-800"    
+  variant="outlined"
+  size="small"
+  placeholder="Search"
+  sx={{
+    width: "60%",
+    backgroundColor: "white",
+    borderRadius: "20px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "20px",
+      "& input": {
+        color: "#9e9e9e", // Gray text color
+      },
+      "& fieldset": {
+        borderColor: "#9e9e9e", // Gray border color
+      },
+      "&:hover fieldset": {
+        borderColor: "#7d7d7d", // Darker gray on hover
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "#616161", // Slightly darker gray when focused
+      },
+    },
+    "& .MuiInputAdornment-root": {
+      color: "#9e9e9e", // Gray color for search icon
+    },
+    "&::placeholder": {
+      color: "#9e9e9e", // Gray placeholder text
+    },
+  }}
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <SearchIcon />
+      </InputAdornment>
+    ),
+  }}
+/>
+
+
       {selectedCategory === "Provisions" && (
           <TextField
-            type="date"
-            label="Select Date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            variant="outlined"
-            size="small"
-            sx={{
-              width: "180px",
-              backgroundColor: "white",
-              borderRadius: "10px",
-            }}
-            InputLabelProps={{ shrink: true }}
-          />
+          className="dark:bg-gray-800"
+          type="date"
+          label="Select Date"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+          variant="outlined"
+          size="small"
+          sx={{
+            width: "180px",
+            backgroundColor: "white",
+            borderRadius: "10px",
+            "& .MuiOutlinedInput-root": {
+              "& input": {
+                color: "#9e9e9e", // Gray text color
+              },
+              "& fieldset": {
+                borderColor: "#c4c4c4", // Light gray border
+              },
+            },
+            "& label": {
+              color: "#9e9e9e", // Gray color for label
+            }
+          }}
+          InputLabelProps={{ shrink: true }}
+        />
+        
         )}
         {selectedCategory !== "Provisions" && (
         <Button
@@ -745,26 +779,26 @@ const Groceries = () => {
             ))}
               </TableRow>
             </TableHead>
-            <TableBody >
+            <TableBody className="dark:bg-gray-800 dark:text-gray-200" >
               {paginatedData.map((row, index) => (
                 <TableRow key={row.id} sx={{ border: "1px solid #E0E0E0", backgroundColor: "white",flexGrow: 0.5  }}>
-                  <TableCell align="center">{index + 1 + page * rowsPerPage}</TableCell>
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">{index + 1 + page * rowsPerPage}</TableCell>
 
               {selectedCategory === 'Provisions' && (
                 <>
-                  <TableCell align="center">{row.itemname}</TableCell>
-                  <TableCell align="center">{row.monthyear}</TableCell>
-                  <TableCell align="center">{row.unit}</TableCell>
-                  <TableCell align="center">
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">{row.itemname}</TableCell>
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">{row.monthyear}</TableCell>
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">{row.unit}</TableCell>
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">
                     {row?.dailyconsumption
                       ? (typeof row.dailyconsumption === "string"
                           ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
                           : row.dailyconsumption[selectedDate] ?? "0")
                       : "0"}
                   </TableCell>
-                  <TableCell align="center">{row.total_quantity_issued}</TableCell>
-                  <TableCell align="center">{row.total_cost}</TableCell>
-                  <TableCell align="center">
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">{row.total_quantity_issued}</TableCell>
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">{row.total_cost}</TableCell>
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">
                     {row?.dailyconsumption && row?.dailyconsumption[selectedDate] !== undefined
                       ? (row.dailyconsumption[selectedDate] === 0
                           ? <CancelIcon color="error" />
@@ -777,38 +811,38 @@ const Groceries = () => {
               )}
               {selectedCategory === 'Vegetables' && (
                 <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.itemName}</TableCell>
-                  <TableCell align="center">{row.Quantity}</TableCell>
-                  <TableCell align="center">{row.CostPerKg}</TableCell>
-                  <TableCell align="center">{row.TotalCost}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.DateOfConsumed}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.itemName}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Quantity}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.CostPerKg}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.TotalCost}</TableCell>
                 </>
               )}
               {selectedCategory === 'Egg' && (
                 <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.Quantity}</TableCell>
-                  <TableCell align="center">{row.CostPerPiece}</TableCell>
-                  <TableCell align="center">{row.TotalCost}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.DateOfConsumed}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Quantity}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.CostPerPiece}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.TotalCost}</TableCell>
                 </>
               )}
               {selectedCategory === 'Milk' && (
                 <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.Quantity}</TableCell>
-                  <TableCell align="center">{row.CostPerLitre}</TableCell>
-                  <TableCell align="center">{row.TotalCost}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.DateOfConsumed}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Quantity}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.CostPerLitre}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.TotalCost}</TableCell>
                 </>
               )}
               {selectedCategory === 'Gas' && (
                 <>
-                  <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                  <TableCell align="center">{row.no_of_cylinder}</TableCell>
-                  <TableCell align="center">{row.TotalAmount}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.DateOfConsumed}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.no_of_cylinder}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.TotalAmount}</TableCell>
                 </>
               )}
 
-                  <TableCell align="center">
+                  <TableCell className=" dark:bg-gray-800 dark:text-gray-200" align="center">
                     <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
                       <EditIcon />
                     </IconButton>
@@ -820,7 +854,8 @@ const Groceries = () => {
 
         </TableContainer>
         <TablePagination
-          sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
+         className=" dark:bg-gray-800 dark:text-gray-200"
+        sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
         rowsPerPageOptions={[10, 25, 50]}
         component="div"
         count={groceriesData.length}

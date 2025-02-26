@@ -495,7 +495,7 @@ saveAs(dataBlob, "Attendence.xlsx");
 
 
 return (
-  <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
+  <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen dark:bg-gray-800 dark:text-gray-200">
     <div className="flex items-center mb-4">
       <ArrowBack className="text-primary cursor-pointer" />
       <span className="ml-2 text-primary text-xl font-bold"> Attendance</span>
@@ -541,45 +541,97 @@ return (
       <Box display="flex" alignItems="center" mb={2} gap={2}>
         {/* Search Field */}
         <TextField
-          variant="outlined"
-          size="small"
-          placeholder="Search"
-          value={searchQuery}
-          onChange={handleSearch}
+  className="dark:bg-gray-800 dark:text-gray-200"
+  variant="outlined"
+  size="small"
+  placeholder="Search"
+  value={searchQuery}
+  onChange={handleSearch}
+  sx={{
+    width: "60%",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "10px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "10px",
+      color: "black", // Light mode text color
+      "& fieldset": { borderColor: "#ccc" },
+      "&:hover fieldset": { borderColor: "#888" },
+      "&.Mui-focused fieldset": { borderColor: "#007bff" },
+    },
+    "& .MuiInputBase-input": {
+      color: "black", // Light mode text color
+      ".dark &": { color: "#a0aec0" }, // Dark mode text color
+    },
+    "&.dark": {
+      backgroundColor: "#2d3748", // Dark mode background
+      "& .MuiOutlinedInput-root": {
+        color: "#a0aec0", // Dark mode text color
+        "& fieldset": { borderColor: "#4a5568" },
+        "&:hover fieldset": { borderColor: "#718096" },
+        "&.Mui-focused fieldset": { borderColor: "#90cdf4" },
+      },
+    },
+  }}
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <SearchIcon
           sx={{
-            width: "60%",
-            backgroundColor: "#f9f9f9",
-            borderRadius: "10px",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "10px",
-            },
-          }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon style={{ color: "#007bff" }} />
-              </InputAdornment>
-            ),
+            color: "black", // Light mode icon color
+            ".dark &": { color: "#a0aec0" }, // Dark mode icon color
           }}
         />
+      </InputAdornment>
+    ),
+  }}
+/>
+
 
 
     
-          <TextField
-                    type="date"
-                    label="Select Date"
-                    value={selectedDate ? selectedDate.format("YYYY-MM-DD") : ""}
-                       onChange={(e) => setSelectedDate(dayjs(e.target.value))}
-                    variant="outlined"
-                    size="small"
-                    sx={{
-                      width: "180px",
-                      backgroundColor: "white",
-                      borderRadius: "10px",
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                    disabled
-                  />
+<TextField
+  className="dark:bg-gray-800 dark:text-gray-200"
+  type="date"
+  label="Select Date"
+  value={selectedDate ? selectedDate.format("YYYY-MM-DD") : ""}
+  onChange={(e) => setSelectedDate(dayjs(e.target.value))}
+  variant="outlined"
+  size="small"
+  sx={{
+    width: "180px",
+    backgroundColor: "white",
+    borderRadius: "10px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "10px",
+      color: "black", // Light mode text color
+      "& fieldset": { borderColor: "#ccc" },
+      "&:hover fieldset": { borderColor: "#888" },
+      "&.Mui-focused fieldset": { borderColor: "#007bff" },
+    },
+    "& .MuiInputBase-input": {
+      color: "black", // Light mode text color
+      ".dark &": { color: "#a0aec0" }, // Dark mode text color
+    },
+    "&.dark": {
+      backgroundColor: "#2d3748", // Dark mode background
+      "& .MuiOutlinedInput-root": {
+        color: "#a0aec0", // Dark mode text color
+        "& fieldset": { borderColor: "#4a5568" },
+        "&:hover fieldset": { borderColor: "#718096" },
+        "&.Mui-focused fieldset": { borderColor: "#90cdf4" },
+      },
+    },
+  }}
+  InputLabelProps={{
+    shrink: true,
+    sx: {
+      color: "black", // Light mode label color
+      ".dark &": { color: "#a0aec0" }, // Dark mode label color
+    },
+  }}
+  disabled
+/>
+
 
 
       </Box>
@@ -635,23 +687,23 @@ return (
             </TableHead>
             <TableBody>
               {filteredData.map((row, index) => (
-                <TableRow key={row.id} sx={{ backgroundColor: 'white' }}>
-                  <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell align="center">{row["Register No  Unique ID"]}</TableCell>
-                  <TableCell align="center">{row.Name}</TableCell>
-                  <TableCell align="center">{row["Room No"]}</TableCell>
-                  <TableCell align="center">{row.monthyear}</TableCell>
+                <TableRow className="dark:bg-gray-800 dark:text-gray-200" key={row.id} sx={{ backgroundColor: 'white' }}>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{page * rowsPerPage + index + 1}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Register No  Unique ID"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Name}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Room No"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.monthyear}</TableCell>
                  
-                  <TableCell align="center">{row.Course}</TableCell>
-                  <TableCell align="center">{row.Branch}</TableCell>
-                  <TableCell align="center">{row["Year of Study"]}</TableCell>
-                  <TableCell align="center">{row["Total  days"]}</TableCell>
-                  <TableCell align="center">{row["Present Days"]}</TableCell>
-                  <TableCell align="center">{row["Reduction Days"]}</TableCell>
-                  <TableCell align="center">{row["Adjust Advance"]}</TableCell>
-                  <TableCell align="center">{row["Prev Month Fine"]}</TableCell>
-                  <TableCell align="center">{row.Total}</TableCell>
-                  <TableCell align="center">
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Course}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Branch}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Year of Study"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Total  days"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Present Days"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Reduction Days"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Adjust Advance"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Prev Month Fine"]}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Total}</TableCell>
+                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">
                     <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
                       <EditIcon />
                     </IconButton>
@@ -663,6 +715,7 @@ return (
 
         </TableContainer>
         <TablePagination
+          className="dark:bg-gray-800 dark:text-gray-200"
           sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
           rowsPerPageOptions={[10, 20, 50]}
           component="div"
