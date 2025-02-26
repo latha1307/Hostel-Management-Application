@@ -106,6 +106,10 @@ const handleSearch = (event) => {
   setSearchQuery(event.target.value);
 };
 
+useEffect(() => {
+  setMonthYear(dayjs().format("YYYY-MM"));
+}, []);
+
   // Fetch groceries data from Supabase
   const fetchGroceriesData = useCallback(async () => {
     setLoading(true);
@@ -232,6 +236,7 @@ const handleMonthSubmit = async () => {
     setFormData(data || {});
     setOpenDialog(true);
   };
+
 
   const handleDialogClose = () => {
     setOpenDialog(false);
@@ -551,9 +556,9 @@ const handleMonthSubmit = async () => {
       color: "white",
       "&:hover": { backgroundColor: "#218838" },
       "&.dark": {
-        backgroundColor: "#374151", // Gray-700 for dark mode
-        color: "#F9FAFB", // Light text for contrast
-        "&:hover": { backgroundColor: "#4B5563" }, // Gray-600 on hover
+        backgroundColor: "#374151",
+        color: "#F9FAFB",
+        "&:hover": { backgroundColor: "#4B5563" },
       },
     }}
   >
@@ -669,19 +674,27 @@ const handleMonthSubmit = async () => {
         <DialogContent>
   {/* Render Other Fields */}
   {getDialogFields.map(({ label, name, type }) => (
-    <TextField
-      key={name}
-      label={label}
-      name={name}
-      value={type === "date" ? (formData[name] ? formData[name].split('T')[0] : "") : formData[name] || ""}
-      onChange={handleInputChange}
-      fullWidth
-      margin="normal"
-      type={type}
-      InputLabelProps={type === "date" ? { shrink: true } : undefined}
-      disabled={name === "monthyear"}
-    />
-  ))}
+  <TextField
+    key={name}
+    label={label}
+    name={name}
+    value={
+      name === "monthyear"
+        ? monthYear // Set monthyear field to the current YYYY-MM value
+        : type === "date"
+        ? formData[name]
+          ? formData[name].split("T")[0]
+          : ""
+        : formData[name] || ""
+    }
+    onChange={handleInputChange}
+    fullWidth
+    margin="normal"
+    type={type}
+    InputLabelProps={type === "date" ? { shrink: true } : undefined}
+    disabled={name === "monthyear"} // Disable editing for monthyear field
+  />
+))}
 
 </DialogContent>
         <DialogActions>
