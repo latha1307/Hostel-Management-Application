@@ -20,6 +20,8 @@ import {
   Typography
 } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
+import { Snackbar, Alert} from "@mui/material";
+import { Refresh } from "@mui/icons-material";
 import Autocomplete from '@mui/material/Autocomplete';
 import EditIcon from "@mui/icons-material/Edit";
 import { Link } from "react-router-dom";
@@ -114,6 +116,12 @@ const Groceries = () => {
   const [selectedRow, setSelectedRow] = useState(null);
   const [dailyConsumptionData, setDailyConsumptionData] = useState({});
   const [formattedData, setFormattedData] = useState<{ date: string; value: number }[]>([]);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success", // Default to success
+  });
+  
 
 
 
@@ -447,9 +455,12 @@ const { error: updateGroceryError } = await supabase
 if (updateGroceryError) throw updateGroceryError;
 
 console.log("✅ Changes saved successfully!");
+ // Assuming the save operation is successful
+ setNotification({ open: true, message: "Saved successfully!", severity: "success" });
 
     } catch (error) {
         console.error("❌ Error saving changes:", error);
+        setNotification({ open: true, message: "Failed to save changes!", severity: "error" });
     }
 };
 
@@ -842,6 +853,13 @@ console.log("✅ Changes saved successfully!");
       </Button>
       )}
       </Box>
+      <div className="flex items-center space-x-4 mb-2">
+        <IconButton className="flex items-center space-x-1  text-blue-500 relative -top-1"
+         onClick={() => fetchGroceriesData(selectedCategory)} >
+        <span className="text-blue-500 text-sm font-medium">Refresh</span>
+  <Refresh className="text-blue-500" />
+
+</IconButton>
       <Button
         variant="contained"
         color="primary"
@@ -850,6 +868,7 @@ console.log("✅ Changes saved successfully!");
       >
         Add Item
       </Button>
+      </div>
       </div>
 
       {error && <div className="text-red-600">{error}</div>}
@@ -1204,6 +1223,18 @@ console.log("✅ Changes saved successfully!");
           </Button>
         </DialogActions>
       </Dialog>
+       {/* Notification Snackbar */}
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        onClose={() => setNotification({ ...notification, open: false })}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert severity={notification.severity} onClose={() => setNotification({ ...notification, open: false })}>
+          {notification.message}
+        </Alert>
+      </Snackbar>
+    
 
     </div>
   );
