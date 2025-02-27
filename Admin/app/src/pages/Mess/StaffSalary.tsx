@@ -234,9 +234,10 @@ const StaffSalary = () => {
 
   return (
     <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen dark:text-gray-200 dark:bg-gray-800">
-      <div className="flex items-center mt-8 mb-4">
-        <ArrowBack className="dark:text-gray-200 text-primary cursor-pointer" />
-        <span className="dark:text-gray-200 ml-2 text-primary text-xl font-bold"> Staff Salaries </span>
+     
+      <div className="flex items-center mt-8 mb-2">
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
+        <span className="ml-2 text-primary text-xl font-bold">Staff Salaries</span>
       </div>
       <div className="text-sm mb-4">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Staff Salaries

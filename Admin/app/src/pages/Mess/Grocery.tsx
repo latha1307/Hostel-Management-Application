@@ -19,6 +19,8 @@ import {
   Collapse,
   Typography
 } from "@mui/material";
+
+import RefreshIcon from "@mui/icons-material/Refresh";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import Autocomplete from '@mui/material/Autocomplete';
 import EditIcon from "@mui/icons-material/Edit";
@@ -956,6 +958,11 @@ useEffect(() => {
           />
 
       </Box>
+      <div className="flex items-center space-x-4 mb-2">
+        <IconButton className="flex items-center space-x-1  text-blue-500 relative -top-1"
+         onClick={() => fetchGroceriesData(selectedCategory)} >
+        <span className="text-blue-500 text-sm font-medium">Refresh</span>
+  <RefreshIcon className="text-blue-500" /> </IconButton>
       <Button
         variant="contained"
         color="primary"
@@ -964,6 +971,7 @@ useEffect(() => {
       >
         Add Item
       </Button>
+      </div>
       </div>
 
       {error && <div className="text-red-600">{error}</div>}
@@ -1374,5 +1382,4 @@ const isEditRow = editMode[rowId] || false;
 };
 
 export default Groceries;
-
 
