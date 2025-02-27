@@ -19,7 +19,7 @@ const BillDistribution = () => {
     { name: "VEGETABLES", icon: VegetableIcon, amount: 0, shadowColor: "#4caf50" },
     { name: "EGG", icon: EggIcon, amount: 0, shadowColor: "#ffcc80" },
     { name: "MILK", icon: MilkImage, amount: 0, shadowColor: "#64b5f6" },
-    { name: "GAS", icon: GasIcon, amount: 84307, shadowColor: "#e57373" },
+    { name: "GAS", icon: GasIcon, amount: 0, shadowColor: "#e57373" },
     { name: "STAFF SALARY", icon: StaffSalaryIcon, amount: 0, shadowColor: "#7986cb" },
   ]);
 
@@ -32,7 +32,7 @@ const BillDistribution = () => {
   const [otherAmount, setOtherAmount] = useState(0);
   const [isOtherAdded, setIsOtherAdded] = useState(false);
   const [open, setOpen] = useState(false);
-  const [studentHeadcounts] = useState(7784);
+  const [studentHeadcounts, setStudentHeadcounts] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
   const totalSummation = items.reduce((sum, item) => sum + item.amount, 0);
   const netAmount = totalSummation - foodWaste - (isOtherAdded ? otherAmount : 0);
@@ -124,12 +124,32 @@ const BillDistribution = () => {
 
       if (error5) throw error5;
 
+      const { data: gasdata, error: error6 } = await supabase
+      .from("gas")
+      .select("TotalAmount")
+      .eq("hostel", hostel)
+      .gte("DateOfConsumed", `${selectedDate}-01`)
+      .lt("DateOfConsumed", `${getNextMonth(selectedDate)}-01`);
+
+    if (error6) throw error6;
+
+    const { data: studentsdata, error: error7 } = await supabase
+    .from("hoste")
+    .select("Total")
+    .eq("hostel", hostel)
+    .eq("monthyear", selectedDate);
+
+
+  if (error7) throw error7;
+
       // ✅ Extract total costs safely
       const totalGroceryCost = consumeddata?.reduce((sum, row) => sum + parseInt(row.total_cost || 0), 0) || 0;
       const totalVegetableCost = vegtabledata?.reduce((sum, row) => sum + parseInt(row.TotalCost || 0), 0) || 0;
       const totalEggCost = Array.isArray(eggdata) ? eggdata.reduce((sum, row) => sum + row.TotalCost, 0) : 0;
+      const totalGasCost = Array.isArray(gasdata) ? gasdata.reduce((sum, row) => sum + row.TotalAmount, 0) : 0;
       const totalMilkCost = milkdata?.reduce((sum, row) => sum + parseInt(row.TotalCost || 0), 0) || 0;
       const totalStaffCost = staffdata?.reduce((sum, row) => sum + parseInt(row.SalaryAmount || 0), 0) || 0;
+      const totalHeadcounts = studentsdata?.reduce((sum, row) => sum + parseInt(row.Total || 0), 0) || 0;
 
       // ✅ Update the UI amounts
       setItems((prevItems) =>
@@ -139,9 +159,11 @@ const BillDistribution = () => {
           if (item.name === "EGG") return { ...item, amount: totalEggCost };
           if (item.name === "MILK") return { ...item, amount: totalMilkCost };
           if (item.name === "STAFF SALARY") return { ...item, amount: totalStaffCost };
+          if (item.name === "GAS") return { ...item, amount: totalGasCost };
           return item;
         })
       );
+      setStudentHeadcounts(totalHeadcounts)
     } catch (error) {
       console.error("Error fetching bill data:", error.message);
       setError("Error fetching bill data");
@@ -179,7 +201,7 @@ const BillDistribution = () => {
         <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
         <span className="ml-2 text-primary text-xl font-bold">Back</span>
       </div>
-      
+
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
       <Select
       className="dark:bg-gray-700 dark:text-gray-200"
@@ -218,11 +240,6 @@ const BillDistribution = () => {
           ))}
         </Grid>
       </Card>
-
-
-
-
-
 
   <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
     <Card className='dark:bg-gray-700 dark:text-gray-200' sx={{ p: 3, width: "48%", boxShadow: "0px 4px 8px red", background: "#fff" }}>

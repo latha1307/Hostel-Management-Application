@@ -196,13 +196,13 @@ const handleMonthSubmit = async () => {
 
       const vegetablesBoysData = vegetablesList.map(item => ({
         monthyear: monthYear,
-        itemname: item.itemname,
+        itemName: item.itemname,
         hostel: 'Boys'
     }));
 
     const vegetablesGirlsData = vegetablesList.map(item => ({
       monthyear: monthYear,
-      itemname: item.itemname,
+      itemName: item.itemname,
       hostel: 'Girls'
   }));
 
