@@ -10,6 +10,8 @@ import DivisionIcon from "../assets/division-Icon.png";
 import PeopleIcon from "@mui/icons-material/People";
 import  supabase  from "../supabaseClient";
 import { useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
+import ArrowBack from "@mui/icons-material/ArrowBack";
 
 const BillDistribution = () => {
   const [items, setItems] = useState([
@@ -171,9 +173,13 @@ const BillDistribution = () => {
   return (
     <Box className="dark:text-gray-200" sx={{ p: 10, paddingTop: 1, textAlign: "center" }}>
       <Typography className="dark:text-gray-200" variant="h5" color="purple" fontWeight={600} gutterBottom>
-        BILL DISTRIBUTION
+        BILL DISTRIBUTION - {hostel} Hostel
       </Typography>
-
+      <div className="flex items-center mt-8 mb-2">
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
+        <span className="ml-2 text-primary text-xl font-bold">Back</span>
+      </div>
+      
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
       <Select
       className="dark:bg-gray-700 dark:text-gray-200"
