@@ -106,6 +106,10 @@ const handleSearch = (event) => {
   setSearchQuery(event.target.value);
 };
 
+useEffect(() => {
+  setMonthYear(dayjs().format("YYYY-MM"));
+}, []);
+
   // Fetch groceries data from Supabase
   const fetchGroceriesData = useCallback(async () => {
     setLoading(true);
@@ -180,12 +184,31 @@ const handleMonthSubmit = async () => {
 
       if (groceriesError) throw groceriesError;
 
+      const { data: vegetablesList, error: vegetablesError } = await supabase
+      .from("vegetables_list")
+      .select("itemname");
+
+  if (vegetablesError) throw vegetablesError;
       // 2. Insert new rows into inventorygrocery table
       const inventoryData = groceriesList.map(item => ({
           monthyear: monthYear,
           itemname: item.itemname,
           unit: item.unit
       }));
+
+      const vegetablesBoysData = vegetablesList.map(item => ({
+        monthyear: monthYear,
+        itemname: item.itemname,
+        hostel: 'Boys'
+    }));
+
+    const vegetablesGirlsData = vegetablesList.map(item => ({
+      monthyear: monthYear,
+      itemname: item.itemname,
+      hostel: 'Girls'
+  }));
+
+
 
       const inventoryBoysData = groceriesList.map(item => ({
         monthyear: monthYear,
@@ -205,6 +228,11 @@ const handleMonthSubmit = async () => {
       const { error: insertError } = await supabase.from("inventorygrocery").insert(inventoryData);
       if (insertError) throw insertError;
 
+      const { error: insertVegetableBoysError } = await supabase.from("vegetables").insert(vegetablesBoysData);
+      if (insertVegetableBoysError) throw insertVegetableBoysError;
+
+      const { error: insertVegetableGirlsError } = await supabase.from("vegetables").insert(vegetablesGirlsData);
+      if (insertVegetableGirlsError) throw insertVegetableGirlsError;
 
       const { error: insertBoysError } = await supabase.from("consumedgrocery").insert(inventoryBoysData);
       if (insertBoysError) throw insertBoysError
@@ -552,9 +580,9 @@ const handleMonthSubmit = async () => {
       color: "white",
       "&:hover": { backgroundColor: "#218838" },
       "&.dark": {
-        backgroundColor: "#374151", // Gray-700 for dark mode
-        color: "#F9FAFB", // Light text for contrast
-        "&:hover": { backgroundColor: "#4B5563" }, // Gray-600 on hover
+        backgroundColor: "#374151",
+        color: "#F9FAFB",
+        "&:hover": { backgroundColor: "#4B5563" },
       },
     }}
   >
@@ -670,19 +698,27 @@ const handleMonthSubmit = async () => {
         <DialogContent>
   {/* Render Other Fields */}
   {getDialogFields.map(({ label, name, type }) => (
-    <TextField
-      key={name}
-      label={label}
-      name={name}
-      value={type === "date" ? (formData[name] ? formData[name].split('T')[0] : "") : formData[name] || ""}
-      onChange={handleInputChange}
-      fullWidth
-      margin="normal"
-      type={type}
-      InputLabelProps={type === "date" ? { shrink: true } : undefined}
-      disabled={name === "monthyear"}
-    />
-  ))}
+  <TextField
+    key={name}
+    label={label}
+    name={name}
+    value={
+      name === "monthyear"
+        ? monthYear // Set monthyear field to the current YYYY-MM value
+        : type === "date"
+        ? formData[name]
+          ? formData[name].split("T")[0]
+          : ""
+        : formData[name] || ""
+    }
+    onChange={handleInputChange}
+    fullWidth
+    margin="normal"
+    type={type}
+    InputLabelProps={type === "date" ? { shrink: true } : undefined}
+    disabled={name === "monthyear"} // Disable editing for monthyear field
+  />
+))}
 
 </DialogContent>
         <DialogActions>

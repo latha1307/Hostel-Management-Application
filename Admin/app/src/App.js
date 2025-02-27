@@ -36,8 +36,7 @@ function App() {
             className={`flex-1 flex flex-col transition-all dark:bg-gray-800 duration-300
             ${isSidebarOpen ? "ml-64" : "ml-16"}`}
           >
-
-            <div className={`flex-grow mt-24 mx-auto ${isSidebarOpen ? 'max-w-[83vw]' : 'max-w-[95vw]'}  overflow-x-hidden  px-6`}>
+            <div className={`flex-grow mt-24 px-6 max-w-screen overflow-x-hidden`}>
               <Routes>
                 <Route path="/mess/provisions" element={<Provisions />} />
                 <Route path="/manage-mess/:hostel" element={<Main />} />

@@ -19,9 +19,9 @@ import {
   Collapse,
   Typography
 } from "@mui/material";
+
+import RefreshIcon from "@mui/icons-material/Refresh";
 import ArrowBack from "@mui/icons-material/ArrowBack";
-import { Snackbar, Alert} from "@mui/material";
-import { Refresh } from "@mui/icons-material";
 import Autocomplete from '@mui/material/Autocomplete';
 import EditIcon from "@mui/icons-material/Edit";
 import { Link } from "react-router-dom";
@@ -37,6 +37,17 @@ import { useParams } from 'react-router-dom';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import dayjs from "dayjs";
+
+interface DailyConsumptionEntry {
+  quantity: number;
+  costPerKg: number;
+  totalCost: number;
+}
+
+type FormattedData =
+  | { date: string; value: number }
+  | { date: string; value: number; costPerKg: number; totalCost: number };
+
 
 interface GroceryItem {
   itemname: string;
@@ -60,15 +71,17 @@ interface GroceryItem {
   Quantity: number;
   no_of_cylinder: number;
   dailyconsumption: Record<string, string>;
+  vegetableid: number;
 }
 
 const categoryData = [
-  { label: "Provisions", image: ConsumedProvisionsImage, color: "#A07444" },
-  { label: "Vegetables", image: VegetableImage, color: "#43A047" },
-  { label: "Egg", image: EggImage, color: "#F9A825" },
-  { label: "Milk", image: MilkImage, color: "#03A9F4" },
-  { label: "Gas", image: GasImage, color: "#D32F2F" },
+  { label: "Provisions", image: ConsumedProvisionsImage, color: "#8B5A2B", darkColor: "#6B4226" },
+  { label: "Vegetables", image: VegetableImage, color: "#388E3C", darkColor: "#2E7D32" },
+  { label: "Egg", image: EggImage, color: "#F57F17", darkColor: "#E65100" },
+  { label: "Milk", image: MilkImage, color: "#0288D1", darkColor: "#01579B" },
+  { label: "Gas", image: GasImage, color: "#C62828", darkColor: "#B71C1C" },
 ];
+
 
 interface PurchasedItem {
   itemname: string;
@@ -111,18 +124,14 @@ const Groceries = () => {
   const [maxQty, setMaxQty] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
   const [today_quantity, setToday_quantity] = useState(0);
-  const [collapseOpen, setcollapseOpen] = useState<Record<number, boolean>>({});
+  const [collapseOpenProvision, setcollapseOpenProvision] = useState<Record<number, boolean>>({});
+  const [collapseOpenVegetable, setcollapseOpenVegetable] = useState<Record<number, boolean>>({});
   const [editMode, setEditMode] = useState<Record<number, boolean>>({});
   const [selectedRow, setSelectedRow] = useState(null);
   const [dailyConsumptionData, setDailyConsumptionData] = useState({});
-  const [formattedData, setFormattedData] = useState<{ date: string; value: number }[]>([]);
-  const [notification, setNotification] = useState({
-    open: false,
-    message: "",
-    severity: "success", // Default to success
-  });
-  
-
+  const [dailyConsumptionVegData, setDailyConsumptionVegData] = useState<Record<string, { quantity: number, costPerKg: number, totalCost: number }>>({});
+  const [formattedData, setFormattedData] = useState<FormattedData[]>([]);
+    const [monthYear, setMonthYear] = useState<string | null>(null);
 
 
   const handleChangePage = (event, newPage) => {
@@ -195,17 +204,9 @@ const Groceries = () => {
     setSelectedDate(new Date().toISOString().split("T")[0]);
   }, []);
 
-  useEffect(() => {
-    if (
-      groceriesData.length > 0 &&
-      groceriesData[0].dailyconsumption &&
-      groceriesData[0].dailyconsumption[selectedDate] !== undefined
-    ) {
-      setToday_quantity(Number(groceriesData[0].dailyconsumption[selectedDate]));
-    } else {
-      setToday_quantity(0);
-    }
-  }, [groceriesData, selectedDate]);
+useEffect(() => {
+  setMonthYear(dayjs().format("YYYY-MM"));
+}, []);
 
 
   useEffect(() => {
@@ -234,13 +235,13 @@ const Groceries = () => {
       case 'Provisions':
         return ['View/Edit Item', 'S.No', 'Item Name', 'Billing Year-Month', 'Unit',`Issued units on ${selectedDate}`, 'Total Quantity Issued', 'Total Amount Issued'];
       case 'Vegetables':
-        return ['S.No', 'Bill Date', 'Name', 'Quantity', 'Cost Per Kg', 'Total Amount', 'Action'];
+        return ['View/Edit Item','S.No', 'Item Name', 'Billing Year-Month', 'Total Issued Units','Total Amount'];
       case 'Egg':
-        return ['S.No', 'Bill Date', 'Quantity', 'Rate Per Piece', 'Total Amount', 'Action'];
+        return ['Action','S.No', 'Bill Date', 'Quantity', 'Rate Per Piece', 'Total Amount'];
       case 'Milk':
-        return ['S.No', 'Bill Date', 'Quantity', 'Rate Per Litre', 'Total Amount', 'Action'];
+        return ['Action','S.No', 'Bill Date', 'Quantity', 'Rate Per Litre', 'Total Amount'];
       case 'Gas':
-        return ['S.No', 'Bill Date', 'No Of Cylinders', 'Total Amount', 'Action'];
+        return ['Action','S.No', 'Bill Date', 'No Of Cylinders', 'Total Amount'];
       default:
         return [];
     }
@@ -252,16 +253,12 @@ const Groceries = () => {
         return [
           { label: "Billing Month", name: "monthyear" },
           { label: "Item Name", name: "itemname" },
-          { label: "Entry Date", name: "selectedDate", type: "date" },
-          { label: "Add Issued Units", name: "today_quantity", type: "number" },
         ];
 
       case 'Vegetables':
         return [
-          { label: "Bill Date", name: "DateOfConsumed", type: "date" },
+          { label: "Bill Month", name: "monthyear", type: "date" },
           { label: "Name", name: "itemName" },
-          { label: "Quantity", name: "Quantity", type: "number" },
-          { label: "Rate Per Kg", name: "CostPerKg", type: "number" },
         ];
       case 'Egg':
         return [
@@ -347,10 +344,6 @@ const Groceries = () => {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
 
-    if (name === "today_quantity") {
-      setToday_quantity(value)
-    }
-
     if (name === "itemname") {
       const selectedItem = availableItems.find((item) => item.itemname === value);
       setMaxQty(selectedItem?.total_stock_available || 0);
@@ -364,112 +357,222 @@ const Groceries = () => {
     }));
   };
 
+  const handleVegetableChange = (date: string, field: string, value: string) => {
+    setDailyConsumptionVegData((prevData) => {
+      const updatedData = { ...prevData };
 
-  const handleSaveChanges = async (updatedValues: Record<string, number>) => {
+      // Ensure the date entry exists
+      if (!updatedData[date]) {
+        updatedData[date] = { quantity: 0, costPerKg: 0, totalCost: 0 };
+      }
+
+      // Convert input to a number (handling empty values)
+      const numericValue = value.trim() === "" ? 0 : parseFloat(value);
+
+      // Update the specific field
+      updatedData[date] = {
+        ...updatedData[date],
+        [field]: numericValue,
+      };
+
+      // Recalculate totalCost after the update
+      updatedData[date].totalCost = updatedData[date].quantity * updatedData[date].costPerKg;
+
+      return { ...updatedData }; // Ensure React recognizes the state change
+    });
+  };
+
+
+
+
+  const handleSaveChanges = async (updatedValues: Record<
+    string,
+    number | { quantity: number; costPerKg: number; totalCost: number }
+  >) => {
     try {
-        console.log(editId)
-        const { data: existingEntry, error: fetchError } = await supabase
-            .from('consumedgrocery')
-            .select('dailyconsumption, total_quantity_issued, total_cost, itemname')
-            .eq('id', editId)
-            .maybeSingle();
+        console.log(editId);
+        switch (selectedCategory) {
+            case 'Provisions': {
+                const { data: existingEntry, error: fetchError } = await supabase
+                    .from('consumedgrocery')
+                    .select('dailyconsumption, total_quantity_issued, total_cost, itemname')
+                    .eq('id', editId)
+                    .maybeSingle();
 
-        if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
+                if (fetchError && fetchError.code !== 'PGRST116') throw fetchError;
 
-        console.log(existingEntry)
+                console.log(existingEntry);
 
-        let updatedDailyConsumption = existingEntry?.dailyconsumption
-            ? typeof existingEntry.dailyconsumption === 'string'
-                ? JSON.parse(existingEntry.dailyconsumption)
-                : existingEntry.dailyconsumption
-            : {};
+                let updatedDailyConsumption: Record<string, string> = existingEntry?.dailyconsumption
+                ? typeof existingEntry.dailyconsumption === 'string'
+                    ? JSON.parse(existingEntry.dailyconsumption)
+                    : existingEntry.dailyconsumption
+                : {};
 
-            for (const [date, quantity] of Object.entries(updatedValues)) {
-            updatedDailyConsumption[date] = String(quantity);
+                for (const [date, quantity] of Object.entries(updatedValues)) {
+                    updatedDailyConsumption[date] = String(quantity);
+                }
+
+                const totalQuantityIssued: number = Object.values(updatedDailyConsumption)
+                    .reduce((sum: any, qty) => sum + Number(qty), 0);
+
+                console.log(totalQuantityIssued);
+
+                const { data: inventoryData, error: inventoryError } = await supabase
+                    .from('inventorygrocery')
+                    .select('opening_stock, supplier1_rate, quantity_received_supplier2, supplier2_rate, quantity_received_intend_1, rate_intend_1, quantity_received_intend_2, rate_intend_2, quantity_received_intend_3, rate_intend_3')
+                    .eq('itemname', existingEntry?.itemname)
+                    .single();
+
+                if (inventoryError) throw inventoryError;
+
+                let remainingQty: number = totalQuantityIssued;
+                let totalCost: number = 0;
+
+                if (remainingQty > 0 && inventoryData.opening_stock > 0) {
+                    let usedQty = Math.min(remainingQty, inventoryData.opening_stock);
+                    totalCost += usedQty * inventoryData.supplier1_rate;
+                    remainingQty -= usedQty;
+                }
+                if (remainingQty > 0 && inventoryData.quantity_received_supplier2 > 0) {
+                    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_supplier2);
+                    totalCost += usedQty * inventoryData.supplier2_rate;
+                    remainingQty -= usedQty;
+                }
+                if (remainingQty > 0 && inventoryData.quantity_received_intend_1 > 0) {
+                    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_1);
+                    totalCost += usedQty * inventoryData.rate_intend_1;
+                    remainingQty -= usedQty;
+                }
+                if (remainingQty > 0 && inventoryData.quantity_received_intend_2 > 0) {
+                    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_2);
+                    totalCost += usedQty * inventoryData.rate_intend_2;
+                    remainingQty -= usedQty;
+                }
+                if (remainingQty > 0 && inventoryData.quantity_received_intend_3 > 0) {
+                    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_3);
+                    totalCost += usedQty * inventoryData.rate_intend_3;
+                    remainingQty -= usedQty;
+                }
+
+                const { error: updateGroceryError } = await supabase
+                    .from('consumedgrocery')
+                    .update({
+                        dailyconsumption: updatedDailyConsumption,
+                        total_quantity_issued: totalQuantityIssued,
+                        total_cost: totalCost
+                    })
+                    .eq('id', editId);
+
+                if (updateGroceryError) throw updateGroceryError;
+
+                console.log("✅ Changes saved successfully!");
+                break;
+            }
+
+            case 'Vegetables': {
+              console.log("Editing vegetable entry:", editId);
+              console.log("Updated values from input:", updatedValues);
+
+              // Fetch existing vegetable entry
+              const { data: existingVegEntry, error: fetchError } = await supabase
+                .from("vegetables")
+                .select("dailyconsumption, TotalCost, itemName") // Removed costPerKg
+                .eq("vegetableid", editId)
+                .maybeSingle();
+
+              if (fetchError) {
+                console.error("❌ Error fetching vegetable data:", fetchError);
+                throw fetchError;
+              }
+
+              console.log("Existing entry:", existingVegEntry);
+
+              let updatedVegDailyConsumption: Record<
+                string,
+                { quantity: number; costPerKg: number; totalCost: number }
+              > = {};
+
+              if (existingVegEntry?.dailyconsumption) {
+                if (typeof existingVegEntry.dailyconsumption === "string") {
+                  try {
+                    updatedVegDailyConsumption = JSON.parse(existingVegEntry.dailyconsumption);
+                  } catch (error) {
+                    console.error("❌ Error parsing existing dailyconsumption:", error);
+                    updatedVegDailyConsumption = {};
+                  }
+                } else if (typeof existingVegEntry.dailyconsumption === "object") {
+                  updatedVegDailyConsumption = existingVegEntry.dailyconsumption; // Already an object
+                } else {
+                  console.error("❌ Unexpected dailyconsumption format:", existingVegEntry.dailyconsumption);
+                  updatedVegDailyConsumption = {};
+                }
+              }
+
+
+              for (const [date, value] of Object.entries(updatedValues)) {
+                if (typeof value === "number") {
+                  console.warn(`⚠️ Unexpected number format for Vegetables on ${date}`);
+                  continue; // Skip if wrong format
+                }
+
+                const qty = Number(value.quantity) || 0;
+                const costPerKg = Number(value.costPerKg) || 0; // Take from input data
+
+                updatedVegDailyConsumption[date] = {
+                  quantity: qty,
+                  costPerKg: costPerKg, // Ensure it's from updatedValues
+                  totalCost: qty * costPerKg,
+                };
+              }
+
+              console.log("Updated daily consumption:", updatedVegDailyConsumption);
+
+              const totalCostIssuedVeg = Object.values(updatedVegDailyConsumption).reduce(
+                (sum, entry) => sum + entry.totalCost,
+                0
+              );
+
+              const totalQuantityIssuedVeg = Object.values(updatedVegDailyConsumption).reduce(
+                (sum, entry) => sum + entry.quantity,
+                0
+              );
+
+              console.log("Total Cost Issued:", totalCostIssuedVeg);
+              console.log("Total Quantity Issued:", totalQuantityIssuedVeg);
+
+
+              const { error: updateVegError } = await supabase
+                .from("vegetables")
+                .update({
+                  dailyconsumption: updatedVegDailyConsumption,
+                  total_quantity_issued: totalQuantityIssuedVeg,
+                  TotalCost: totalCostIssuedVeg,
+                })
+                .eq("vegetableid", editId);
+
+              if (updateVegError) {
+                console.error("❌ Error updating vegetable data:", updateVegError);
+                throw updateVegError;
+              }
+
+              console.log("✅ Changes saved successfully!");
+              break;
+            }
+
         }
-
-
-
-        const totalQuantityIssued: any = Object.values(updatedDailyConsumption)
-            .reduce((sum: any, qty) => sum + Number(qty), 0);
-
-        console.log(totalQuantityIssued)
-
-        // ✅ Fetch inventory data for cost calculations
-        const { data: inventoryData, error: inventoryError } = await supabase
-            .from('inventorygrocery')
-            .select('opening_stock, supplier1_rate, quantity_received_supplier2, supplier2_rate, quantity_received_intend_1, rate_intend_1, quantity_received_intend_2, rate_intend_2, quantity_received_intend_3, rate_intend_3')
-            .eq('itemname', existingEntry?.itemname)
-            .single();
-
-        if (inventoryError) throw inventoryError;
-
-let remainingQty: number = totalQuantityIssued;
-let totalCost: number = 0;
-
-// Step 1: Deduct from Opening Stock
-if (remainingQty > 0 && inventoryData.opening_stock > 0) {
-    let usedQty = Math.min(remainingQty, inventoryData.opening_stock);
-    totalCost += usedQty * inventoryData.supplier1_rate;
-    remainingQty -= usedQty;
-}
-
-// Step 2: Deduct from Supplier 2 Stock
-if (remainingQty > 0 && inventoryData.quantity_received_supplier2 > 0) {
-    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_supplier2);
-    totalCost += usedQty * inventoryData.supplier2_rate;
-    remainingQty -= usedQty;
-}
-
-// Step 3: Deduct from Indent 1 Stock
-if (remainingQty > 0 && inventoryData.quantity_received_intend_1 > 0) {
-    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_1);
-    totalCost += usedQty * inventoryData.rate_intend_1;
-    remainingQty -= usedQty;
-}
-
-// Step 4: Deduct from Indent 2 Stock
-if (remainingQty > 0 && inventoryData.quantity_received_intend_2 > 0) {
-    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_2);
-    totalCost += usedQty * inventoryData.rate_intend_2;
-    remainingQty -= usedQty;
-}
-
-// Step 5: Deduct from Indent 3 Stock
-if (remainingQty > 0 && inventoryData.quantity_received_intend_3 > 0) {
-    let usedQty = Math.min(remainingQty, inventoryData.quantity_received_intend_3);
-    totalCost += usedQty * inventoryData.rate_intend_3;
-    remainingQty -= usedQty;
-}
-
-// ✅ Update consumed grocery with new total quantity & cost
-const { error: updateGroceryError } = await supabase
-    .from('consumedgrocery')
-    .update({
-        dailyconsumption: updatedDailyConsumption,
-        total_quantity_issued: totalQuantityIssued,
-        total_cost: totalCost
-    })
-    .eq('id', editId);
-
-if (updateGroceryError) throw updateGroceryError;
-
-console.log("✅ Changes saved successfully!");
- // Assuming the save operation is successful
- setNotification({ open: true, message: "Saved successfully!", severity: "success" });
-
     } catch (error) {
         console.error("❌ Error saving changes:", error);
-        setNotification({ open: true, message: "Failed to save changes!", severity: "error" });
     }
 };
 
 
 
 
+
   const handleSubmit = async () => {
     try {
-      const { itemname, itemName, DateOfConsumed ,ConsumedQnty = 0, Quantity, CostPerKg, CostPerPiece, CostPerLitre,no_of_cylinder, TotalAmount } = formData;
+      const { itemname, itemName, DateOfConsumed , Quantity, CostPerKg, CostPerPiece, CostPerLitre,no_of_cylinder, TotalAmount } = formData;
 
       let response;
 
@@ -635,21 +738,21 @@ console.log("✅ Changes saved successfully!");
       } else {
         switch (selectedCategory) {
           case 'Provisions':
-            const { data: purchasedData, error: purchasedError } = await supabase
-              .from('purchasedprovisions')
-              .select('purchaseid, PurchasedCostPerKg, RemainingQty')
+            const { data: inventoryData, error: inventoryError } = await supabase
+              .from('inventorygrocery')
+              .select('unit')
               .eq('itemname', itemname)
+              .eq('monthyear', monthYear)
               .limit(1);
 
-            if (purchasedError) throw purchasedError;
+            if (inventoryError) throw inventoryError;
 
-            if (!purchasedData || purchasedData.length === 0) {
+            if (!inventoryData || inventoryData.length === 0) {
               throw new Error('Item not found in PurchasedProvisions');
             }
 
-            const { purchaseid, PurchasedCostPerKg, RemainingQty } = purchasedData[0];
-            const ConsumedCost = PurchasedCostPerKg * ConsumedQnty;
-            const updatedRemainingQty = RemainingQty - ConsumedQnty;
+            // Extract unit from first record
+            const unit = inventoryData[0]?.unit;
 
             response = await supabase
               .from('consumedprovisions')
@@ -657,22 +760,13 @@ console.log("✅ Changes saved successfully!");
                 {
                   hostel,
                   itemname,
-                  purchaseid,
-                  ConsumedQnty,
-                  ConsumedCost,
-                  RemainingQty: updatedRemainingQty,
-                  DateOfConsumed,
+                  monthyear: monthYear,
+                  unit, // Use extracted unit
                 },
               ]);
 
             if (response.error) throw response.error;
 
-            const updateResponse = await supabase
-              .from('purchasedprovisions')
-              .update({ RemainingQty: updatedRemainingQty })
-              .eq('purchaseid', purchaseid);
-
-            if (updateResponse.error) throw updateResponse.error;
             break;
 
           case 'Vegetables':
@@ -750,7 +844,14 @@ console.log("✅ Changes saved successfully!");
   const handleView = (row) => {
     if (!row) return;
     setSelectedRow(row);
-    setDailyConsumptionData(row.dailyconsumption || {});
+    switch (selectedCategory) {
+      case 'Provisions':
+        setDailyConsumptionData(row.dailyconsumption || {});
+        break;
+      case 'Vegetables':
+        setDailyConsumptionVegData(row.dailyconsumption || {});
+        break;
+    }
   };
 
   const generateMonthDates = (selectedDate) => {
@@ -759,27 +860,39 @@ console.log("✅ Changes saved successfully!");
       dayjs(selectedDate).startOf("month").add(i, "day").format("YYYY-MM-DD")
     );
   };
-
   useEffect(() => {
     if (!selectedRow) return;
 
     const monthDates = generateMonthDates(selectedDate);
-    const newFormattedData = monthDates.map((date) => ({
-      date,
-      value: dailyConsumptionData[date] ? parseInt(dailyConsumptionData[date], 10) : 0,
-    }));
+
+    const newFormattedData = monthDates.map((date) => {
+      if (selectedCategory === 'Vegetables') {
+        return {
+          date,
+          value: dailyConsumptionVegData[date]?.quantity || 0,
+          costPerKg: dailyConsumptionVegData[date]?.costPerKg || 0,
+          totalCost: dailyConsumptionVegData[date]?.totalCost || 0,
+        };
+      } else {
+        return {
+          date,
+          value: dailyConsumptionData[date] ? parseInt(dailyConsumptionData[date], 10) : 0,
+        };
+      }
+    });
 
     setFormattedData(newFormattedData);
-  }, [dailyConsumptionData, selectedDate]);
+  }, [dailyConsumptionData, dailyConsumptionVegData, selectedDate, selectedCategory]);
+
 
   return (
-    <div className="max-h-screen max-w-screen bg-pageBg p-1 -mt-16">
+    <div className="max-h-screen max-w-screen bg-gray-100 dark:bg-gray-800 p-1 -mt-16">
       {/* Header */}
       <div className="flex items-center mt-14 mb-2">
-        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
-        <span className="ml-2 text-primary text-xl font-bold">Groceries</span>
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-gray-900 dark:text-gray-100 cursor-pointer" /></Link>
+        <span className="ml-2 text-gray-900 dark:text-gray-100 text-xl font-bold">Groceries</span>
       </div>
-      <div className="text-tertiary font-medium mb-4">
+      <div className="text-gray-400 font-medium mb-4">
         <div className="text-sm mb-4">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Groceries
         </div>
@@ -791,7 +904,7 @@ console.log("✅ Changes saved successfully!");
           <div
             key={index}
             onClick={() => setSelectedCategory(category.label)}
-            className="flex items-center justify-between bg-blue-500 text-white px-4 py-3 rounded-sm cursor-pointer hover:scale-105 transition-transform"
+            className="flex items-center justify-between bg-blue-500 text-white px-4 py-3 rounded-lg cursor-pointer hover:scale-105 transition-transform"
             style={{ backgroundColor: category.color, width: "20%", height: "60px" }}
           >
             <span className="font-bold text-sm">{category.label}</span>
@@ -802,7 +915,7 @@ console.log("✅ Changes saved successfully!");
 
       {/* Table Title */}
       <div className="flex items-center justify-center mb-1">
-        <span className="ml-2 text-primary text-xl font-bold">{selectedCategory}</span>
+        <span className="ml-2 text-gray-900 dark:text-gray-100 text-xl font-bold">{selectedCategory}</span>
       </div>
 
       {/* Search and Filter Section */}
@@ -820,6 +933,7 @@ console.log("✅ Changes saved successfully!");
               borderRadius: "20px",
             },
           }}
+          className="dark:bg-gray-600 dark:text:gray"
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -828,7 +942,6 @@ console.log("✅ Changes saved successfully!");
             ),
           }}
         />
-      {selectedCategory === "Provisions" && (
           <TextField
             type="date"
             label="Select Date"
@@ -843,23 +956,13 @@ console.log("✅ Changes saved successfully!");
             }}
             InputLabelProps={{ shrink: true }}
           />
-        )}
-        {selectedCategory !== "Provisions" && (
-        <Button
-        variant="contained"
-        color="primary"
-      >
-        Filter By
-      </Button>
-      )}
+
       </Box>
       <div className="flex items-center space-x-4 mb-2">
         <IconButton className="flex items-center space-x-1  text-blue-500 relative -top-1"
          onClick={() => fetchGroceriesData(selectedCategory)} >
         <span className="text-blue-500 text-sm font-medium">Refresh</span>
-  <Refresh className="text-blue-500" />
-
-</IconButton>
+  <RefreshIcon className="text-blue-500" /> </IconButton>
       <Button
         variant="contained"
         color="primary"
@@ -910,7 +1013,7 @@ console.log("✅ Changes saved successfully!");
               }}
             >
               {getTableHeaders().map((header, index) => (
-                <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
+                <TableCell key={index} align="left" sx={{ fontWeight: "bold", color: "white" }}>
                   {header}
                 </TableCell>
               ))}
@@ -918,67 +1021,97 @@ console.log("✅ Changes saved successfully!");
           </TableHead>
           <TableBody>
           {paginatedData.map((row, index) => {
-    const isRowOpen = collapseOpen[row.id] || false;
-    const isEditRow = editMode[row.id] || false;
+const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+
+const isRowOpen = collapseOpenProvision[rowId] || collapseOpenVegetable[rowId] || false;
+const isEditRow = editMode[rowId] || false;
 
     return (
-      <React.Fragment key={row.id}>
-        {/* Main Row */}
-        <TableRow sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
-          <TableCell>
-          <IconButton
-            aria-label="expand row"
-            size="small"
-            onClick={() => {
-              setcollapseOpen((prev) => {
-                const newCollapseState = Object.keys(prev).reduce((acc, key) => {
-                  acc[key] = false; // Collapse all rows
-                  return acc;
-                }, {} as Record<string, boolean>);
-                return { ...newCollapseState, [row.id]: !isRowOpen }; // Expand only the clicked row
-              });
-              handleView(row);
-              setEditId(row.id);
-            }}
-          >
-            {isRowOpen ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+<React.Fragment key={rowId}>
+  {/* Main Row */}
+  <TableRow className="dark:bg-gray-700 dark:text-gray-100" sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
+    <TableCell>
+      <IconButton
+        aria-label="expand row"
+        size="small"
+        className="dark:text-gray-100"
+        onClick={() => {
+          const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+
+          if (selectedCategory === "Provisions") {
+            setcollapseOpenProvision((prev) => {
+              const newCollapseState = Object.keys(prev).reduce((acc, key) => {
+                acc[key] = false;
+                return acc;
+              }, {} as Record<string, boolean>);
+              return { ...newCollapseState, [rowId]: !prev[rowId] };
+            });
+            setcollapseOpenVegetable({});
+          } else if (selectedCategory === "Vegetables") {
+            setcollapseOpenVegetable((prev) => {
+              const newCollapseState = Object.keys(prev).reduce((acc, key) => {
+                acc[key] = false;
+                return acc;
+              }, {} as Record<string, boolean>);
+              return { ...newCollapseState, [rowId]: !prev[rowId] };
+            });
+            setcollapseOpenProvision({});
+          }
+
+          handleView(row);
+          setEditId(rowId); // ✅ Correctly setting the edit ID dynamically
+        }}
+      >
+        {selectedCategory === "Provisions"
+          ? collapseOpenProvision[row.id]
+            ? <KeyboardArrowUpIcon />
+            : <KeyboardArrowDownIcon />
+          : collapseOpenVegetable[row.vegetableid]
+            ? <KeyboardArrowUpIcon />
+            : <KeyboardArrowDownIcon />
+        }
           </IconButton>
+
 
             <IconButton
               color="primary"
-              onClick={() => setEditMode((prev) => ({ ...prev, [row.id]: !isEditRow }))}
+              className="dark:hover:bg-slate-600"
+              onClick={() => {
+                const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+                setEditMode((prev) => ({ ...prev, [rowId]: !isEditRow }));
+              }}
             >
-              <EditIcon />
+              <EditIcon className='dark:text-gray-900' />
             </IconButton>
+
           </TableCell>
-          <TableCell align="left">{index + 1 + page * rowsPerPage}</TableCell>
+          <TableCell align="left" className="dark:text-gray-100">{index + 1 + page * rowsPerPage}.</TableCell>
 
           {/* Category-specific columns */}
           {selectedCategory === "Provisions" && (
             <>
-              <TableCell align="left">{row.itemname}</TableCell>
-              <TableCell align="right">{row.monthyear}</TableCell>
-              <TableCell align="right">{row.unit}</TableCell>
-              <TableCell align="right">
+              <TableCell align="left" className="dark:text-gray-100">{row.itemname}</TableCell>
+              <TableCell align="left"  className="dark:text-gray-100">{row.monthyear}</TableCell>
+              <TableCell align="left"  className="dark:text-gray-100">{row.unit}</TableCell>
+              <TableCell align="left"  className="dark:text-gray-100">
                 {row?.dailyconsumption
                   ? (typeof row.dailyconsumption === "string"
                       ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
                       : row.dailyconsumption[selectedDate] ?? "0")
                   : "0"}
               </TableCell>
-              <TableCell align="right">{row.total_quantity_issued}</TableCell>
-              <TableCell align="right">{row.total_cost}</TableCell>
+              <TableCell align="left" className="dark:text-gray-100">{row.total_quantity_issued}</TableCell>
+              <TableCell align="left" className="dark:text-gray-100">₹ {row.total_cost}</TableCell>
             </>
           )}
 
           {/* Other categories (Vegetables, Egg, Milk, Gas) */}
           {selectedCategory === "Vegetables" && (
             <>
-              <TableCell align="center">{row.DateOfConsumed}</TableCell>
-              <TableCell align="center">{row.itemName}</TableCell>
-              <TableCell align="center">{row.Quantity}</TableCell>
-              <TableCell align="center">{row.CostPerKg}</TableCell>
-              <TableCell align="center">{row.TotalCost}</TableCell>
+              <TableCell align="left">{row.itemName}</TableCell>
+              <TableCell align="left">{row.monthyear}</TableCell>
+              <TableCell align="left">{row.total_quantity_issued}</TableCell>
+              <TableCell align="left">₹ {(row.TotalCost) ? row.TotalCost : 0}</TableCell>
             </>
           )}
           {selectedCategory === "Egg" && (
@@ -1014,13 +1147,14 @@ console.log("✅ Changes saved successfully!");
                 <Box
                   sx={{
                     padding: 2,
-                    backgroundColor: "#F9FAFB", // Light gray background
+                    backgroundColor: "#F9FAFB",
                     borderBottomLeftRadius: "8px",
                     borderBottomRightRadius: "8px",
                     boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
                     border: "1px solid #E0E0E0",
                     marginBottom: "4px",
                   }}
+                  className="dark:bg-slate-800 "
                 >
                   <Typography
                     variant="subtitle1"
@@ -1030,14 +1164,15 @@ console.log("✅ Changes saved successfully!");
                       marginBottom: "8px",
                       textAlign: "center",
                     }}
+                    className="dark:text-gray-100"
                   >
-                    Daily Issued Information
+                    Daily Issued Information - {selectedCategory}
                   </Typography>
 
                   <Box
                     sx={{
                       display: "grid",
-                      gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                      gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
                       gap: 2,
                       padding: "8px",
                     }}
@@ -1059,32 +1194,76 @@ console.log("✅ Changes saved successfully!");
                             boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
                           },
                         }}
+                        className="dark:bg-slate-600 "
                       >
                         <Typography
                           variant="caption"
-                          sx={{ color: "#555", fontWeight: "bold" }}
+                          sx={{
+                            color: "#555",
+                            fontWeight: "bold",
+                          }}
                         >
                           {dayjs(date).format("DD MMM")}
                         </Typography>
-                        <TextField
-                          size="small"
-                          value={value}
-                          onChange={(e) => handleConsumptionChange(date, e.target.value)}
-                          disabled={!isEditRow}
-                          sx={{
-                            width: "80px",
-                            backgroundColor: "white",
-                            borderRadius: "5px",
-                            "&.Mui-disabled": {
-                              backgroundColor: "rgba(255,255,255,0.2)",
-                            },
-                          }}
-                        />
+
+                        {selectedCategory === "Provisions" ? (
+                          // **Provisions: Only 1 Field**
+                          <TextField
+                            size="small"
+                            value={value}
+                            onChange={(e) =>
+                              handleConsumptionChange(date, e.target.value)
+                            }
+                            disabled={!isEditRow}
+                            sx={{
+                              width: "80px",
+                              backgroundColor: "white",
+                              borderRadius: "5px",
+                              "&.Mui-disabled": {
+                                backgroundColor: "rgba(255,255,255,0.2)",
+                              },
+                              input: {
+                                color: "#000",
+                                "&.dark": {
+                                  color: "#FFF",
+                                },
+                              },
+                            }}
+                            className="dark:bg-gray-200 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-400"
+                          />
+                        ) : (
+                          // **Vegetables: Quantity & Cost/kg**
+                          <>
+                            <TextField
+                              size="small"
+                              label="Quantity"
+                              value={dailyConsumptionVegData[date]?.quantity || ""}
+                              onChange={(e) =>
+                                handleVegetableChange(date, "quantity", e.target.value)
+                              }
+                              disabled={!isEditRow}
+                              sx={{ width: "80px" }}
+                            />
+                            <TextField
+                              size="small"
+                              label="Cost/kg"
+                              value={dailyConsumptionVegData[date]?.costPerKg || ""}
+                              onChange={(e) =>
+                                handleVegetableChange(date, "costPerKg", e.target.value)
+                              }
+                              disabled={!isEditRow}
+                              sx={{ width: "80px" }}
+                            />
+                            <Typography variant="caption" sx={{ fontWeight: "bold" }}>
+                              ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
+                            </Typography>
+
+                          </>
+                        )}
                       </Box>
                     ))}
                   </Box>
 
-                  {/* Save Button - Only visible when editing */}
                   {isEditRow && (
                     <Box
                       sx={{
@@ -1104,11 +1283,23 @@ console.log("✅ Changes saved successfully!");
                           fontSize: "14px",
                           fontWeight: "bold",
                           backgroundColor: "#1976D2",
-                          "&:hover": {
+                          "&.dark": {
                             backgroundColor: "#1565C0",
                           },
+                          "&:hover": {
+                            backgroundColor: "#1565C0",
+                            "&.dark": {
+                              backgroundColor: "#1258A7",
+                            },
+                          },
                         }}
-                        onClick={() => handleSaveChanges(dailyConsumptionData)}
+                        onClick={() => {
+                          if(selectedCategory==='Provisions'){
+                          handleSaveChanges(dailyConsumptionData)}
+                          else{
+                            handleSaveChanges(dailyConsumptionVegData)
+                          }
+                        }}
                       >
                         Save Changes
                       </Button>
@@ -1119,6 +1310,7 @@ console.log("✅ Changes saved successfully!");
             </TableCell>
           </TableRow>
         )}
+
       </React.Fragment>
     )
           })}
@@ -1129,7 +1321,8 @@ console.log("✅ Changes saved successfully!");
 
         </TableContainer>
         <TablePagination
-          sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
+        className="dark:bg-gray-700 dark:text-gray-100"
+        sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
         rowsPerPageOptions={[10, 25, 50]}
         component="div"
         count={groceriesData.length}
@@ -1144,102 +1337,49 @@ console.log("✅ Changes saved successfully!");
       </>
       )}
       <Dialog open={openDialog} onClose={handleDialogClose}>
-        <DialogTitle>{isEditing ? "Edit Item" : "Add Item"}</DialogTitle>
-        <DialogContent>
-          {getDialogFields().map((field, index) => (
-            field.name === "itemname" && field.label === "Item Name" ? (
-              <Autocomplete
-                key={index}
-                options={availableItems.map(item => item.itemname)}
-                value={formData.itemname || ""}
-                onChange={(event, newValue) => {
-                  handleInputChange({
-                    target: {
-                      name: "itemname",
-                      value: newValue || ""
-                    }
-                  });
-                }}
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Item Name"
-                    fullWidth
-                    margin="dense"
-                  />
-                )}
-                disabled={isEditing}
-              />
-            ) : field.name === "ConsumedQnty" ? (
-              <TextField
-                key={index}
-                fullWidth
-                label={field.label}
-                name={field.name}
-                type="number"
-                value={formData[field.name] || ""}
-                onChange={(e) => {
-                  const value = parseInt(e.target.value, 10);
-                      if (value > maxQty) {
-                        alert("Consumed quantity cannot exceed remaining quantity.");
-                      }
+  <DialogTitle>Add Item</DialogTitle>
+  <DialogContent>
+    {/* Billing Month - Disabled Field */}
+    <TextField
+      fullWidth
+      label="Billing Month"
+      name="monthyear"
+      value={monthYear} // Automatically set to current YYYY-MM
+      margin="dense"
+      disabled
+    />
 
+    {/* Item Name - Autocomplete Dropdown */}
+    <Autocomplete
+      options={availableItems.map((item) => item.itemname)}
+      value={formData.itemname || ""}
+      onChange={(event, newValue) => {
+        handleInputChange({
+          target: {
+            name: "itemname",
+            value: newValue || "",
+          },
+        });
+      }}
+      renderInput={(params) => (
+        <TextField {...params} label="Item Name" fullWidth margin="dense" />
+      )}
+      disabled={isEditing}
+    />
+  </DialogContent>
 
-                  handleInputChange(e);
-                }}
-                margin="dense"
-                  inputProps={{
-                    max: maxQty,
-                  }}
-                  helperText={`Max: ${maxQty} kg or Lit`}
-              />
-            ) : (
-              <TextField
-                key={index}
-                fullWidth
-                label={field.label}
-                name={field.name}
-                type={field.type || "text"}
-                value={
-                  field.name === "selectedDate"
-                    ? selectedDate // Set value to selectedDate
-                    : field.type === "date"
-                    ? formData[field.name] || new Date().toISOString().split("T")[0]
-                    : formData[field.name] || ""
-                }
-                onChange={handleInputChange}
-                margin="dense"
-                InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
-                disabled={field.name === "selectedDate" || field.name === "monthyear"}
-              />
-            )
-          ))}
-        </DialogContent>
+  <DialogActions>
+    <Button onClick={handleDialogClose}>Cancel</Button>
+    <Button onClick={handleSubmit} variant="contained" color="primary">
+      Add
+    </Button>
+  </DialogActions>
+</Dialog>
 
-        <DialogActions>
-          <Button onClick={handleDialogClose}>Cancel</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
-            {isEditing ? "Update" : "Add"}
-          </Button>
-        </DialogActions>
-      </Dialog>
-       {/* Notification Snackbar */}
-      <Snackbar
-        open={notification.open}
-        autoHideDuration={3000}
-        onClose={() => setNotification({ ...notification, open: false })}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert severity={notification.severity} onClose={() => setNotification({ ...notification, open: false })}>
-          {notification.message}
-        </Alert>
-      </Snackbar>
-    
 
     </div>
   );
 };
 
 export default Groceries;
-
 
