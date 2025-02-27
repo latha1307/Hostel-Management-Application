@@ -210,7 +210,8 @@ useEffect(() => {
       try {
         const { data, error } = await supabase
           .from('inventorygrocery')
-          .select('itemname, total_stock_available');
+          .select('itemname, total_stock_available')
+          .eq('monthyear',monthYear);
 
         if (error) {
           throw error;
