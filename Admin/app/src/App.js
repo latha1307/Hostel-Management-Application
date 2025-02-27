@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import Navbar from "./components/NavBar.tsx";
 import "./index.css";
-import { ThemeProvider } from './constants/ThemeContext.js'
 import Main from "./pages/Mess/main.tsx";
 import Groceries from "./pages/Mess/Grocery.tsx";
 import Provisions from "./pages/Mess/Provisions.tsx";
@@ -26,7 +25,6 @@ function App() {
   };
 
   return (
-    <ThemeProvider>
       <Router>
         <div className={` ${darkMode ? 'dark' : ''} flex h-full bg-gray-100 font-quickSand`}>
           <Header toggleDarkMode={toggleDarkMode} darkMode={darkMode} toggleSidebar={toggleSidebar} />
@@ -53,7 +51,6 @@ function App() {
           </div>
         </div>
       </Router>
-    </ThemeProvider>
   );
 }
 

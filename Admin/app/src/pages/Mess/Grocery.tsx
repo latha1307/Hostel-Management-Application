@@ -35,12 +35,8 @@ import { useParams } from 'react-router-dom';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import dayjs from "dayjs";
+import { format } from "date-fns";
 
-interface DailyConsumptionEntry {
-  quantity: number;
-  costPerKg: number;
-  totalCost: number;
-}
 
 type FormattedData =
   | { date: string; value: number }
@@ -255,7 +251,7 @@ useEffect(() => {
 
       case 'Vegetables':
         return [
-          { label: "Bill Month", name: "monthyear", type: "date" },
+          { label: "Bill Month", name: "monthyear"},
           { label: "Name", name: "itemName" },
         ];
       case 'Egg':
@@ -318,7 +314,13 @@ useEffect(() => {
     setMaxQty(selectedItem?.total_stock_available || 0);
 };
 
+const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  setSelectedDate(e.target.value);
+};
 
+const formatMonthYear = (dateString: string) => {
+  return dateString ? format(new Date(dateString), "MMMM yyyy") : "";
+};
 
 
   const handleDialogClose = () => {
@@ -774,9 +776,7 @@ useEffect(() => {
                 {
                   hostel,
                   itemName,
-                  Quantity,
-                  CostPerKg,
-                  DateOfConsumed,
+                  monthyear: monthYear
                 },
               ]);
 
@@ -940,20 +940,39 @@ useEffect(() => {
             ),
           }}
         />
-          <TextField
-            type="date"
-            label="Select Date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            variant="outlined"
-            size="small"
-            sx={{
-              width: "180px",
-              backgroundColor: "white",
-              borderRadius: "10px",
-            }}
-            InputLabelProps={{ shrink: true }}
-          />
+<div style={{ position: "relative", display: "inline-block" }}>
+      {/* Hidden date input */}
+      <input
+        type="date"
+        value={selectedDate}
+        onChange={handleDateChange}
+        ref={(input) => {
+          if (input) {
+            input.style.position = "absolute";
+            input.style.width = "100%";
+            input.style.height = "100%";
+            input.style.opacity = "0";
+            input.style.cursor = "pointer";
+          }
+        }}
+      />
+
+      {/* Clickable TextField */}
+      <TextField
+        label="Select Date"
+        value={formatMonthYear(selectedDate)}
+        variant="outlined"
+        size="small"
+        onClick={() => document.querySelector("input[type='date']")?.click()}
+        onFocus={() => document.querySelector("input[type='date']")?.showPicker?.()} // Open date picker on focus (if supported)
+        sx={{
+          width: "180px",
+          backgroundColor: "white",
+          borderRadius: "10px",
+        }}
+        InputLabelProps={{ shrink: true }}
+      />
+    </div>
 
       </Box>
       <Button
@@ -1023,58 +1042,65 @@ const isEditRow = editMode[rowId] || false;
   {/* Main Row */}
   <TableRow className="dark:bg-gray-700 dark:text-gray-100" sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
     <TableCell>
-      <IconButton
-        aria-label="expand row"
-        size="small"
-        className="dark:text-gray-100"
-        onClick={() => {
-          const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+    <IconButton
+  aria-label="expand row"
+  size="small"
+  className="dark:text-gray-100"
+  onClick={() => {
+    const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
 
-          if (selectedCategory === "Provisions") {
-            setcollapseOpenProvision((prev) => {
-              const newCollapseState = Object.keys(prev).reduce((acc, key) => {
-                acc[key] = false;
-                return acc;
-              }, {} as Record<string, boolean>);
-              return { ...newCollapseState, [rowId]: !prev[rowId] };
-            });
-            setcollapseOpenVegetable({});
-          } else if (selectedCategory === "Vegetables") {
-            setcollapseOpenVegetable((prev) => {
-              const newCollapseState = Object.keys(prev).reduce((acc, key) => {
-                acc[key] = false;
-                return acc;
-              }, {} as Record<string, boolean>);
-              return { ...newCollapseState, [rowId]: !prev[rowId] };
-            });
-            setcollapseOpenProvision({});
-          }
+    if (selectedCategory === "Provisions") {
+      setcollapseOpenProvision((prev) => {
+        const newCollapseState = Object.keys(prev).reduce((acc, key) => {
+          acc[key] = false;
+          return acc;
+        }, {} as Record<string, boolean>);
+        return { ...newCollapseState, [rowId]: !prev[rowId] };
+      });
+      setcollapseOpenVegetable({});
+    } else if (selectedCategory === "Vegetables") {
+      setcollapseOpenVegetable((prev) => {
+        const newCollapseState = Object.keys(prev).reduce((acc, key) => {
+          acc[key] = false;
+          return acc;
+        }, {} as Record<string, boolean>);
+        return { ...newCollapseState, [rowId]: !prev[rowId] };
+      });
+      setcollapseOpenProvision({});
+    }
 
-          handleView(row);
-          setEditId(rowId); // ✅ Correctly setting the edit ID dynamically
-        }}
-      >
-        {selectedCategory === "Provisions"
-          ? collapseOpenProvision[row.id]
-            ? <KeyboardArrowUpIcon />
-            : <KeyboardArrowDownIcon />
-          : collapseOpenVegetable[row.vegetableid]
-            ? <KeyboardArrowUpIcon />
-            : <KeyboardArrowDownIcon />
-        }
-          </IconButton>
+    handleView(row);
+    setEditId(rowId);
+  }}
+>
+  {(selectedCategory === "Provisions" || selectedCategory === "Vegetables") &&
+    (selectedCategory === "Provisions"
+      ? collapseOpenProvision[row.id]
+        ? <KeyboardArrowUpIcon />
+        : <KeyboardArrowDownIcon />
+      : collapseOpenVegetable[row.vegetableid]
+        ? <KeyboardArrowUpIcon />
+        : <KeyboardArrowDownIcon />
+    )}
+</IconButton>
 
 
-            <IconButton
-              color="primary"
-              className="dark:hover:bg-slate-600"
-              onClick={() => {
-                const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
-                setEditMode((prev) => ({ ...prev, [rowId]: !isEditRow }));
-              }}
-            >
-              <EditIcon className='dark:text-gray-900' />
-            </IconButton>
+
+<IconButton
+  color="primary"
+  className="dark:hover:bg-slate-600"
+  onClick={() => {
+    if (selectedCategory === 'Provisions' || selectedCategory === 'Vegetables') {
+      const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+      setEditMode((prev) => ({ ...prev, [rowId]: !isEditRow }));
+    } else {
+      handleDialogOpen(row);
+    }
+  }}
+>
+  <EditIcon className='dark:text-gray-900' />
+</IconButton>
+
 
           </TableCell>
           <TableCell align="left" className="dark:text-gray-100">{index + 1 + page * rowsPerPage}.</TableCell>
@@ -1328,45 +1354,82 @@ const isEditRow = editMode[rowId] || false;
         </Box>
       </>
       )}
-      <Dialog open={openDialog} onClose={handleDialogClose}>
-  <DialogTitle>Add Item</DialogTitle>
+<Dialog open={openDialog} onClose={handleDialogClose}>
+  <DialogTitle>{isEditing ? "Edit Item" : "Add Item"}</DialogTitle>
   <DialogContent>
-    {/* Billing Month - Disabled Field */}
-    <TextField
-      fullWidth
-      label="Billing Month"
-      name="monthyear"
-      value={monthYear} // Automatically set to current YYYY-MM
-      margin="dense"
-      disabled
-    />
-
-    {/* Item Name - Autocomplete Dropdown */}
-    <Autocomplete
-      options={availableItems.map((item) => item.itemname)}
-      value={formData.itemname || ""}
-      onChange={(event, newValue) => {
-        handleInputChange({
-          target: {
-            name: "itemname",
-            value: newValue || "",
-          },
-        });
-      }}
-      renderInput={(params) => (
-        <TextField {...params} label="Item Name" fullWidth margin="dense" />
-      )}
-      disabled={isEditing}
-    />
+    {getDialogFields().map((field, index) =>
+      field.name === "itemname" && field.label === "Item Name" ? (
+        <Autocomplete
+          key={index}
+          options={availableItems.map((item) => item.itemname)}
+          value={formData.itemname || ""}
+          onChange={(event, newValue) => {
+            handleInputChange({
+              target: {
+                name: "itemname",
+                value: newValue || "",
+              },
+            });
+          }}
+          renderInput={(params) => (
+            <TextField {...params} label="Item Name" fullWidth margin="dense" />
+          )}
+          disabled={isEditing}
+        />
+      ) : field.name === "ConsumedQnty" ? (
+        <TextField
+          key={index}
+          fullWidth
+          label={field.label}
+          name={field.name}
+          type="number"
+          value={formData[field.name] || ""}
+          onChange={(e) => {
+            const value = parseInt(e.target.value, 10);
+            if (value > maxQty) {
+              alert("Consumed quantity cannot exceed remaining quantity.");
+            }
+            handleInputChange(e);
+          }}
+          margin="dense"
+          inputProps={{
+            max: maxQty,
+          }}
+          helperText={`Max: ${maxQty} kg or Lit`}
+        />
+      ) : (
+        <TextField
+    key={index}
+    fullWidth
+    label={field.label}
+    name={field.name}
+    type={field.type || "text"}
+    value={
+      field.name === "selectedDate"
+        ? selectedDate
+        : field.name === "monthyear"
+        ? monthYear // Ensuring Billing Month is included
+        : field.type === "date"
+        ? formData[field.name] || new Date().toISOString().split("T")[0]
+        : formData[field.name] || ""
+    }
+    onChange={handleInputChange}
+    margin="dense"
+    InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
+    disabled={field.name === "selectedDate" || field.name === "monthyear"}
+  />
+))}
   </DialogContent>
 
   <DialogActions>
     <Button onClick={handleDialogClose}>Cancel</Button>
     <Button onClick={handleSubmit} variant="contained" color="primary">
-      Add
+      {isEditing ? "Update" : "Add"}
     </Button>
   </DialogActions>
 </Dialog>
+
+
 
 
     </div>

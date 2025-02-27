@@ -18,7 +18,7 @@ const BillDistribution = () => {
     { name: "EGG", icon: EggIcon, amount: 0, shadowColor: "#ffcc80" },
     { name: "MILK", icon: MilkImage, amount: 0, shadowColor: "#64b5f6" },
     { name: "GAS", icon: GasIcon, amount: 84307, shadowColor: "#e57373" },
-    { name: "STAFF", icon: StaffSalaryIcon, amount: 0, shadowColor: "#7986cb" },
+    { name: "STAFF SALARY", icon: StaffSalaryIcon, amount: 0, shadowColor: "#7986cb" },
   ]);
 
   const { hostel } = useParams();
@@ -28,75 +28,115 @@ const BillDistribution = () => {
   const [isEditingOtherWaste, setIsEditingOtherWaste] = useState(false);
   const [foodWaste, setFoodWaste] = useState(0);
   const [otherAmount, setOtherAmount] = useState(0);
-  const [groceryAmount, setGroceryAmount] = useState(0);
   const [isOtherAdded, setIsOtherAdded] = useState(false);
   const [open, setOpen] = useState(false);
   const [studentHeadcounts] = useState(7784);
-  const [selectedDate, setSelectedDate] = useState("December 2024");
+  const [selectedDate, setSelectedDate] = useState("");
   const totalSummation = items.reduce((sum, item) => sum + item.amount, 0);
   const netAmount = totalSummation - foodWaste - (isOtherAdded ? otherAmount : 0);
   const perDayAmount = netAmount / studentHeadcounts;
 
+  const generateMonthOptions = () => {
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    const currentYear = new Date().getFullYear();
+    let options = [];
+
+    for (let year = currentYear - 1; year <= currentYear + 1; year++) {
+      for (let month = 0; month < 12; month++) {
+        const value = `${year}-${String(month + 1).padStart(2, "0")}`;
+        const label = `${months[month]} ${year}`;
+        options.push({ value, label });
+      }
+    }
+
+    return options;
+  };
+
 
   const fetchBillData = useCallback(async () => {
+    if (!selectedDate) return; // Prevents calling without a valid date
+
     setLoading(true);
     setError(null);
 
     try {
-      // Fetch consumed grocery data
+      console.log("Fetching data for:", selectedDate);
+
+      // Fetch Grocery Data
       const { data: consumeddata, error: error1 } = await supabase
         .from("consumedgrocery")
         .select("total_cost")
-        .eq("hostel", hostel);
+        .eq("hostel", hostel)
+        .eq("monthyear", selectedDate);
 
       if (error1) throw error1;
 
-      // Fetch vegetable data
+      // Fetch Vegetable Data
       const { data: vegtabledata, error: error2 } = await supabase
         .from("vegetables")
         .select("TotalCost")
-        .eq("hostel", hostel);
+        .eq("hostel", hostel)
+        .eq("monthyear", selectedDate);
 
       if (error2) throw error2;
-
+      function getNextMonth(ym) {
+        let [year, month] = ym.split("-").map(Number);
+        month += 1;
+        if (month > 12) {  // Handle December -> January transition
+          month = 1;
+          year += 1;
+        }
+        return `${year}-${String(month).padStart(2, "0")}`;  // Format as YYYY-MM
+      }
+      // Fetch Egg Data
       const { data: eggdata, error: error3 } = await supabase
-        .from("egg")
-        .select("TotalCost")
-        .eq("hostel", hostel);
+  .from("egg")
+  .select("TotalCost")
+  .eq("hostel", hostel)
+  .gte("DateOfConsumed", `${selectedDate}-01`)
+  .lt("DateOfConsumed", `${getNextMonth(selectedDate)}-01`);
 
       if (error3) throw error3;
 
+      // Fetch Milk Data
       const { data: milkdata, error: error4 } = await supabase
         .from("milk")
         .select("TotalCost")
-        .eq("hostel", hostel);
+        .eq("hostel", hostel)
+        .gte("DateOfConsumed", `${selectedDate}-01`)
+        .lt("DateOfConsumed", `${getNextMonth(selectedDate)}-01`);
 
       if (error4) throw error4;
 
+      // Fetch Staff Salary
       const { data: staffdata, error: error5 } = await supabase
-      .from("staffsalary")
-      .select("SalaryAmount")
-      .eq("hostel", hostel);
+        .from("staffsalary")
+        .select("SalaryAmount")
+        .eq("hostel", hostel)
+        .gte("DateOfIssued", `${selectedDate}-01`)
+        .lt("DateOfIssued", `${getNextMonth(selectedDate)}-01`);
 
-    if (error5) throw error5;
+      if (error5) throw error5;
 
-      // ✅ Extract total costs
-      const totalGroceryCost = consumeddata.reduce((sum, row) => parseInt(sum + row.total_cost), 0);
-      const totalVegetableCost = vegtabledata.reduce((sum, row) => sum + row.TotalCost, 0);
-      const totalEggCost = eggdata.reduce((sum, row) => sum + row.TotalCost, 0);
-      const totalMilkCost = milkdata.reduce((sum, row) => sum + row.TotalCost, 0);
-      const totalStaffCost = staffdata.reduce((sum, row) => sum + row.SalaryAmount, 0);
+      // ✅ Extract total costs safely
+      const totalGroceryCost = consumeddata?.reduce((sum, row) => sum + parseInt(row.total_cost || 0), 0) || 0;
+      const totalVegetableCost = vegtabledata?.reduce((sum, row) => sum + parseInt(row.TotalCost || 0), 0) || 0;
+      const totalEggCost = Array.isArray(eggdata) ? eggdata.reduce((sum, row) => sum + row.TotalCost, 0) : 0;
+      const totalMilkCost = milkdata?.reduce((sum, row) => sum + parseInt(row.TotalCost || 0), 0) || 0;
+      const totalStaffCost = staffdata?.reduce((sum, row) => sum + parseInt(row.SalaryAmount || 0), 0) || 0;
 
-      // ✅ Update the amounts
-      setGroceryAmount(totalGroceryCost);
-
+      // ✅ Update the UI amounts
       setItems((prevItems) =>
         prevItems.map((item) => {
           if (item.name === "GROCERIES ISSUED") return { ...item, amount: totalGroceryCost };
           if (item.name === "VEGETABLES") return { ...item, amount: totalVegetableCost };
           if (item.name === "EGG") return { ...item, amount: totalEggCost };
           if (item.name === "MILK") return { ...item, amount: totalMilkCost };
-          if (item.name === "STAFF") return { ...item, amount: totalStaffCost };
+          if (item.name === "STAFF SALARY") return { ...item, amount: totalStaffCost };
           return item;
         })
       );
@@ -106,12 +146,18 @@ const BillDistribution = () => {
     } finally {
       setLoading(false);
     }
-  }, [hostel]);
+  }, [selectedDate, hostel]); // ✅ Now depends on `selectedDate`
 
-
+  // 🔹 Re-run fetchBillData when selectedDate changes
   useEffect(() => {
     fetchBillData();
   }, [fetchBillData]);
+
+
+  useEffect(() => {
+    const defaultDate = new Date().toISOString().slice(0, 7); // Set default to YYYY-MM
+    setSelectedDate(defaultDate);
+  }, []);
 
 
   const handleOpen = () => setOpen(true);
@@ -129,11 +175,16 @@ const BillDistribution = () => {
       </Typography>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Select className='dark:bg-gray-700 dark:text-gray-200' value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} sx={{ bgcolor: "#fff" }}>
-          {["December 2024"].map((date) => (
-            <MenuItem key={date} value={date}>{date}</MenuItem>
-          ))}
-        </Select>
+      <Select
+      className="dark:bg-gray-700 dark:text-gray-200"
+      value={selectedDate}
+      onChange={(e) => setSelectedDate(e.target.value)}
+      sx={{ bgcolor: "#fff" }}
+    >
+      {generateMonthOptions().map(({ value, label }) => (
+        <MenuItem key={value} value={value}>{label}</MenuItem>
+      ))}
+    </Select>
         <Button variant="contained" color="primary" sx={{ fontSize: "0.7rem" }}>View History</Button>
       </Box>
 
@@ -184,7 +235,7 @@ const BillDistribution = () => {
         onChange={(e) => setFoodWaste(Number(e.target.value))}
         onBlur={() => setIsEditingFoodWaste(false)}
         autoFocus
-        className='dark:bg-gray-100' 
+        className='dark:bg-gray-100'
         sx={{ width: "120px", fontSize: "1.2rem" }}
       />
     ) : (
@@ -211,7 +262,7 @@ const BillDistribution = () => {
           onChange={(e) => setOtherAmount(Number(e.target.value))}
           onBlur={() => setIsEditingOtherWaste(false)}
           autoFocus
-          className='dark:bg-gray-100' 
+          className='dark:bg-gray-100'
           sx={{ width: "120px", fontSize: "1.2rem", color: 'black' }}
         />
       ) : (
@@ -258,9 +309,9 @@ const BillDistribution = () => {
         <Typography variant="subtitle2" sx={{ marginTop:"10px", height: "4%", color: "green", bgcolor: "#e6ffe6", p: 1, borderRadius: 1 }}>
           Per day Amount : <span style={{ color: "green" }}>₹</span> {perDayAmount.toFixed(2)}
         </Typography>
-        <Button 
-  variant="contained" 
-  color="error" 
+        <Button
+  variant="contained"
+  color="error"
   sx={{ fontSize: "1rem",marginTop:"10px", height: "4%", height: "40px" }}
 >
   Distribute To All Students
