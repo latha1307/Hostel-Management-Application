@@ -44,7 +44,7 @@ const ExcelImport: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [tempDate, setTempDate] = useState<Dayjs | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
-
+  
   
 
  
@@ -566,12 +566,12 @@ saveAs(dataBlob, "Attendence.xlsx");
 
 
 return (
-  <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
+  <div className="max-h-screen p-2 -mt-10 max-w-screen dark:bg-gray-800">
           <div className="flex items-center mt-8 mb-2">
-        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
-        <span className="ml-2 text-primary text-xl font-bold">Attendance</span>
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer dark:text-gray-200" /></Link>
+        <span className="ml-2 text-primary text-xl font-bold dark:text-gray-200">Attendance</span>
       </div>
-    <div className="text-sm mb-4">
+    <div className="text-sm mb-4 dark:text-gray-200">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Attendence
       </div>
     <div className='flex space-x-3 m-3 -ml-0'>
@@ -609,33 +609,54 @@ return (
         </label>
     </div>
           <div className="flex justify-between">
-      <Box display="flex" alignItems="center" mb={2} gap={2}>
-        {/* Search Field */}
-        <TextField
-          variant="outlined"
-          size="small"
-          placeholder="Search"
-          value={searchQuery}
-          onChange={handleSearch}
+          <Box display="flex" alignItems="center" mb={2} gap={2}>
+  {/* Search Field */}
+  <TextField
+  className="dark:bg-gray-800"
+  variant="outlined"
+  size="small"
+  placeholder="Search"
+  value={searchQuery}
+  onChange={handleSearch}
+  sx={{
+    width: "60%",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "10px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "10px",
+      "& fieldset": { borderColor: "#ccc" },
+      "&:hover fieldset": { borderColor: "#aaa" },
+      "& input": { color: "black" }, // Black text in light mode
+    },
+    "@media (prefers-color-scheme: dark)": {
+      backgroundColor: "rgb(31 41 55) !important",
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": { borderColor: "rgb(229 231 235) !important" },
+        "& input": { color: "white !important" }, // White text in dark mode
+      },
+    },
+  }}
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <SearchIcon
           sx={{
-            width: "60%",
-            backgroundColor: "#f9f9f9",
-            borderRadius: "10px",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "10px",
-            },
-          }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon style={{ color: "#007bff" }} />
-              </InputAdornment>
-            ),
+            color: "black", // Black icon in light mode
+            "@media (prefers-color-scheme: dark)": { color: "white !important" }, // White icon in dark mode
           }}
         />
-<LocalizationProvider dateAdapter={AdapterDayjs}>
+      </InputAdornment>
+    ),
+  }}
+/>
+
+
+
+
+  {/* Date Picker */}
+  <LocalizationProvider dateAdapter={AdapterDayjs}>
     <DatePicker
-      views={["year", "month"]} // Only show month & year
+      views={["year", "month"]}
       label="Select Month"
       value={selectedDate}
       onChange={(newValue) => setSelectedDate(newValue)}
@@ -644,24 +665,35 @@ return (
           {...params}
           size="small"
           variant="outlined"
+          className="w-[180px] rounded-[10px] bg-white dark:bg-gray-800 dark:border-gray-200 dark:text-gray-200"
           sx={{
-            width: "180px",
-            backgroundColor: "white",
-            borderRadius: "10px",
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#ccc" }, // Default light mode border
+              "&:hover fieldset": { borderColor: "#aaa" }, // Slightly darker on hover
+              "&.Mui-focused fieldset": { borderColor: "#007bff" }, // Focus color
+              "& input": { color: "black" }, // Light mode text color
+            },
+            "&.dark .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "rgb(229 231 235) !important" }, // gray-200 in dark mode
+              "& input": { color: "white !important" }, // White text in dark mode
+            },
           }}
           InputProps={{
             ...params.InputProps,
-            startAdornment: <CalendarMonthIcon sx={{ marginRight: 1 }} />, // Add calendar icon
+            startAdornment: (
+              <CalendarMonthIcon className="mr-1 text-blue-500 dark:text-white" />
+            ),
           }}
         />
       )}
     />
   </LocalizationProvider>
+</Box>
 
 
-         
 
-      </Box>
+
+
 
       {/* Add Item Button */}
       <Button
@@ -700,49 +732,62 @@ return (
           }}
         >
           <Table>
-            <TableHead>
-              <TableRow sx={{ backgroundColor:"#F57F17", position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap" }}>
-                {["Action","S.No", "Register NO","Name","Room No", "Month Year","Course","Branch",
-                "Year of Study","Total days","Present Days","Reduction Days","Adjust Advance","Prev Month Fine","Total"]
-                  .map((header, index) => (
-                    <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
-                      {header}
-                    </TableCell>
-                  ))
-                }
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredData.map((row, index) => (
-                <TableRow key={row.id} sx={{ backgroundColor: 'white' }}>
-                   <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
-                      <EditIcon />
-                    </IconButton>
-                  <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell align="center">{row["Register_no"]}</TableCell>
-                  <TableCell align="center">{row.Name}</TableCell>
-                  <TableCell align="center">{row["Room_No"]}</TableCell>
-                  <TableCell align="center">{row.monthyear}</TableCell>
-                 
-                  <TableCell align="center">{row.Course}</TableCell>
-                  <TableCell align="center">{row.Branch}</TableCell>
-                  <TableCell align="center">{row["Year_of_Study"]}</TableCell>
-                  <TableCell align="center">{row["Total_days"]}</TableCell>
-                  <TableCell align="center">{row["Present_Days"]}</TableCell>
-                  <TableCell align="center">{row["Reduction_Days"]}</TableCell>
-                  <TableCell align="center">{row["Adjust_Advance"]}</TableCell>
-                  <TableCell align="center">{row["Prev_Month_Fine"]}</TableCell>
-                  <TableCell align="center">{row.Total}</TableCell>
-                  <TableCell align="center">
-                   
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+  <TableHead className="dark:bg-gray-800 dark:text-gray-200">
+    <TableRow sx={{ backgroundColor: "#F57F17", position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap" }}>
+      {[
+        "Action",
+        "S.No",
+        "Register NO",
+        "Name",
+        "Room No",
+        "Month Year",
+        "Course",
+        "Branch",
+        "Year of Study",
+        "Total days",
+        "Present Days",
+        "Reduction Days",
+        "Adjust Advance",
+        "Prev Month Fine",
+        "Total",
+      ].map((header, index) => (
+        <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
+          {header}
+        </TableCell>
+      ))}
+    </TableRow>
+  </TableHead>
+  <TableBody>
+    {filteredData.map((row, index) => (
+      <TableRow key={row.id} sx={{ backgroundColor: "white" }}>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">
+          <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
+            <EditIcon />
+          </IconButton>
+        </TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{page * rowsPerPage + index + 1}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Register_no"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row.Name}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Room_No"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row.monthyear}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row.Course}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row.Branch}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Year_of_Study"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Total_days"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Present_Days"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Reduction_Days"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Adjust_Advance"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row["Prev_Month_Fine"]}</TableCell>
+        <TableCell align="center" className="dark:bg-gray-800 dark:text-gray-200">{row.Total}</TableCell>
+      </TableRow>
+    ))}
+  </TableBody>
+</Table>
+
 
         </TableContainer>
         <TablePagination
+          className="dark:bg-gray-800 dark:text-gray-200"
           sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
           rowsPerPageOptions={[10, 20, 50]}
           component="div"
