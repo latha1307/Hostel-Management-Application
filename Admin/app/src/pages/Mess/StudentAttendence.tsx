@@ -612,44 +612,25 @@ return (
       <Box display="flex" alignItems="center" mb={2} gap={2}>
         {/* Search Field */}
         <TextField
-  className="dark:bg-gray-800 dark:text-gray-200"
-  variant="outlined"
-  size="small"
-  placeholder="Search"
-  value={searchQuery}
-  onChange={handleSearch}
-  sx={{
-    width: "60%",
-    backgroundColor: "#f9f9f9",
-    borderRadius: "10px",
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "10px",
-      color: "black", // Light mode text color
-      "& fieldset": { borderColor: "#ccc" },
-      "&:hover fieldset": { borderColor: "#888" },
-      "&.Mui-focused fieldset": { borderColor: "#007bff" },
-    },
-    "& .MuiInputBase-input": {
-      color: "black", // Light mode text color
-      ".dark &": { color: "#a0aec0" }, // Dark mode text color
-    },
-    "&.dark": {
-      backgroundColor: "#2d3748", // Dark mode background
-      "& .MuiOutlinedInput-root": {
-        color: "#a0aec0", // Dark mode text color
-        "& fieldset": { borderColor: "#4a5568" },
-        "&:hover fieldset": { borderColor: "#718096" },
-        "&.Mui-focused fieldset": { borderColor: "#90cdf4" },
-      },
-    },
-  }}
-  InputProps={{
-    endAdornment: (
-      <InputAdornment position="end">
-        <SearchIcon
+          variant="outlined"
+          size="small"
+          placeholder="Search"
+          value={searchQuery}
+          onChange={handleSearch}
           sx={{
-            color: "black", // Light mode icon color
-            ".dark &": { color: "#a0aec0" }, // Dark mode icon color
+            width: "60%",
+            backgroundColor: "#f9f9f9",
+            borderRadius: "10px",
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "10px",
+            },
+          }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <SearchIcon style={{ color: "#007bff" }} />
+              </InputAdornment>
+            ),
           }}
         />
 <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -762,7 +743,6 @@ return (
 
         </TableContainer>
         <TablePagination
-          className="dark:bg-gray-800 dark:text-gray-200"
           sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
           rowsPerPageOptions={[10, 20, 50]}
           component="div"

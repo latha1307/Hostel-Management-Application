@@ -18,6 +18,7 @@ import {
   TableRow,
   IconButton,
   InputAdornment,
+  MenuItem,
 
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -71,6 +72,26 @@ type FormData = {
   rate_intend_3: number;
 };
 
+const generateMonths = (): { value: string; label: string }[] => {
+  const months: { value: string; label: string }[] = [];
+  const today = new Date();
+
+  for (let i = 0; i < 12; i++) {
+    const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Ensure two-digit format
+
+    const value = `${year}-${month}`; // YYYY-MM
+    const label = date.toLocaleString("en-US", { month: "long", year: "numeric" }); // August 2024
+
+    months.push({ value, label });
+  }
+
+  return months;
+};
+
+
+
 const Provisions = () => {
   const [groceriesData, setGroceriesData] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -100,6 +121,8 @@ const Provisions = () => {
    | null>(null);
   const [fileName, setFileName] = useState("Provisions_Stock.xlsx");
   const [searchQuery, setSearchQuery] = useState("");
+
+
 
 
 const handleSearch = (event) => {
@@ -196,13 +219,13 @@ const handleMonthSubmit = async () => {
 
       const vegetablesBoysData = vegetablesList.map(item => ({
         monthyear: monthYear,
-        itemname: item.itemname,
+        itemName: item.itemname,
         hostel: 'Boys'
     }));
 
     const vegetablesGirlsData = vegetablesList.map(item => ({
       monthyear: monthYear,
-      itemname: item.itemname,
+      itemName: item.itemname,
       hostel: 'Girls'
   }));
 
@@ -257,6 +280,9 @@ const handleMonthSubmit = async () => {
     setOpenDialog(true);
   };
 
+  const handleDateChange = (event) => {
+    setMonthYear(event.target.value);
+  };
 
   const handleDialogClose = () => {
     setOpenDialog(false);
@@ -565,6 +591,35 @@ const handleMonthSubmit = async () => {
   }}
 />
 
+<TextField
+    select
+    variant="outlined"
+    size="small"
+    value={monthYear}
+    onChange={handleDateChange}
+    className="dark:bg-gray-700 dark:text-gray-200"
+    sx={{
+      width: "30%",
+      backgroundColor: "white",
+      borderRadius: "10px",
+      "& .MuiOutlinedInput-root": {
+        borderRadius: "10px",
+        "&.Mui-focused": {
+          borderColor: "#60A5FA",
+          "& fieldset": { borderColor: "#60A5FA !important" },
+        },
+      },
+      "&.dark .MuiOutlinedInput-root": {
+        backgroundColor: "#374151",
+      },
+    }}
+  >
+    {generateMonths().map((month) => (
+      <MenuItem key={month.value} value={month.value}>
+        {month.label}
+      </MenuItem>
+    ))}
+  </TextField>
   {/* Add New Month Button */}
   <Button
     variant="contained"
