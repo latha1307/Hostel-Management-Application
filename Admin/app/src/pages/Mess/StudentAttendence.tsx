@@ -35,7 +35,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { useParams } from "react-router-dom";
 import ArrowBack from "@mui/icons-material/ArrowBack";
-
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
   
 const ExcelImport: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -48,36 +48,36 @@ const ExcelImport: React.FC = () => {
   
 
  
-  interface InventoryItem {
+  interface StudentAttendance {
   id: number;
  
-   "Register No  Unique Id": string,
-    "Room No": number,
+   "Register_No": string,
+    "Room_No": number,
     monthyear:string,
     Name: string,
     Course: string,
     Branch: string,
-    "Year of Study":number,
-    "Total days": number,
-    "Present Days": number,
-   "Reduction Days": number,
-    "Adjust Advance": number,
-    "Prev Month Fine": number,
+    "Year_of_Study":number,
+    "Total_days": number,
+    "Present_Days": number,
+   "Reduction_Days": number,
+    "Adjust_Advance": number,
+    "Prev_Month_Fine": number,
      Total: number
 }
 interface FormFields {
-  "Register No  Unique ID": string;
-  "Room No": number;
+  "Register_no": string;
+  "Room_No": number;
   monthyear: string;
   Name: string;
   Course: string;
   Branch: string;
-  "Year of Study": number;
-  "Total days": number;
-  "Present Days": number;
-  "Reduction Days": number;
-  "Adjust Advance": number;
-  "Prev Month Fine": number;
+  "Year_of_Study": number;
+  "Total_days": number;
+  "Present_Days": number;
+  "Reduction_Days": number;
+  "Adjust_Advance": number;
+  "Prev_Month_Fine": number;
   Total: number;
 }
   const [error, setError] = useState<string | null>(null);
@@ -87,35 +87,35 @@ interface FormFields {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchQuery, setSearchQuery] = useState("");
- const [groceriesData, setGroceriesData] = useState<InventoryItem[]>([]);
+ const [StudentData, setStudentData] = useState<StudentAttendance[]>([]);
   const [formData, setFormData] = useState<FormFields>({
-   "Register No  Unique ID": "",
-    "Room No": 0,
+   "Register_no": "",
+    "Room_No": 0,
     monthyear: '',
     Name: '',
     Course: '',
     Branch: '',
-    "Year of Study":0,
-    "Total days": 0,
-    "Present Days": 0,
-    "Reduction Days": 0,
-    "Adjust Advance": 0,
-    "Prev Month Fine": 0,
+    "Year_of_Study":0,
+    "Total_days": 0,
+    "Present_Days": 0,
+    "Reduction_Days": 0,
+    "Adjust_Advance": 0,
+    "Prev_Month_Fine": 0,
      Total: 0
   });
   const getDialogFields = [
-    { label: "Register No", name: "Register No  Unique ID" },
-    { label: "Room No", name: "Room No",type:"number" },
+    { label: "Register No", name: "Register_no" },
+    { label: "Room No", name: "Room_No",type:"number" },
     { label: "Month/Year", name: "monthyear" },
     { label: "Name", name: "Name" },
     { label: "Course", name: "Course" },
     { label: "Branch", name: "Branch"},
-    { label: "Year of Study", name: "Year of Study" },
-    { label: "Total days", name: "Total  days", type: "number" },
-    { label: "Present Days", name: "Present Days", type: "number" },
-    { label: "Reduction Days", name: "Reduction Days", type: "number" },
-    { label: "Adjust Advance", name: "Adjust Advance", type: "number" },
-    { label: "Prev Month Fine", name: "Prev Month Fine", type: "number" },
+    { label: "Year of Study", name: "Year_of_Study" },
+    { label: "Total days", name: "Total_days", type: "number" },
+    { label: "Present Days", name: "Present_Days", type: "number" },
+    { label: "Reduction Days", name: "Reduction_Days", type: "number" },
+    { label: "Adjust Advance", name: "Adjust_Advance", type: "number" },
+    { label: "Prev Month Fine", name: "Prev_Month_Fine", type: "number" },
     { label: "Total", name: "Total" ,type:"number"},
   ];
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -147,7 +147,7 @@ interface FormFields {
     setPage(0);
   };
 
-  const paginatedData = groceriesData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const paginatedData = StudentData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
 const handleSearch = (event) => {
   setSearchQuery(event.target.value);
@@ -160,28 +160,38 @@ const handleSearch = (event) => {
         value.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
-  const fetchGroceriesData = useCallback(async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    const { data, error } = await supabase
-      .from("hoste")
-      .select("*")
-      .order("id", { ascending: true });
+  const FetchAttendanceData = useCallback(async (hostelType?: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      let query = supabase.from("hoste").select("*").order("id", { ascending: true });
+  
+      if (hostelType) {
+        query = query.eq("hostel", hostelType); // Filter by hostel type
+      }
+  
+      const { data, error } = await query;
+  
+      if (error) throw error;
+  
+      setStudentData(data as StudentAttendance[]);
+    } catch (error: any) {
+      console.error("Error fetching student attendance data:", error.message);
+      setError("Error fetching student attendance data");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  
+  // Fetch data when component mounts or hostel type changes
+  useEffect(() => {
+    FetchAttendanceData(hostel || "Girls"); // Default to 'Girls' if undefined
+  }, [hostel,FetchAttendanceData]);
+  
+     
 
-    if (error) throw error;
-
-    setGroceriesData(data as InventoryItem[]);
-  } catch (error: any) {
-    console.error("Error fetching groceries data:", error.message);
-    setError("Error fetching groceries data");
-  } finally {
-    setLoading(false);
-  }
-}, []);
-useEffect(() => {
-  fetchGroceriesData();
-}, [fetchGroceriesData]);
+  
+  
 
 
   const handleOpenDialog = () => setOpen(true);
@@ -196,18 +206,18 @@ useEffect(() => {
     setOpenDialog(false);
     setFormData({
       
-    "Register No  Unique ID": "",
-    "Room No": 0,
+    "Register_no": "",
+    "Room_No": 0,
     monthyear: '',
     Name: '',
     Course: '',
     Branch: '',
-    "Year of Study":0,
-    "Total  days": 0,
-    "Present Days": 0,
-    "Reduction Days": 0,
-    "Adjust Advance": 0,
-    "Prev Month Fine": 0,
+    "Year_of_Study":0,
+    "Total_days": 0,
+    "Present_Days": 0,
+    "Reduction_Days": 0,
+    "Adjust_Advance": 0,
+    "Prev_Month_Fine": 0,
      Total: 0
     });
     setIsEditing(false);
@@ -243,8 +253,10 @@ useEffect(() => {
             return;
           }
  // Define normalization function
-const normalize = (str: string) => str.trim().toLowerCase().replace(/\s+/g, " ");
+ const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, "").trim();
 
+  // Normalize column names to match database schema
+ 
 // Define required headers without monthyear (since it's added later)
 const requiredHeaders = [
   "Register No Unique ID", "Room No", "Name",
@@ -253,20 +265,14 @@ const requiredHeaders = [
 ];
 
 // Find header row index dynamically
-const headerRowIndex = rawRows.findIndex(row => 
-  row.some((cell: any) => typeof cell === "string" && 
-    normalize(cell).includes("register no unique id")
-  )
-);
-
-if (headerRowIndex === -1) {
-  alert("Header row not found.");
-  reject("Header row not found.");
-  return;
-}
-
+const headerRowIndex = 0;
 const headers = rawRows[headerRowIndex].map((header: string) => header.trim());
 console.log("Extracted Headers:", headers);
+if (!headers.length) {
+  alert("Header row is empty.");
+  reject("Header row is empty.");
+  return;
+}
 if (headers.length > 12) {
   headers[12] = "Prev Month Fine";
 }
@@ -292,16 +298,59 @@ if (missingHeaders.length > 0) {
           });
 
           console.log("Final Processed Records:", dataRows);
-          resolve(dataRows);
-        };
+            // Parse data rows
+            const columnMapping: Record<string, string> = {
+              "Register No Unique ID": "Register_no",
+              "Room No": "Room_No",
+              "Name": "Name",
+              "Course": "Course",
+              "Branch": "Branch",
+              "Year of Study": "Year_of_Study",
+              "Total days": "Total_days",
+              "Present Days": "Present_Days",
+              "Reduction Days": "Reduction_Days",
+              "Adjust Advance": "Adjust_Advance",
+              "Prev Month Fine": "Prev_Month_Fine",
+              "Total": "Total",
+            };
+    
+            // Function to rename extracted column names to match database column names
+            const normalizeColumnNames = (data: Record<string, any>[]) => {
+              return data.map(record => {
+                const transformedRecord: Record<string, any> = {};
+                Object.keys(record).forEach((key) => {
+                  const normalizedKey = key.trim();
+                  if (columnMapping[normalizedKey]) {
+                    transformedRecord[columnMapping[normalizedKey]] = record[key];
+                  } else {
+                    transformedRecord[normalizedKey] = record[key];
+                  }
+                });
+                return transformedRecord;
+              });
+            };
 
-        reader.onerror = (error) => reject(error);
-      } catch (err) {
-        console.error("Error during import:", err);
-        reject(err);
-      }
-    });
-  };
+            // Apply column name normalization
+            const normalizedData = normalizeColumnNames(dataRows);
+            console.log("Final Normalized Data:", normalizedData);
+    
+            resolve(normalizedData);
+  
+          };
+  
+          reader.onerror = (error) => {
+            console.error("Error during file read:", error);
+            reject(error);
+          };
+          } catch (error) {
+      console.error("Error in importExcelData function:", error);
+      reject(error);
+    }
+         
+        });
+      };
+
+      
 const handleSubmit = async (
  
 ) => {
@@ -371,10 +420,11 @@ useEffect(() => {
     handleSubmit(file); // Pass file here if needed
   }
 }, [file]);
+
 const handleupdate= async () => {
   try {
     const requiredFields = [
-      { key: "Register No  Unique ID", label: "Register No" },
+      { key: "Register_no", label: "Register No" },
       { key: "Name", label: "Name" },
        { key: "monthyear", label: "Month/Year" }
     ];
@@ -387,7 +437,7 @@ const handleupdate= async () => {
       return;
     }
     
-    if (!formData.Name || !formData["Register No  Unique ID"] || !formData.monthyear) {
+    if (!formData.Name || !formData["Register_no"] || !formData.monthyear) {
       alert("Please fill in all required fields.");
       return;
     }
@@ -407,6 +457,7 @@ const handleupdate= async () => {
 
       console.log("Existing Data:", existingData);
 
+     
 
       const updateData: Record<string, any> = {};
       Object.keys(formData).forEach((key) => {
@@ -428,26 +479,45 @@ const handleupdate= async () => {
         console.log("No changes detected, skipping update.");
       }
     } else {
-
-      const { error } = await supabase.from("hoste").insert([formData]);
+      const insertData = { ...formData };
+      console.log("Form Data before update:", insertData);
+      if (!insertData || Object.keys(insertData).length === 0) {
+        console.error("formData is empty or undefined, cannot proceed!");
+        return; // Prevent further execution
+      }
+      Object.keys(insertData).forEach((key) => {
+        if (typeof insertData[key] === "undefined") {
+          insertData[key] = 0; // or use another appropriate default value
+        }
+      });
+      const { error } = await supabase.from("hoste").insert([insertData]);
       if (error) throw error;
       console.log("New item added successfully!");
     }
 
-    fetchGroceriesData();
+    FetchAttendanceData();
     handleDialogClose();
   } catch (error) {
     console.error("Error submitting data:", error);
     alert("Error submitting data. Please try again.");
   }
-};
+}   
+
+      
+   
+     
+        
+ 
+
+
 const exportToExcel = () => {
-  if (!groceriesData || groceriesData.length === 0) {
+  if (!StudentData || StudentData.length === 0) {
     alert("No data available to export!");
     return;
   }
 let headers = [
   "S.No",
+  "Register No",
   "Name",
   "Room No",
   "Month Year",
@@ -461,20 +531,21 @@ let headers = [
   "Prev Month Fine",
   "Total",
 ];
-const excelData = groceriesData.map((row, index) => {
+const excelData = StudentData.map((row, index) => {
   let rowData = [
     page * rowsPerPage + index + 1,
+    row["Register_no"],
     row.Name,
-    row["Room No"],
+    row["Room_No"],
     row.monthyear,
     row.Course,
     row.Branch,
-    row["Year of Study"],
-    row["Total  days"],
-    row["Present Days"],
-    row["Reduction Days"],
-    row["Adjust Advance"],
-    row["Prev Month Fine"],
+    row["Year_of_Study"],
+    row["Total_days"],
+    row["Present_Days"],
+    row["Reduction-Days"],
+    row["Adjust_Advance"],
+    row["Prev_Month_Fine"],
     row.Total,
   ];
 
@@ -495,11 +566,11 @@ saveAs(dataBlob, "Attendence.xlsx");
 
 
 return (
-  <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen dark:bg-gray-800 dark:text-gray-200">
-    <div className="flex items-center mb-4">
-      <ArrowBack className="text-primary cursor-pointer" />
-      <span className="ml-2 text-primary text-xl font-bold"> Attendance</span>
-    </div>
+  <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen">
+          <div className="flex items-center mt-8 mb-2">
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
+        <span className="ml-2 text-primary text-xl font-bold">Attendance</span>
+      </div>
     <div className="text-sm mb-4">
           <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}>{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</Link> &gt; Attendence
       </div>
@@ -581,58 +652,33 @@ return (
             ".dark &": { color: "#a0aec0" }, // Dark mode icon color
           }}
         />
-      </InputAdornment>
-    ),
-  }}
-/>
+<LocalizationProvider dateAdapter={AdapterDayjs}>
+    <DatePicker
+      views={["year", "month"]} // Only show month & year
+      label="Select Month"
+      value={selectedDate}
+      onChange={(newValue) => setSelectedDate(newValue)}
+      renderInput={(params) => (
+        <TextField
+          {...params}
+          size="small"
+          variant="outlined"
+          sx={{
+            width: "180px",
+            backgroundColor: "white",
+            borderRadius: "10px",
+          }}
+          InputProps={{
+            ...params.InputProps,
+            startAdornment: <CalendarMonthIcon sx={{ marginRight: 1 }} />, // Add calendar icon
+          }}
+        />
+      )}
+    />
+  </LocalizationProvider>
 
 
-
-    
-<TextField
-  className="dark:bg-gray-800 dark:text-gray-200"
-  type="date"
-  label="Select Date"
-  value={selectedDate ? selectedDate.format("YYYY-MM-DD") : ""}
-  onChange={(e) => setSelectedDate(dayjs(e.target.value))}
-  variant="outlined"
-  size="small"
-  sx={{
-    width: "180px",
-    backgroundColor: "white",
-    borderRadius: "10px",
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "10px",
-      color: "black", // Light mode text color
-      "& fieldset": { borderColor: "#ccc" },
-      "&:hover fieldset": { borderColor: "#888" },
-      "&.Mui-focused fieldset": { borderColor: "#007bff" },
-    },
-    "& .MuiInputBase-input": {
-      color: "black", // Light mode text color
-      ".dark &": { color: "#a0aec0" }, // Dark mode text color
-    },
-    "&.dark": {
-      backgroundColor: "#2d3748", // Dark mode background
-      "& .MuiOutlinedInput-root": {
-        color: "#a0aec0", // Dark mode text color
-        "& fieldset": { borderColor: "#4a5568" },
-        "&:hover fieldset": { borderColor: "#718096" },
-        "&.Mui-focused fieldset": { borderColor: "#90cdf4" },
-      },
-    },
-  }}
-  InputLabelProps={{
-    shrink: true,
-    sx: {
-      color: "black", // Light mode label color
-      ".dark &": { color: "#a0aec0" }, // Dark mode label color
-    },
-  }}
-  disabled
-/>
-
-
+         
 
       </Box>
 
@@ -660,7 +706,7 @@ return (
       <div>Loading...</div>
     ) : (
       <>
-        <Box sx={{ maxHeight: "70vh", maxWidth: '1180px', overflowX: "auto" }}>
+        <Box sx={{ maxHeight: "70vh", maxWidth: '1200px', overflowX: "auto" }}>
         <TableContainer
           sx={{
             maxHeight: "60vh",
@@ -675,8 +721,8 @@ return (
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor:"#F57F17", position: "sticky", top: 0, zIndex: 1, whiteSpace: "nowrap" }}>
-                {["S.No", "Register NO  Unique Id","Name","Room No", "Month Year","Course","Branch",
-                "Year of Study","Total days","Present Days","Reduction Days","Adjust Advance","Prev Month Fine","Total","Action"]
+                {["Action","S.No", "Register NO","Name","Room No", "Month Year","Course","Branch",
+                "Year of Study","Total days","Present Days","Reduction Days","Adjust Advance","Prev Month Fine","Total"]
                   .map((header, index) => (
                     <TableCell key={index} align="center" sx={{ fontWeight: "bold", color: "white" }}>
                       {header}
@@ -687,26 +733,27 @@ return (
             </TableHead>
             <TableBody>
               {filteredData.map((row, index) => (
-                <TableRow className="dark:bg-gray-800 dark:text-gray-200" key={row.id} sx={{ backgroundColor: 'white' }}>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{page * rowsPerPage + index + 1}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Register No  Unique ID"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Name}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Room No"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.monthyear}</TableCell>
-                 
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Course}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Branch}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Year of Study"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Total  days"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Present Days"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Reduction Days"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Adjust Advance"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row["Prev Month Fine"]}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">{row.Total}</TableCell>
-                  <TableCell className="dark:bg-gray-800 dark:text-gray-200" align="center">
-                    <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
+                <TableRow key={row.id} sx={{ backgroundColor: 'white' }}>
+                   <IconButton color="primary" onClick={() => handleDialogOpen(row)}>
                       <EditIcon />
                     </IconButton>
+                  <TableCell align="center">{page * rowsPerPage + index + 1}</TableCell>
+                  <TableCell align="center">{row["Register_no"]}</TableCell>
+                  <TableCell align="center">{row.Name}</TableCell>
+                  <TableCell align="center">{row["Room_No"]}</TableCell>
+                  <TableCell align="center">{row.monthyear}</TableCell>
+                 
+                  <TableCell align="center">{row.Course}</TableCell>
+                  <TableCell align="center">{row.Branch}</TableCell>
+                  <TableCell align="center">{row["Year_of_Study"]}</TableCell>
+                  <TableCell align="center">{row["Total_days"]}</TableCell>
+                  <TableCell align="center">{row["Present_Days"]}</TableCell>
+                  <TableCell align="center">{row["Reduction_Days"]}</TableCell>
+                  <TableCell align="center">{row["Adjust_Advance"]}</TableCell>
+                  <TableCell align="center">{row["Prev_Month_Fine"]}</TableCell>
+                  <TableCell align="center">{row.Total}</TableCell>
+                  <TableCell align="center">
+                   
                   </TableCell>
                 </TableRow>
               ))}
@@ -719,7 +766,7 @@ return (
           sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
           rowsPerPageOptions={[10, 20, 50]}
           component="div"
-          count={groceriesData.length}
+          count={StudentData.length}
           rowsPerPage={rowsPerPage}
           page={page}
           onPageChange={handleChangePage}
@@ -745,7 +792,7 @@ return (
     margin="normal"
     type={type}
     InputLabelProps={type === "date" ? { shrink: true } : undefined}
-    disabled={name === "monthyear"}
+    disabled={name=="monthyear"}
    
   />
 ))}

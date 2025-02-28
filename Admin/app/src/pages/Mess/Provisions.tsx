@@ -175,8 +175,6 @@ const handleMonthSubmit = async () => {
 
   try {
 
-    const today = new Date();
-    const formattedDate = today.toISOString().split("T")[0].split("-").reverse().join("-");
       // 1. Fetch groceries list (itemname, unit)
       const { data: groceriesList, error: groceriesError } = await supabase
           .from("grocerieslist")
@@ -215,7 +213,6 @@ const handleMonthSubmit = async () => {
         itemname: item.itemname,
         unit: item.unit,
         hostel: 'Boys',
-        dailyconsumption: { [formattedDate]: "0" }
     }));
 
     const inventoryGirlsData = groceriesList.map(item => ({
@@ -223,7 +220,6 @@ const handleMonthSubmit = async () => {
       itemname: item.itemname,
       unit: item.unit,
       hostel: 'Girls',
-      dailyconsumption: { [formattedDate]: "0" }
   }));
       const { error: insertError } = await supabase.from("inventorygrocery").insert(inventoryData);
       if (insertError) throw insertError;
