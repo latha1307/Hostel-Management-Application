@@ -620,26 +620,36 @@ return (
   onChange={handleSearch}
   sx={{
     width: "60%",
-    backgroundColor: "#f9f9f9",
+    backgroundColor: "white",
     borderRadius: "10px",
     "& .MuiOutlinedInput-root": {
       borderRadius: "10px",
-      "& fieldset": { borderColor: "#ccc" },
-      "&:hover fieldset": { borderColor: "#aaa" },
-      "& input": { color: "black" }, // Black text in light mode
+      "& fieldset": {
+        borderColor: "gray", // Default border color
+      },
     },
-    "@media (prefers-color-scheme: dark)": {
-      backgroundColor: "rgb(31 41 55) !important",
+    "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+      borderColor: "gray", // Border color when focused
+    },
+    "& .MuiInputBase-input": {
+      color: "black", // Default text color
+    },
+    ".dark &": {
+      backgroundColor: "transparent", // Dark mode background
       "& .MuiOutlinedInput-root": {
-        "& fieldset": { borderColor: "rgb(229 231 235) !important" },
-        "& input": { color: "white !important" }, // White text in dark mode
+        "& fieldset": {
+          borderColor: "gray", // Dark mode border color
+        },
+      },
+      "& .MuiInputBase-input": {
+        color: "white", // Dark mode text color
       },
     },
   }}
   InputProps={{
     endAdornment: (
       <InputAdornment position="end">
-        <SearchIcon
+        <SearchIcon className="dark:text-white"
           sx={{
             color: "black", // Black icon in light mode
             "@media (prefers-color-scheme: dark)": { color: "white !important" }, // White icon in dark mode
@@ -653,9 +663,11 @@ return (
 
 
 
+
   {/* Date Picker */}
   <LocalizationProvider dateAdapter={AdapterDayjs}>
     <DatePicker
+      className="bg-white dark:bg-gray-800 dark:border-white dark:text-white"
       views={["year", "month"]}
       label="Select Month"
       value={selectedDate}
@@ -665,12 +677,12 @@ return (
           {...params}
           size="small"
           variant="outlined"
-          className="w-[180px] rounded-[10px] bg-white dark:bg-gray-800 dark:border-gray-200 dark:text-gray-200"
+          className="w-[180px] rounded-[10px] bg-white"
           sx={{
             "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#ccc" }, // Default light mode border
-              "&:hover fieldset": { borderColor: "#aaa" }, // Slightly darker on hover
-              "&.Mui-focused fieldset": { borderColor: "#007bff" }, // Focus color
+              "& fieldset": { borderColor: "black" }, // Default light mode border
+              "&:hover fieldset": { borderColor: "black" }, // Slightly darker on hover
+              "&.Mui-focused fieldset": { borderColor: "black" }, // Focus color
               "& input": { color: "black" }, // Light mode text color
             },
             "&.dark .MuiOutlinedInput-root": {
@@ -690,12 +702,7 @@ return (
   </LocalizationProvider>
 </Box>
 
-
-
-
-
-
-      {/* Add Item Button */}
+{/* Add Item Button */}
       <Button
         variant="contained"
         size="small"
@@ -706,6 +713,7 @@ return (
           color: "white",
           "&:hover": { backgroundColor: "#c82333" },
           marginBottom: 2,
+          margin: 2
         }}
       >
         Add Item
@@ -817,7 +825,7 @@ return (
     margin="normal"
     type={type}
     InputLabelProps={type === "date" ? { shrink: true } : undefined}
-    disabled={name=="monthyear"}
+    disabled={name==="monthyear"}
    
   />
 ))}
