@@ -63,7 +63,7 @@
               className={`flex-1 flex flex-col transition-all dark:bg-gray-800 duration-300
               ${isSidebarOpen ? "ml-64" : "ml-16"}`}
             >
-              <div className="flex-grow mt-24 px-6 max-w-screen overflow-x-hidden">
+              <div className={`flex-grow mt-24 px-6 ${ isSidebarOpen ? 'max-w-[83vw]' : 'max-w-[96vw]'} overflow-x-hidden`}>
                 <Routes>
                   <Route path="/mess/provisions" element={<Provisions />} />
                   <Route path="/manage-mess/:hostel" element={<Main />} />
@@ -74,6 +74,7 @@
 
                   <Route path="/admin/profile" element={<AdminDetails email={email} />} />
                   <Route path="/admin/add" element={<AdminManagement />} />
+                  <Route path="/" element={<Provisions />} />
                 </Routes>
               </div>
             </div>

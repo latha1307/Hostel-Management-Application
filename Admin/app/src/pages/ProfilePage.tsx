@@ -3,6 +3,12 @@ import {
   Container,
   TextField,
   Button,
+  Card,
+  CardContent,
+  Typography,
+  IconButton,
+  Snackbar,
+  Alert,
   Table,
   TableBody,
   TableCell,
@@ -10,17 +16,18 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Card,
-  CardContent,
-  Typography,
-  IconButton,
-  Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
-import { Edit, Save, Add, Delete, ArrowBack } from "@mui/icons-material";
-import { Link } from "react-router-dom";
+import { Edit, Save, ArrowBack, Logout, LockReset, Delete } from "@mui/icons-material";
+import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 
 interface Admin {
+  id: number;
   name: string;
   email: string;
 }
@@ -29,161 +36,117 @@ interface Props {
   email: string | null;
 }
 
-const AdminDetails: React.FC<Props> = ({ email }) => {
+const ProfilePage: React.FC<Props> = ({ email }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [admin, setAdmin] = useState<Admin | null>(null);
   const [admins, setAdmins] = useState<Admin[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [adminToDelete, setAdminToDelete] = useState<Admin | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (email) {
-      fetchAdminDetails(email);
-    }
+    if (email) fetchAdminDetails(email);
     fetchAllAdmins();
   }, [email]);
 
-  // Fetch the logged-in admin details
   const fetchAdminDetails = async (adminEmail: string) => {
-    const { data, error } = await supabase
-      .from("admin")
-      .select("*")
-      .eq("email", adminEmail)
-      .single();
-
-    if (error) {
-      console.error("Error fetching admin details:", error);
-    } else {
-      setAdmin(data);
-    }
+    const { data, error } = await supabase.from("admin").select("*").eq("email", adminEmail).single();
+    if (!error) setAdmin(data);
   };
 
-  // Fetch all admins (excluding the logged-in admin)
   const fetchAllAdmins = async () => {
-    const { data, error } = await supabase.from("Admin").select("*");
-
-    if (error) {
-      console.error("Error fetching admins:", error);
-    } else {
-      setAdmins(data);
-    }
+    const { data } = await supabase.from("admin").select("*");
+    if (data) setAdmins(data);
   };
 
-  const handleEditClick = () => setIsEditing(!isEditing);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (admin) {
-      setAdmin({ ...admin, [e.target.name]: e.target.value });
-    }
+  const handleResetPassword = async () => {
+    if (!email) return;
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: "https://yourdomain.com/reset-password",
+    });
+    setSnackbarMessage(error ? "Failed to send reset email." : "Password reset email sent successfully.");
+    setSnackbarOpen(true);
   };
-
-  const handleRemoveAdmin = async (adminEmail: string) => {
-    const { error } = await supabase.from("admin").delete().eq("email", adminEmail);
-
-    if (error) {
-      console.error("Error deleting admin:", error);
-    } else {
-      setAdmins(admins.filter((a) => a.email !== adminEmail));
-    }
-  };
-
-  if (!email) {
-    return <Typography variant="h6">No Admin Logged In</Typography>;
-  }
 
   return (
     <Container maxWidth="md" sx={{ marginTop: 5 }}>
-      <Card sx={{ background: "#fff", padding: 3, borderRadius: 3, boxShadow: 5 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+        <Button variant="contained" startIcon={<ArrowBack />} component={Link} to="/">
+          Back
+        </Button>
+        <Button variant="contained" color="error" startIcon={<Logout />} onClick={() => navigate("/login")}> Logout </Button>
+      </div>
+
+      <Card sx={{ padding: 3, borderRadius: 3, boxShadow: 5 }}>
         <CardContent>
-          <div className="flex justify-start items-center">
-            <Typography variant="h5" fontWeight="bold" sx={{ color: "#00654D" }}>
-              Admin Details
-            </Typography>
-            <IconButton color="primary" onClick={handleEditClick}>
-              {isEditing ? <Save /> : <Edit />}
-            </IconButton>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <Typography variant="h5" fontWeight="bold">Admin Profile</Typography>
+            <div>
+              <IconButton color="primary" onClick={() => setIsEditing(!isEditing)}>
+                {isEditing ? <Save /> : <Edit />}
+              </IconButton>
+              <IconButton color="secondary" onClick={handleResetPassword}>
+                <LockReset />
+              </IconButton>
+            </div>
           </div>
 
-          {admin ? (
-            <div className="flex gap-6 mt-4">
-              <div className="w-1/2">
-                <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Name"
-                  name="name"
-                  value={admin.name}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                />
-                <TextField
-                  fullWidth
-                  margin="normal"
-                  label="Email"
-                  name="email"
-                  value={admin.email}
-                  disabled
-                />
-              </div>
-
-              <Divider orientation="vertical" flexItem sx={{ bgcolor: "gray.400", width: "2px" }} />
-
-              <div className="w-1/2">
-                <div className="flex justify-between items-center mb-3">
-                  <Typography variant="h6" fontWeight="bold" color="secondary">
-                    Other Admins
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    startIcon={<Add />}
-                    color="secondary"
-                    component={Link}
-                    to="/admin/add"
-                  >
-                    Add Admin
-                  </Button>
-                </div>
-
-                <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: "hidden" }}>
-                  <Table>
-                    <TableHead sx={{ background: "#7B1FA2" }}>
-                      <TableRow>
-                        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Name</TableCell>
-                        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Email</TableCell>
-                        <TableCell sx={{ color: "#fff", fontWeight: "bold" }}>Actions</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {admins.map((adminItem, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{adminItem.name}</TableCell>
-                          <TableCell>{adminItem.email}</TableCell>
-                          <TableCell>
-                            <IconButton
-                              color="error"
-                              onClick={() => handleRemoveAdmin(adminItem.email)}
-                            >
-                              <Delete />
-                            </IconButton>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </div>
+          {admin && (
+            <div>
+              <TextField fullWidth margin="normal" label="Name" value={admin.name} disabled={!isEditing} />
+              <TextField fullWidth margin="normal" label="Email" value={admin.email} disabled />
+              {isEditing && <Button variant="contained" sx={{ mt: 2 }} onClick={() => setIsEditing(false)}> Save Changes </Button>}
             </div>
-          ) : (
-            <Typography variant="h6">Admin details not found.</Typography>
           )}
         </CardContent>
       </Card>
 
-      <div className="flex justify-start mt-5">
-        <Button variant="contained" startIcon={<ArrowBack />} component={Link} to="/">
-          Back
-        </Button>
-      </div>
+      <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 2 }}>Admin List</Typography>
+      <TableContainer component={Paper} sx={{ marginBottom: 3 }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Name</TableCell>
+              <TableCell>Email</TableCell>
+              <TableCell>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {admins.map((adminItem) => (
+              <TableRow key={adminItem.id}>
+                <TableCell>{adminItem.name}</TableCell>
+                <TableCell>{adminItem.email}</TableCell>
+                <TableCell>
+                  <IconButton color="error" onClick={() => setAdminToDelete(adminItem) || setDeleteDialogOpen(true)}>
+                    <Delete />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete <strong>{adminToDelete?.name}</strong>?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+          <Button onClick={() => setDeleteDialogOpen(false) || setAdmins(admins.filter(a => a.id !== adminToDelete?.id))} color="error"> Delete </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={() => setSnackbarOpen(false)}>
+        <Alert severity="info">{snackbarMessage}</Alert>
+      </Snackbar>
     </Container>
   );
 };
 
-export default AdminDetails;
+export default ProfilePage;

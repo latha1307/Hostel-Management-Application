@@ -135,7 +135,7 @@ const BillDistribution = () => {
 
     const { data: studentsdata, error: error7 } = await supabase
     .from("hoste")
-    .select("Total")
+    .select("Present_Days")
     .eq("hostel", hostel)
     .eq("monthyear", selectedDate);
 
@@ -149,7 +149,7 @@ const BillDistribution = () => {
       const totalGasCost = Array.isArray(gasdata) ? gasdata.reduce((sum, row) => sum + row.TotalAmount, 0) : 0;
       const totalMilkCost = milkdata?.reduce((sum, row) => sum + parseInt(row.TotalCost || 0), 0) || 0;
       const totalStaffCost = staffdata?.reduce((sum, row) => sum + parseInt(row.SalaryAmount || 0), 0) || 0;
-      const totalHeadcounts = studentsdata?.reduce((sum, row) => sum + parseInt(row.Total || 0), 0) || 0;
+      const totalHeadcounts = studentsdata?.reduce((sum, row) => sum + parseInt(row.Present_Days || 0), 0) || 0;
 
       // ✅ Update the UI amounts
       setItems((prevItems) =>
