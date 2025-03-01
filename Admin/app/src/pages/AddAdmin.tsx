@@ -1,13 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container, TextField, Button, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Card, CardContent, Box, InputAdornment, IconButton
 } from "@mui/material";
-import { Person, Email, Phone, Lock, ArrowBack } from "@mui/icons-material"; // Import Icons
+import { Person, Email, Phone, Lock, ArrowBack, Delete } from "@mui/icons-material"; // Import Icons
+import supabase from "../supabaseClient"; // Ensure correct path to supabaseClient.js
 
 const AdminManagement = () => {
   const [admin, setAdmin] = useState({ name: "", email: "", phone: "", password: "" });
-  const [adminList, setAdminList] = useState<{ name: string; email: string; phone: string }[]>([]);
+  const [adminList, setAdminList] = useState<{ id: string; name: string; email: string; phone: string }[]>([]);
+
+  // Fetch Admins from Supabase
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      const { data, error } = await supabase.from("admins").select("id, name, email, phone");
+      if (error) {
+        console.error("Error fetching admins:", error.message);
+      } else {
+        setAdminList(data);
+      }
+    };
+    fetchAdmins();
+  }, []);
 
   // Handle input change
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -15,17 +29,30 @@ const AdminManagement = () => {
   };
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (admin.name && admin.email && admin.phone && admin.password) {
-      setAdminList([...adminList, { name: admin.name, email: admin.email, phone: admin.phone }]);
-      setAdmin({ name: "", email: "", phone: "", password: "" }); // Clear form fields
+      const { data, error } = await supabase
+        .from("admins")
+        .insert([{ name: admin.name, email: admin.email, phone: admin.phone, password: admin.password }])
+        .select();
+      if (error) {
+        console.error("Error adding admin:", error.message);
+      } else {
+        setAdminList([...adminList, ...data]); // Add new admin to the list
+        setAdmin({ name: "", email: "", phone: "", password: "" }); // Clear form
+      }
     }
   };
 
   // Handle removing an admin
-  const handleRemoveAdmin = (index: number) => {
-    setAdminList(adminList.filter((_, i) => i !== index));
+  const handleRemoveAdmin = async (id: string) => {
+    const { error } = await supabase.from("admins").delete().eq("id", id);
+    if (error) {
+      console.error("Error deleting admin:", error.message);
+    } else {
+      setAdminList(adminList.filter((admin) => admin.id !== id));
+    }
   };
 
   return (
@@ -168,14 +195,14 @@ const AdminManagement = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {adminList.map((admin, index) => (
-                  <TableRow key={index}>
+                {adminList.map((admin) => (
+                  <TableRow key={admin.id}>
                     <TableCell>{admin.name}</TableCell>
                     <TableCell>{admin.email}</TableCell>
                     <TableCell>{admin.phone}</TableCell>
                     <TableCell>
-                      <IconButton color="error" onClick={() => handleRemoveAdmin(index)}>
-                        <Lock /> {/* Change this to Delete icon if you want */}
+                      <IconButton color="error" onClick={() => handleRemoveAdmin(admin.id)}>
+                        <Delete />
                       </IconButton>
                     </TableCell>
                   </TableRow>

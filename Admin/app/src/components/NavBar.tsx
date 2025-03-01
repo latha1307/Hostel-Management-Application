@@ -17,23 +17,33 @@ import {
 import { Tooltip } from "@mui/material"; // Import Tooltip
 
 const navItems = [
-  { label: "Dashboard", icon: <Dashboard />, path: "/dashboard" },
-  { label: "Student Requests", icon: <Person />, path: "/student-requests" },
-  { label: "Student Details", icon: <School />, path: "/student-details" },
-  { label: "Leave Requests", icon: <ListAlt />, path: "/leave-requests" },
+  { label: "Inventory", icon: <Store />, path: "/mess/provisions" },
+
   {
-    label: "Manage Mess",
-    icon: <Restaurant />,
+    label: "Boys Hostel",
+    icon: <Apartment />,
+    path: "/manage-mess/Boys",
     subItems: [
-      { label: "Inventory", icon: <Store />, path: "/mess/provisions" },
-      { label: "Boys Hostel", icon: <Apartment />, path: "/manage-mess/Boys" },
-      { label: "Girls Hostel", icon: <Apartment />, path: "/manage-mess/Girls" },
+      { label: "Staff Salaries", icon: <ListAlt />, path: "/manage-mess/Boys/staffsalary" },
+      { label: "Groceries", icon: <Store />, path: "/manage-mess/Boys/groceries" },
+      { label: "Student Attendance", icon: <School />, path: "/manage-mess/Boys/attendance" },
+      { label: "Bill Distribution", icon: <Restaurant />, path: "/manage-mess/Boys/bill-distribution" },
     ],
   },
-  { label: "Notice Board", icon: <Notifications />, path: "/notice-board" },
-  { label: "Complaints", icon: <ReportProblem />, path: "/complaints" },
-  { label: "Vacate Requests", icon: <ExitToApp />, path: "/vacate-requests" },
+  {
+    label: "Girls Hostel",
+    icon: <Apartment />,
+    path: "/manage-mess/Girls",
+    subItems: [
+      { label: "Staff Salaries", icon: <ListAlt />, path: "/manage-mess/Girls/staffsalary" },
+      { label: "Groceries", icon: <Store />, path: "/manage-mess/Girls/groceries" },
+      { label: "Student Attendance", icon: <School />, path: "/manage-mess/Girls/attendance" },
+      { label: "Bill Distribution", icon: <Restaurant />, path: "/manage-mess/Girls/bill-distribution" },
+    ],
+  }
 ];
+
+
 
 const Navbar = ({ isSidebarOpen }) => {
   const [expandedIndex, setExpandedIndex] = useState(null);
