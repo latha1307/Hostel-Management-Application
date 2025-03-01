@@ -34,13 +34,11 @@ import  supabase  from "../../supabaseClient";
 import { useParams } from 'react-router-dom';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from "dayjs";
+import { Snackbar, Alert } from "@mui/material";
 
-interface DailyConsumptionEntry {
-  quantity: number;
-  costPerKg: number;
-  totalCost: number;
-}
+
 
 type FormattedData =
   | { date: string; value: number }
@@ -121,7 +119,6 @@ const Groceries = () => {
   const [availableItems, setAvailableItems] = useState<PurchasedItem[]>([]);
   const [maxQty, setMaxQty] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
-  const [today_quantity, setToday_quantity] = useState(0);
   const [collapseOpenProvision, setcollapseOpenProvision] = useState<Record<number, boolean>>({});
   const [collapseOpenVegetable, setcollapseOpenVegetable] = useState<Record<number, boolean>>({});
   const [editMode, setEditMode] = useState<Record<number, boolean>>({});
@@ -130,6 +127,9 @@ const Groceries = () => {
   const [dailyConsumptionVegData, setDailyConsumptionVegData] = useState<Record<string, { quantity: number, costPerKg: number, totalCost: number }>>({});
   const [formattedData, setFormattedData] = useState<FormattedData[]>([]);
     const [monthYear, setMonthYear] = useState<string | null>(null);
+    const [openSnackbar, setOpenSnackbar] = useState(false);
+const [snackbarMessage, setSnackbarMessage] = useState("");
+const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
 
 
   const handleChangePage = (event, newPage) => {
@@ -141,56 +141,63 @@ const Groceries = () => {
     setPage(0); // Reset to first page
   };
 
-  const paginatedData = groceriesData.slice(
-    page * rowsPerPage,
-    page * rowsPerPage + rowsPerPage
-  );
+  const handleCloseSnackbar = () => {
+    setOpenSnackbar(false);
+};
 
-  const fetchGroceriesData = useCallback(async (category) => {
-    setLoading(true);
-    setError(null);
-    const categoryMap = {
-      "Provisions": "consumedgrocery",
-      "Vegetables": "vegetables",
-      "Egg": "egg",
-      "Milk": "milk",
-      "Gas": "gas",
-    };
 
-    const categoryId = {
-      "Provisions": 'id',
-      "Vegetables": 'vegetableid',
-      "Egg": 'id',
-      "Milk": 'id',
-      "Gas": 'id',
-    };
 
-    const selectedCategory = categoryMap[category];
-    const selectedID = categoryId[category];
+const fetchGroceriesData = useCallback(async (category) => {
+  setLoading(true);
+  setError(null);
 
-    if (!selectedCategory) {
-      setError('Invalid category selected');
+  const categoryMap = {
+      "provisions": "consumedgrocery",
+      "vegetables": "vegetables",
+      "egg": "egg",
+      "milk": "milk",
+      "gas": "gas",
+  };
+
+  const categoryIdMap = {
+      "provisions": "id",
+      "vegetables": "vegetableid",
+      "egg": "id",
+      "milk": "id",
+      "gas": "id",
+  };
+
+  const categoryKey = category.trim().toLowerCase(); // Normalize category input
+  const selectedCategory = categoryMap[categoryKey];
+  const selectedID = categoryIdMap[categoryKey];
+
+  if (!selectedCategory) {
+      setError("Invalid category selected");
       setLoading(false);
       return;
-    }
+  }
 
-    try {
-      console.log(selectedCategory)
+  try {
+      console.log("Fetching data from:", selectedCategory);
       const { data, error } = await supabase
-        .from(selectedCategory)
-        .select('*')
-        .eq('hostel', hostel)
-        .order(selectedID, { ascending: true });
+          .from(selectedCategory)
+          .select("*")
+          .eq("hostel", hostel)
+          .order(selectedID, { ascending: true });
 
-      if (error) throw error;
+      if (error || !data) {
+          throw new Error(error?.message || "No data found");
+      }
+
       setGroceriesData(data);
-    } catch (error) {
+  } catch (error) {
       console.error("Error fetching groceries data:", error);
-      setError("Error fetching groceries data");
-    } finally {
+      setError(error.message || "Error fetching groceries data");
+  } finally {
       setLoading(false);
-    }
-  }, [hostel]);
+  }
+}, [hostel, setGroceriesData, setLoading, setError]);
+
 
   useEffect(() => {
     fetchGroceriesData(selectedCategory);
@@ -351,9 +358,10 @@ useEffect(() => {
   const handleConsumptionChange = (date: string, value: string) => {
     setDailyConsumptionData((prevData) => ({
       ...prevData,
-      [date]: value === "" || value === "null" ? null : Number(value),
+      [date]: value.trim() === "" ? null : parseFloat(value),
     }));
   };
+
 
   const handleVegetableChange = (date: string, field: string, value: string) => {
     setDailyConsumptionVegData((prevData) => {
@@ -364,22 +372,34 @@ useEffect(() => {
         updatedData[date] = { quantity: 0, costPerKg: 0, totalCost: 0 };
       }
 
-      // Convert input to a number (handling empty values)
       const numericValue = value.trim() === "" ? 0 : parseFloat(value);
 
-      // Update the specific field
       updatedData[date] = {
         ...updatedData[date],
         [field]: numericValue,
       };
 
-      // Recalculate totalCost after the update
       updatedData[date].totalCost = updatedData[date].quantity * updatedData[date].costPerKg;
 
-      return { ...updatedData }; // Ensure React recognizes the state change
+      return { ...updatedData };
     });
   };
 
+  const formattedDate = selectedDate.slice(0, 7);
+
+  const filteredData = groceriesData.filter(item => {
+    if (item.monthyear) {
+      return item.monthyear === formattedDate;
+    } else if (item.DateOfConsumed) {
+      return item.DateOfConsumed.slice(0, 7) === formattedDate;
+    }
+    return false;
+  });
+
+  const paginatedData = filteredData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
 
 
@@ -464,7 +484,10 @@ useEffect(() => {
 
                 if (updateGroceryError) throw updateGroceryError;
 
-                console.log("✅ Changes saved successfully!");
+                setSnackbarMessage("✅ Changes saved successfully!");
+                setSnackbarSeverity("success");
+                setOpenSnackbar(true);
+                fetchGroceriesData(selectedCategory)
                 break;
             }
 
@@ -554,13 +577,19 @@ useEffect(() => {
                 throw updateVegError;
               }
 
-              console.log("✅ Changes saved successfully!");
+              setSnackbarMessage("✅ Changes saved successfully!");
+                setSnackbarSeverity("success");
+                setOpenSnackbar(true);
+                fetchGroceriesData(selectedCategory)
               break;
             }
 
         }
     } catch (error) {
         console.error("❌ Error saving changes:", error);
+        setSnackbarMessage("❌ Error saving changes!");
+        setSnackbarSeverity("error");
+        setOpenSnackbar(true);
     }
 };
 
@@ -577,119 +606,6 @@ useEffect(() => {
       if (isEditing) {
         // Editing logic
         switch (selectedCategory) {
-          case 'Provisions':
-
-            const { data: existingEntry, error: fetchError } = await supabase
-                .from('consumedgrocery')
-                .select('dailyconsumption, total_quantity_issued, total_cost, itemname')
-                .eq('id', editId)
-                .maybeSingle();
-
-                console.log("Fetched rows:", existingEntry);
-
-            if (fetchError && fetchError.code !== 'PGRST116') {
-                throw fetchError;
-            }
-
-            let updatedDailyConsumption = existingEntry?.dailyconsumption
-                ? typeof existingEntry.dailyconsumption === 'string'
-                    ? JSON.parse(existingEntry.dailyconsumption)
-                    : existingEntry.dailyconsumption
-                : {};
-
-            console.log(today_quantity)
-
-            const previousQuantity = Number(updatedDailyConsumption[selectedDate] || 0);
-            const netChange = today_quantity - previousQuantity;
-
-            updatedDailyConsumption[selectedDate] = String(today_quantity);
-
-            const { data: inventoryData, error: inventoryError } = await supabase
-                .from('inventorygrocery')
-                .select('opening_stock_remaining, supplier1_rate, quantity_supplier2_remaining, supplier2_rate, quantity_intend1_remaining, rate_intend_1, quantity_intend2_remaining, rate_intend_2, quantity_intend3_remaining, rate_intend_3, opening_stock, quantity_received_supplier2, quantity_received_intend_1, quantity_received_intend_2, quantity_received_intend_3')
-                .eq('itemname', existingEntry?.itemname)
-                .single();
-
-            if (inventoryError) throw inventoryError;
-
-            let remainingQty = netChange;
-            let updatedInventory = { ...inventoryData };
-            let totalCost = 0;
-
-            const trackUsage = (usedKey, stockKey, rateKey, isReturning = false) => {
-              if (remainingQty !== 0 && updatedInventory[stockKey] > 0) {
-                  let availableQty = updatedInventory[stockKey] - (updatedInventory[usedKey] || 0);
-
-                  if (availableQty > 0) {
-                      let usedNow = Math.min(Math.abs(remainingQty), availableQty); // Ensure no negative values
-
-                      if (!isReturning) {
-                          updatedInventory[usedKey] = (updatedInventory[usedKey] || 0) + usedNow;
-                          totalCost += usedNow * (inventoryData[rateKey] || 0);
-                      } else {
-                          updatedInventory[usedKey] = (updatedInventory[usedKey] || 0) - usedNow; // Return stock
-                          totalCost -= usedNow * (inventoryData[rateKey] || 0);
-                      }
-
-                      remainingQty += isReturning ? usedNow : -usedNow; // Adjust remainingQty
-                  }
-              }
-          };
-
-
-          // If quantity is being reduced, return the stock
-          const isReturning = netChange < 0;
-
-          trackUsage('opening_stock_remaining', 'opening_stock', 'supplier1_rate', isReturning);
-          trackUsage('quantity_supplier2_remaining', 'quantity_received_supplier2', 'supplier2_rate', isReturning);
-          trackUsage('quantity_intend1_remaining', 'quantity_received_intend_1', 'rate_intend_1', isReturning);
-          trackUsage('quantity_intend2_remaining', 'quantity_received_intend_2', 'rate_intend_2', isReturning);
-          trackUsage('quantity_intend3_remaining', 'quantity_received_intend_3', 'rate_intend_3', isReturning);
-
-          // Ensure total cost updates correctly
-          const updatedTotalCost = existingEntry?.total_cost + (netChange < 0 ? -Math.abs(totalCost) : totalCost);
-
-          // ✅ Update consumed grocery
-          response = await supabase
-              .from('consumedgrocery')
-              .update({
-                  dailyconsumption: updatedDailyConsumption,
-                  total_quantity_issued: Object.values(updatedDailyConsumption).reduce((sum:any, qty) => sum + Number(qty), 0),
-                  total_cost: updatedTotalCost
-              })
-              .eq('id', editId);
-
-          if (response.error) throw response.error;
-
-          // ✅ Update inventory stocks
-          const updateInventoryResponse = await supabase
-              .from('inventorygrocery')
-              .update({
-                  opening_stock_remaining: updatedInventory.opening_stock_remaining,
-                  quantity_supplier2_remaining: updatedInventory.quantity_supplier2_remaining,
-                  quantity_intend1_remaining: updatedInventory.quantity_intend1_remaining,
-                  quantity_intend2_remaining: updatedInventory.quantity_intend2_remaining,
-                  quantity_intend3_remaining: updatedInventory.quantity_intend3_remaining
-              })
-              .eq('itemname', existingEntry?.itemname);
-
-          if (updateInventoryResponse.error) throw updateInventoryResponse.error;
-
-
-            break;
-
-          case 'Vegetables':
-            response = await supabase
-              .from('vegetables')
-              .update({
-                Quantity,
-                CostPerKg,
-                DateOfConsumed,
-              })
-              .eq('vegetableid', editId);
-
-            if (response.error) throw response.error;
-            break;
 
           case 'Egg':
             response = await supabase
@@ -874,7 +790,7 @@ useEffect(() => {
       } else {
         return {
           date,
-          value: dailyConsumptionData[date] ? parseInt(dailyConsumptionData[date], 10) : 0,
+          value: dailyConsumptionData[date] ? parseFloat(dailyConsumptionData[date]) : 0,
         };
       }
     });
@@ -1020,6 +936,11 @@ useEffect(() => {
 
 
       </Box>
+      <div className="flex items-center space-x-4 mb-2">
+        <IconButton className="flex items-center space-x-1  text-blue-500 relative -top-1"
+         onClick={() => fetchGroceriesData(selectedCategory)} >
+        <span className="text-blue-500 text-sm font-medium">Refresh</span>
+        <RefreshIcon className="text-blue-500" /> </IconButton>
       <Button
         variant="contained"
         color="primary"
@@ -1028,6 +949,7 @@ useEffect(() => {
       >
         Add Item
       </Button>
+      </div>
       </div>
 
       {error && <div className="text-red-600">{error}</div>}
@@ -1076,69 +998,76 @@ useEffect(() => {
             </TableRow>
           </TableHead>
           <TableBody>
-          {paginatedData.map((row, index) => {
-const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+            {paginatedData.map((row, index) => {
+              const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
 
-const isRowOpen = collapseOpenProvision[rowId] || collapseOpenVegetable[rowId] || false;
-const isEditRow = editMode[rowId] || false;
+              const isRowOpen = collapseOpenProvision[rowId] || collapseOpenVegetable[rowId] || false;
+              const isEditRow = editMode[rowId] || false;
 
-    return (
-<React.Fragment key={rowId}>
-  {/* Main Row */}
-  <TableRow className="dark:text-gray-100 dark:bg-gray-800" sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
-    <TableCell>
-      <IconButton
-        aria-label="expand row"
-        size="small"
-        className="dark:text-gray-100"
-        onClick={() => {
-          const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+              return (
+                <React.Fragment >
+                  {/* Main Row */}
+                  <TableRow className="dark:bg-gray-700 dark:text-gray-100" sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
+                    <TableCell>
+                    <IconButton
+                  aria-label="expand row"
+                  size="small"
+                  className="dark:text-gray-100"
+                  onClick={() => {
+                    const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
 
-          if (selectedCategory === "Provisions") {
-            setcollapseOpenProvision((prev) => {
-              const newCollapseState = Object.keys(prev).reduce((acc, key) => {
-                acc[key] = false;
-                return acc;
-              }, {} as Record<string, boolean>);
-              return { ...newCollapseState, [rowId]: !prev[rowId] };
-            });
-            setcollapseOpenVegetable({});
-          } else if (selectedCategory === "Vegetables") {
-            setcollapseOpenVegetable((prev) => {
-              const newCollapseState = Object.keys(prev).reduce((acc, key) => {
-                acc[key] = false;
-                return acc;
-              }, {} as Record<string, boolean>);
-              return { ...newCollapseState, [rowId]: !prev[rowId] };
-            });
-            setcollapseOpenProvision({});
-          }
+                    if (selectedCategory === "Provisions") {
+                      setcollapseOpenProvision((prev) => {
+                        const newCollapseState = Object.keys(prev).reduce((acc, key) => {
+                          acc[key] = false;
+                          return acc;
+                        }, {} as Record<string, boolean>);
+                        return { ...newCollapseState, [rowId]: !prev[rowId] };
+                      });
+                      setcollapseOpenVegetable({});
+                    } else if (selectedCategory === "Vegetables") {
+                      setcollapseOpenVegetable((prev) => {
+                        const newCollapseState = Object.keys(prev).reduce((acc, key) => {
+                          acc[key] = false;
+                          return acc;
+                        }, {} as Record<string, boolean>);
+                        return { ...newCollapseState, [rowId]: !prev[rowId] };
+                      });
+                      setcollapseOpenProvision({});
+                    }
 
-          handleView(row);
-          setEditId(rowId); // ✅ Correctly setting the edit ID dynamically
-        }}
-      >
-        {selectedCategory === "Provisions"
-          ? collapseOpenProvision[row.id]
-            ? <KeyboardArrowUpIcon />
-            : <KeyboardArrowDownIcon />
-          : collapseOpenVegetable[row.vegetableid]
-            ? <KeyboardArrowUpIcon />
-            : <KeyboardArrowDownIcon />
-        }
-          </IconButton>
+    handleView(row);
+    setEditId(rowId);
+  }}
+>
+  {(selectedCategory === "Provisions" || selectedCategory === "Vegetables") &&
+    (selectedCategory === "Provisions"
+      ? collapseOpenProvision[row.id]
+        ? <KeyboardArrowUpIcon />
+        : <KeyboardArrowDownIcon />
+      : collapseOpenVegetable[row.vegetableid]
+        ? <KeyboardArrowUpIcon />
+        : <KeyboardArrowDownIcon />
+    )}
+</IconButton>
 
 
-            <IconButton
-              color="primary"
-              className="dark:hover:bg-slate-600"
-              onClick={() => {
-                const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
-                setEditMode((prev) => ({ ...prev, [rowId]: !isEditRow }));
-              }}
-            >
-              <EditIcon className='dark:text-gray-200' />
-            </IconButton>
+
+                <IconButton
+                  color="primary"
+                  className="dark:hover:bg-slate-600"
+                  onClick={() => {
+                    if (selectedCategory === 'Provisions' || selectedCategory === 'Vegetables') {
+                      const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
+                      setEditMode((prev) => ({ ...prev, [rowId]: !isEditRow }));
+                    } else {
+                      handleDialogOpen(row);
+                    }
+                  }}
+                >
+                  <EditIcon className='dark:text-gray-900' />
+                </IconButton>
+
 
           </TableCell>
           <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{index + 1 + page * rowsPerPage}.</TableCell>
@@ -1224,7 +1153,7 @@ const isEditRow = editMode[rowId] || false;
                 >
                   Daily Issued Information - {selectedCategory}
                 </Typography>
-        
+
                 <Box
                   sx={{
                     display: "grid",
@@ -1263,10 +1192,12 @@ const isEditRow = editMode[rowId] || false;
                       >
                         {dayjs(date).format("DD MMM")}
                       </Typography>
-        
+
                       {selectedCategory === "Provisions" ? (
+
                         <TextField
                           size="small"
+                          type='number'
                           value={value}
                           onChange={(e) => handleConsumptionChange(date, e.target.value)}
                           disabled={!isEditRow}
@@ -1291,6 +1222,7 @@ const isEditRow = editMode[rowId] || false;
                         />
                       ) : (
                         <>
+<<<<<<< HEAD
                                 <TextField
   
   size="small"
@@ -1395,6 +1327,62 @@ const isEditRow = editMode[rowId] || false;
 </Typography>
 
 
+=======
+                          <TextField
+                            size="small"
+                          type='number'
+                            label="Quantity"
+                            value={dailyConsumptionVegData[date]?.quantity || ""}
+                            onChange={(e) =>
+                              handleVegetableChange(date, "quantity", e.target.value)
+                            }
+                            disabled={!isEditRow}
+                            sx={{
+                              width: "100px",
+                              marginBottom: "6px",
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": {
+                                  borderColor: "gray",
+                                },
+                                "& input": {
+                                  color: "white",
+                                },
+                              },
+                            }}
+                            className="dark:bg-transparent dark:text-white"
+                          />
+                          <TextField
+                            size="small"
+                          type='number'
+
+                            label="Cost/kg"
+                            value={dailyConsumptionVegData[date]?.costPerKg || ""}
+                            onChange={(e) =>
+                              handleVegetableChange(date, "costPerKg", e.target.value)
+                            }
+                            disabled={!isEditRow}
+                            sx={{
+                              width: "100px",
+                              marginBottom: "6px",
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": {
+                                  borderColor: "gray",
+                                },
+                                "& input": {
+                                  color: "white",
+                                },
+                              },
+                            }}
+                            className="dark:bg-transparent dark:text-white"
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: "bold", marginTop: "6px" }}
+                            className="dark:text-gray-200"
+                          >
+                            ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
+                          </Typography>
+>>>>>>> upstream/main
                         </>
                       )}
                     </Box>
@@ -1404,16 +1392,189 @@ const isEditRow = editMode[rowId] || false;
             </Collapse>
           </TableCell>
         </TableRow>
-        
-        
-        
-        
-        )}
 
-      </React.Fragment>
-    )
-          })}
-        </TableBody>
+
+
+
+        )}
+                  {/* Collapsible Row */}
+                  {isRowOpen && (
+                    <TableRow>
+                      <TableCell colSpan={10} sx={{ padding: 0 }}>
+                        <Collapse in={isRowOpen} timeout="auto" unmountOnExit>
+                          <Box
+                            sx={{
+                              padding: 2,
+                              backgroundColor: "#F9FAFB",
+                              borderBottomLeftRadius: "8px",
+                              borderBottomRightRadius: "8px",
+                              boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                              border: "1px solid #E0E0E0",
+                              marginBottom: "4px",
+                            }}
+                            className="dark:bg-slate-800 "
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              sx={{
+                                fontWeight: "bold",
+                                color: "#333",
+                                marginBottom: "8px",
+                                textAlign: "center",
+                              }}
+                              className="dark:text-gray-100"
+                            >
+                              Daily Issued Information - {selectedCategory}
+                            </Typography>
+
+                            <Box
+                              sx={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                                gap: 2,
+                                padding: "8px",
+                              }}
+                            >
+                              {formattedData.map(({ date, value }) => (
+                                <Box
+                                  key={date}
+                                  sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    alignItems: "center",
+                                    padding: "8px",
+                                    borderRadius: "8px",
+                                    backgroundColor: "white",
+                                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                                    transition: "0.3s",
+                                    "&:hover": {
+                                      transform: "scale(1.05)",
+                                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
+                                    },
+                                  }}
+                                  className="dark:bg-slate-600 "
+                                >
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: "#555",
+                                      fontWeight: "bold",
+                                    }}
+                                  >
+                                    {dayjs(date).format("DD MMM")}
+                                  </Typography>
+
+                                  {selectedCategory === "Provisions" ? (
+                                    // **Provisions: Only 1 Field**
+                                    <TextField
+                                      size="small"
+                                      type="number"
+                                      value={value}
+                                      onChange={(e) => handleConsumptionChange(date, e.target.value)}
+                                      disabled={!isEditRow}
+                                      sx={{
+                                        width: "80px",
+                                        backgroundColor: "white",
+                                        borderRadius: "5px",
+                                        "&.Mui-disabled": {
+                                          backgroundColor: "rgba(255,255,255,0.2)",
+                                        },
+                                        input: {
+                                          color: "#000",
+                                          "&.dark": {
+                                            color: "#FFF",
+                                          },
+                                        },
+                                      }}
+                                      className="dark:bg-gray-200 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-400"
+                                    />
+
+                                  ) : (
+                                    // **Vegetables: Quantity & Cost/kg**
+                                    <>
+                                      <TextField
+                                        size="small"
+                                        label="Quantity"
+                                        type="number"
+                                        value={dailyConsumptionVegData[date]?.quantity || ""}
+                                        onChange={(e) =>
+                                          handleVegetableChange(date, "quantity", e.target.value)
+                                        }
+                                        disabled={!isEditRow}
+                                        sx={{ width: "80px" }}
+                                      />
+                                      <TextField
+                                        size="small"
+                                        label="Cost/kg"
+                                        type="number"
+                                        value={dailyConsumptionVegData[date]?.costPerKg || ""}
+                                        onChange={(e) =>
+                                          handleVegetableChange(date, "costPerKg", e.target.value)
+                                        }
+                                        disabled={!isEditRow}
+                                        sx={{ width: "80px" }}
+                                      />
+                                      <Typography variant="caption" sx={{ fontWeight: "bold" }}>
+                                        ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
+                                      </Typography>
+
+                                    </>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+
+                            {isEditRow && (
+                              <Box
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "center",
+                                  marginTop: "16px",
+                                }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  startIcon={<SaveIcon />}
+                                  sx={{
+                                    borderRadius: "8px",
+                                    textTransform: "none",
+                                    padding: "6px 16px",
+                                    fontSize: "14px",
+                                    fontWeight: "bold",
+                                    backgroundColor: "#1976D2",
+                                    "&.dark": {
+                                      backgroundColor: "#1565C0",
+                                    },
+                                    "&:hover": {
+                                      backgroundColor: "#1565C0",
+                                      "&.dark": {
+                                        backgroundColor: "#1258A7",
+                                      },
+                                    },
+                                  }}
+                                  onClick={() => {
+                                    if(selectedCategory==='Provisions'){
+                                    handleSaveChanges(dailyConsumptionData)}
+                                    else{
+                                      handleSaveChanges(dailyConsumptionVegData)
+                                    }
+                                  }}
+                                >
+                                  Save Changes
+                                </Button>
+                              </Box>
+                            )}
+                          </Box>
+                        </Collapse>
+                      </TableCell>
+                    </TableRow>
+                  )}
+
+                </React.Fragment>
+              )
+            })}
+          </TableBody>
 
         </Table>
 
@@ -1424,7 +1585,7 @@ const isEditRow = editMode[rowId] || false;
         sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
         rowsPerPageOptions={[10, 25, 50]}
         component="div"
-        count={groceriesData.length}
+        count={filteredData.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
@@ -1436,44 +1597,69 @@ const isEditRow = editMode[rowId] || false;
       </>
       )}
       <Dialog open={openDialog} onClose={handleDialogClose}>
-  <DialogTitle>Add Item</DialogTitle>
-  <DialogContent>
-    {/* Billing Month - Disabled Field */}
-    <TextField
-      fullWidth
-      label="Billing Month"
-      name="monthyear"
-      value={monthYear} // Automatically set to current YYYY-MM
-      margin="dense"
-      disabled
-    />
+        <DialogTitle>{isEditing ? "Edit Item" : "Add Item"}</DialogTitle>
+        <DialogContent>
+          {getDialogFields().map((field, index) =>
+            field.name === "itemname" && field.label === "Item Name" ? (
+              <Autocomplete
+                key={index}
+                options={availableItems.map((item) => item.itemname)}
+                value={formData.itemname || ""}
+                onChange={(event, newValue) => {
+                  handleInputChange({
+                    target: {
+                      name: "itemname",
+                      value: newValue || "",
+                    },
+                  });
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Item Name" fullWidth margin="dense" />
+                )}
+                disabled={isEditing}
+              />
+            ): (
+              <TextField
+                key={index}
+                fullWidth
+                label={field.label}
+                name={field.name}
+                type={field.type || "text"}
+                value={
+                  field.name === "selectedDate"
+                    ? selectedDate
+                    : field.name === "monthyear"
+                    ? formattedDate
+                    : field.type === "date"
+                    ? formData[field.name] || new Date().toISOString().split("T")[0]
+                    : formData[field.name] || ""
+                }
+                onChange={handleInputChange}
+                margin="dense"
+                InputLabelProps={field.type === "date" ? { shrink: true } : undefined}
+                disabled={field.name === "selectedDate" || field.name === "monthyear"}
+              />
+            ))}
+        </DialogContent>
 
-    {/* Item Name - Autocomplete Dropdown */}
-    <Autocomplete
-      options={availableItems.map((item) => item.itemname)}
-      value={formData.itemname || ""}
-      onChange={(event, newValue) => {
-        handleInputChange({
-          target: {
-            name: "itemname",
-            value: newValue || "",
-          },
-        });
-      }}
-      renderInput={(params) => (
-        <TextField {...params} label="Item Name" fullWidth margin="dense" />
-      )}
-      disabled={isEditing}
-    />
-  </DialogContent>
+        <DialogActions>
+          <Button onClick={handleDialogClose}>Cancel</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
+            {isEditing ? "Update" : "Add"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-  <DialogActions>
-    <Button onClick={handleDialogClose}>Cancel</Button>
-    <Button onClick={handleSubmit} variant="contained" color="primary">
-      Add
-    </Button>
-  </DialogActions>
-</Dialog>
+      <Snackbar
+            open={openSnackbar}
+            autoHideDuration={3000} // 3 seconds
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+            <Alert onClose={handleCloseSnackbar} severity={snackbarSeverity} sx={{ width: "100%" }}>
+                {snackbarMessage}
+            </Alert>
+        </Snackbar>
 
 
     </div>

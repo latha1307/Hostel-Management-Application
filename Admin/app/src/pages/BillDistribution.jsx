@@ -335,7 +335,7 @@ const BillDistribution = () => {
         <Button
   variant="contained"
   color="error"
-  sx={{ fontSize: "1rem",marginTop:"10px", height: "4%", height: "40px" }}
+  sx={{ fontSize: "1rem",marginTop:"10px", height: "4%"}}
 >
   Distribute To All Students
 </Button>

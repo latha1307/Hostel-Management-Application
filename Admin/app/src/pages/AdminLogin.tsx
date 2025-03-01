@@ -1,125 +1,83 @@
-import React from "react";
-import { 
-  Card, CardContent, Container, TextField, Button, Typography, Link, Box, InputAdornment
-} from "@mui/material";
-import { Lock, Mail } from "@mui/icons-material";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import supabase from "../supabaseClient";
 
-const AdminLogin = () => {
+interface LoginProps {
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const navigate = useNavigate();
+
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setErrorMessage("Please enter both email and password.");
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMessage(error.message);
+      return;
+    }
+
+    if (data.session) {
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("userEmail", email); // Store user session
+      setIsLoggedIn(true);
+      navigate("/"); // Redirect to dashboard or home
+    } else {
+      setErrorMessage("Login failed. Please try again.");
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        width: "100vw",
-        background: "url('https://www.protechguy.com/wp-content/uploads/sites/712/2021/01/bigstock-Closed-Padlock-On-Digital-Back-383628656-scaled.jpg') center/cover no-repeat", 
-        px: 2,
-      }}
-    >
-      <Container 
-        maxWidth="xl"
-        sx={{ 
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          width: { xs: "95%", sm: "80%", md: "60%", lg: "50%", xl: "40%" },
-        }}
-      >
-        <Card 
-          sx={{ 
-            width: "100%", 
-            borderRadius: 6, 
-            boxShadow: 10, 
-            overflow: "hidden",
-            background: "rgba(255, 255, 255, 0.8)", 
-            backdropFilter: "blur(10px)",
-            p: { xs: 3, md: 5 },
-          }}
+    <div className="min-h-screen w-full bg-blue-100 flex items-center justify-center">
+      <div className="w-full max-w-md bg-white p-8 rounded-lg shadow-lg">
+        <h2 className="text-3xl font-bold text-center text-[#71045F] mb-6">
+          Admin Login
+        </h2>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Email
+          </label>
+          <input
+            type="email"
+            className="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#71045F]"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter your email"
+          />
+        </div>
+        <div className="mt-4">
+          <label className="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <input
+            type="password"
+            className="w-full mt-2 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#71045F]"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter your password"
+          />
+        </div>
+        {errorMessage && <p className="text-sm text-red-500 mt-2">{errorMessage}</p>}
+        <button
+          onClick={handleLogin}
+          className="w-full mt-6 py-3 bg-[#9e298b] text-white font-semibold rounded-lg hover:bg-[#71045F] focus:outline-none focus:ring-2 focus:ring-[#71045F]"
         >
-          <CardContent sx={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            
-            {/* Simple Logo Styling */}
-            <Box
-              component="img"
-              src="https://github.com/latha1307/TPGIT_hostel/blob/main/src/assets/TPGIT_logo_created.png?raw=true"
-              alt="TPGIT Logo"
-              sx={{ 
-                width: 180, 
-                height: 120, 
-                marginBottom: 3, 
-                display: "block",
-                borderRadius: 2, // Rounded edges
-             
-              }}
-            />
-            
-            {/* Admin Login Title */}
-            <Typography variant="h4" fontWeight="bold" color="#0072ff" mb={3}>
-              Admin Login
-            </Typography>
-
-            {/* Email Input */}
-            <TextField 
-              fullWidth 
-              label="Email" 
-              variant="outlined" 
-              margin="normal" 
-              InputProps={{ 
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Mail color="primary" />
-                  </InputAdornment>
-                ) 
-              }} 
-            />
-
-            {/* Password Input */}
-            <TextField 
-              fullWidth 
-              label="Password" 
-              type="password" 
-              variant="outlined" 
-              margin="normal" 
-              InputProps={{ 
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Lock color="primary" />
-                  </InputAdornment>
-                ) 
-              }} 
-            />
-            
-            {/* Forgot Password Link Aligned Right */}
-            <Box width="100%" display="flex" justifyContent="flex-end" mt={1}>
-              <Link href="#" variant="body2">
-                Forgot Password?
-              </Link>
-            </Box>
-            
-            {/* Sign In Button with Blue Theme */}
-            <Button 
-              fullWidth 
-              variant="contained" 
-              sx={{ 
-                mt: 3, 
-                py: 1.2, 
-                fontSize: "1rem",
-                borderRadius: 12,
-                background: "linear-gradient(to right, #0072ff, #00c6ff)", 
-                color: "white",
-                "&:hover": {
-                  background: "linear-gradient(to right, #005bb5, #009fda)"
-                }
-              }}
-            >
-              Login
-            </Button>
-          </CardContent>
-        </Card>
-      </Container>
-    </Box>
+          Login
+        </button>
+      </div>
+    </div>
   );
 };
 
-export default AdminLogin;
+export default Login;
