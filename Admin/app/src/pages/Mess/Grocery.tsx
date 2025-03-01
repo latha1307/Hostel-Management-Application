@@ -19,8 +19,6 @@ import {
   Collapse,
   Typography
 } from "@mui/material";
-
-import RefreshIcon from "@mui/icons-material/Refresh";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import Autocomplete from '@mui/material/Autocomplete';
 import EditIcon from "@mui/icons-material/Edit";
@@ -36,9 +34,10 @@ import  supabase  from "../../supabaseClient";
 import { useParams } from 'react-router-dom';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import dayjs from "dayjs";
-import { format } from "date-fns";
 import { Snackbar, Alert } from "@mui/material";
+
 
 
 type FormattedData =
@@ -220,8 +219,7 @@ useEffect(() => {
       try {
         const { data, error } = await supabase
           .from('inventorygrocery')
-          .select('itemname, total_stock_available')
-          .eq('monthyear',monthYear);
+          .select('itemname, total_stock_available');
 
         if (error) {
           throw error;
@@ -264,7 +262,7 @@ useEffect(() => {
 
       case 'Vegetables':
         return [
-          { label: "Bill Month", name: "monthyear"},
+          { label: "Bill Month", name: "monthyear", type: "date" },
           { label: "Name", name: "itemName" },
         ];
       case 'Egg':
@@ -327,13 +325,7 @@ useEffect(() => {
     setMaxQty(selectedItem?.total_stock_available || 0);
 };
 
-const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  setSelectedDate(e.target.value);
-};
 
-const formatMonthYear = (dateString: string) => {
-  return dateString ? format(new Date(dateString), "MMMM yyyy") : "";
-};
 
 
   const handleDialogClose = () => {
@@ -698,7 +690,9 @@ const formatMonthYear = (dateString: string) => {
                 {
                   hostel,
                   itemName,
-                  monthyear: monthYear
+                  Quantity,
+                  CostPerKg,
+                  DateOfConsumed,
                 },
               ]);
 
@@ -841,60 +835,105 @@ const formatMonthYear = (dateString: string) => {
       {/* Search and Filter Section */}
       <div className="flex justify-between">
       <Box display="flex" alignItems="center" mb={1} gap={2}>
-        <TextField
-          variant="outlined"
-          size="small"
-          placeholder="Search"
-          sx={{
-            width: "60%",
-            backgroundColor: "white",
-            borderRadius: "20px",
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "20px",
-            },
-          }}
-          className="dark:bg-gray-600 dark:text:gray"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
-<div style={{ position: "relative", display: "inline-block" }}>
-      {/* Hidden date input */}
-      <input
-        type="date"
-        value={selectedDate}
-        onChange={handleDateChange}
-        ref={(input) => {
-          if (input) {
-            input.style.position = "absolute";
-            input.style.width = "100%";
-            input.style.height = "100%";
-            input.style.opacity = "0";
-            input.style.cursor = "pointer";
-          }
-        }}
-      />
-
-      {/* Clickable TextField */}
       <TextField
-        label="Select Date"
-        value={formatMonthYear(selectedDate)}
-        variant="outlined"
-        size="small"
-        onClick={() => (document.querySelector("input[type='date']") as HTMLInputElement)?.click()}
-        onFocus={() => (document.querySelector("input[type='date']")  as HTMLInputElement)?.showPicker?.()} // Open date picker on focus (if supported)
-        sx={{
-          width: "180px",
-          backgroundColor: "white",
-          borderRadius: "10px",
-        }}
-        InputLabelProps={{ shrink: true }}
-      />
-    </div>
+  variant="outlined"
+  size="small"
+  placeholder="Search"
+  sx={{
+    width: "60%",
+    backgroundColor: "white",
+    borderRadius: "20px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "20px",
+      "& fieldset": {
+        borderColor: "gray", // Default border color
+      },
+    },
+    "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+      borderColor: "gray", // Border color when focused
+    },
+    "& .MuiInputBase-input": {
+      color: "black", // Default text color
+    },
+    ".dark &": {
+      backgroundColor: "transparent", // Dark mode background
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": {
+          borderColor: "gray", // Dark mode border color
+        },
+      },
+      "& .MuiInputBase-input": {
+        color: "white", // Dark mode text color
+      },
+    },
+  }}
+  className="dark:bg-transparent dark:text-white"
+  InputProps={{
+    endAdornment: (
+      <InputAdornment position="end">
+        <SearchIcon className="dark:text-white" />
+      </InputAdornment>
+    ),
+  }}
+/>
+
+<TextField
+  type="date"
+  label="Select Date"
+  value={selectedDate}
+  onChange={(e) => setSelectedDate(e.target.value)}
+  variant="outlined"
+  size="small"
+  sx={{
+    width: "180px",
+    backgroundColor: "white",
+    borderRadius: "10px",
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "10px",
+      "& fieldset": {
+        borderColor: "gray", // Default border color
+      },
+    },
+    "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+      borderColor: "gray", // Border color when focused
+    },
+    "& .MuiInputBase-input": {
+      color: "black", // Default input text color
+    },
+    "& input::-webkit-calendar-picker-indicator": {
+      filter: "invert(0)", // Default icon color (black)
+    },
+    ".dark &": {
+      backgroundColor: "transparent", // Dark mode background
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": {
+          borderColor: "gray", // Dark mode border color
+        },
+      },
+      "& .MuiInputBase-input": {
+        color: "white", // Input text white in dark mode
+      },
+      "& input::-webkit-calendar-picker-indicator": {
+        filter: "invert(60%)", // Dark mode: turns icon gray
+      },
+    },
+  }}
+  className="dark:bg-transparent"
+  InputLabelProps={{
+    shrink: true,
+    sx: {
+      color: "black", // Default label color
+      ".dark &": {
+        color: "gray", // Dark mode label color (Select Date text)
+      },
+    },
+  }}
+/>
+
+
+
+
+
 
       </Box>
       <div className="flex items-center space-x-4 mb-2">
@@ -997,20 +1036,20 @@ const formatMonthYear = (dateString: string) => {
                       setcollapseOpenProvision({});
                     }
 
-                    handleView(row);
-                    setEditId(rowId);
-                  }}
-                >
-                  {(selectedCategory === "Provisions" || selectedCategory === "Vegetables") &&
-                    (selectedCategory === "Provisions"
-                      ? collapseOpenProvision[row.id]
-                        ? <KeyboardArrowUpIcon />
-                        : <KeyboardArrowDownIcon />
-                      : collapseOpenVegetable[row.vegetableid]
-                        ? <KeyboardArrowUpIcon />
-                        : <KeyboardArrowDownIcon />
-                    )}
-                </IconButton>
+    handleView(row);
+    setEditId(rowId);
+  }}
+>
+  {(selectedCategory === "Provisions" || selectedCategory === "Vegetables") &&
+    (selectedCategory === "Provisions"
+      ? collapseOpenProvision[row.id]
+        ? <KeyboardArrowUpIcon />
+        : <KeyboardArrowDownIcon />
+      : collapseOpenVegetable[row.vegetableid]
+        ? <KeyboardArrowUpIcon />
+        : <KeyboardArrowDownIcon />
+    )}
+</IconButton>
 
 
 
@@ -1030,61 +1069,223 @@ const formatMonthYear = (dateString: string) => {
                 </IconButton>
 
 
-                    </TableCell>
-                    <TableCell align="left" className="dark:text-gray-100">{index + 1 + page * rowsPerPage}.</TableCell>
+          </TableCell>
+          <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{index + 1 + page * rowsPerPage}.</TableCell>
 
-                    {/* Category-specific columns */}
-                    {selectedCategory === "Provisions" && (
-                      <>
-                        <TableCell align="left" className="dark:text-gray-100">{row.itemname}</TableCell>
-                        <TableCell align="left"  className="dark:text-gray-100">{row.monthyear}</TableCell>
-                        <TableCell align="left"  className="dark:text-gray-100">{row.unit}</TableCell>
-                        <TableCell align="left"  className="dark:text-gray-100">
-                          {row?.dailyconsumption
-                            ? (typeof row.dailyconsumption === "string"
-                                ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
-                                : row.dailyconsumption[selectedDate] ?? "0")
-                            : "0"}
-                        </TableCell>
-                        <TableCell align="left" className="dark:text-gray-100">{row.total_quantity_issued}</TableCell>
-                        <TableCell align="left" className="dark:text-gray-100">₹ {row.total_cost}</TableCell>
-                      </>
-                    )}
+          {/* Category-specific columns */}
+          {selectedCategory === "Provisions" && (
+            <>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{row.itemname}</TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{row.monthyear}</TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{row.unit}</TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">
+                {row?.dailyconsumption
+                  ? (typeof row.dailyconsumption === "string"
+                      ? JSON.parse(row.dailyconsumption)[selectedDate] ?? "0"
+                      : row.dailyconsumption[selectedDate] ?? "0")
+                  : "0"}
+              </TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{row.total_quantity_issued}</TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">₹ {row.total_cost}</TableCell>
+            </>
+          )}
 
-                    {/* Other categories (Vegetables, Egg, Milk, Gas) */}
-                    {selectedCategory === "Vegetables" && (
-                      <>
-                        <TableCell align="left">{row.itemName}</TableCell>
-                        <TableCell align="left">{row.monthyear}</TableCell>
-                        <TableCell align="left">{row.total_quantity_issued}</TableCell>
-                        <TableCell align="left">₹ {(row.TotalCost) ? row.TotalCost : 0}</TableCell>
-                      </>
-                    )}
-                    {selectedCategory === "Egg" && (
-                      <>
-                        <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                        <TableCell align="center">{row.Quantity}</TableCell>
-                        <TableCell align="center">{row.CostPerPiece}</TableCell>
-                        <TableCell align="center">{row.TotalCost}</TableCell>
-                      </>
-                    )}
-                    {selectedCategory === "Milk" && (
-                      <>
-                        <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                        <TableCell align="center">{row.Quantity}</TableCell>
-                        <TableCell align="center">{row.CostPerLitre}</TableCell>
-                        <TableCell align="center">{row.TotalCost}</TableCell>
-                      </>
-                    )}
-                    {selectedCategory === "Gas" && (
-                      <>
-                        <TableCell align="center">{row.DateOfConsumed}</TableCell>
-                        <TableCell align="center">{row.no_of_cylinder}</TableCell>
-                        <TableCell align="center">{row.TotalAmount}</TableCell>
-                      </>
-                    )}
-                  </TableRow>
+          {/* Other categories (Vegetables, Egg, Milk, Gas) */}
+          {selectedCategory === "Vegetables" && (
+            <>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{row.itemName}</TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{row.monthyear}</TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">{row.total_quantity_issued}</TableCell>
+              <TableCell align="left" className="dark:text-gray-200 dark:bg-gray-800">₹ {(row.TotalCost) ? row.TotalCost : 0}</TableCell>
+            </>
+          )}
+          {selectedCategory === "Egg" && (
+            <>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.DateOfConsumed}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.Quantity}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.CostPerPiece}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.TotalCost}</TableCell>
+            </>
+          )}
+          {selectedCategory === "Milk" && (
+            <>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.DateOfConsumed}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.Quantity}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.CostPerLitre}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.TotalCost}</TableCell>
+            </>
+          )}
+          {selectedCategory === "Gas" && (
+            <>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.DateOfConsumed}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.no_of_cylinder}</TableCell>
+              <TableCell align="center" className="dark:text-gray-200 dark:bg-gray-800">{row.TotalAmount}</TableCell>
+            </>
+          )}
+        </TableRow>
 
+        {/* Collapsible Row */}
+        {isRowOpen && (
+          <TableRow>
+          <TableCell colSpan={10} sx={{ padding: 0 }}>
+            <Collapse in={isRowOpen} timeout="auto" unmountOnExit>
+              <Box
+                sx={{
+                  padding: 3,
+                  backgroundColor: "#F9FAFB",
+                  borderBottomLeftRadius: "8px",
+                  borderBottomRightRadius: "8px",
+                  boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
+                  border: "1px solid #E0E0E0",
+                  marginBottom: "8px",
+                }}
+                className="dark:bg-slate-800"
+              >
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: "bold",
+                    color: "#333",
+                    marginBottom: "12px",
+                    textAlign: "center",
+                  }}
+                  className="dark:text-gray-100"
+                >
+                  Daily Issued Information - {selectedCategory}
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
+                    gap: 3,
+                    padding: "12px",
+                  }}
+                >
+                  {formattedData.map(({ date, value }) => (
+                    <Box
+                      key={date}
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        padding: "12px",
+                        borderRadius: "8px",
+                        backgroundColor: "white",
+                        boxShadow: "0 2px 6px rgba(0, 0, 0, 0.1)",
+                        transition: "0.3s",
+                        "&:hover": {
+                          transform: "scale(1.05)",
+                          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
+                        },
+                      }}
+                      className="dark:bg-slate-600"
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: "#555",
+                          fontWeight: "bold",
+                          marginBottom: "6px",
+                        }}
+                        className="dark:text-gray-300"
+                      >
+                        {dayjs(date).format("DD MMM")}
+                      </Typography>
+
+                      {selectedCategory === "Provisions" ? (
+
+                        <TextField
+                          size="small"
+                          value={value}
+                          onChange={(e) => handleConsumptionChange(date, e.target.value)}
+                          disabled={!isEditRow}
+                          sx={{
+                            width: "100px",
+                            backgroundColor: "white",
+                            borderRadius: "5px",
+                            marginBottom: "6px",
+                            "&.Mui-disabled": {
+                              backgroundColor: "rgba(255,255,255,0.2)",
+                            },
+                            "& .MuiOutlinedInput-root": {
+                              "& fieldset": {
+                                borderColor: "gray",
+                              },
+                              "& input": {
+                                color: "white",
+                              },
+                            },
+                          }}
+                          className="dark:bg-transparent dark:text-white"
+                        />
+                      ) : (
+                        <>
+                          <TextField
+                            size="small"
+                            label="Quantity"
+                            value={dailyConsumptionVegData[date]?.quantity || ""}
+                            onChange={(e) =>
+                              handleVegetableChange(date, "quantity", e.target.value)
+                            }
+                            disabled={!isEditRow}
+                            sx={{
+                              width: "100px",
+                              marginBottom: "6px",
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": {
+                                  borderColor: "gray",
+                                },
+                                "& input": {
+                                  color: "white",
+                                },
+                              },
+                            }}
+                            className="dark:bg-transparent dark:text-white"
+                          />
+                          <TextField
+                            size="small"
+                            label="Cost/kg"
+                            value={dailyConsumptionVegData[date]?.costPerKg || ""}
+                            onChange={(e) =>
+                              handleVegetableChange(date, "costPerKg", e.target.value)
+                            }
+                            disabled={!isEditRow}
+                            sx={{
+                              width: "100px",
+                              marginBottom: "6px",
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": {
+                                  borderColor: "gray",
+                                },
+                                "& input": {
+                                  color: "white",
+                                },
+                              },
+                            }}
+                            className="dark:bg-transparent dark:text-white"
+                          />
+                          <Typography
+                            variant="caption"
+                            sx={{ fontWeight: "bold", marginTop: "6px" }}
+                            className="dark:text-gray-200"
+                          >
+                            ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
+            </Collapse>
+          </TableCell>
+        </TableRow>
+
+
+
+
+        )}
                   {/* Collapsible Row */}
                   {isRowOpen && (
                     <TableRow>
@@ -1269,7 +1470,7 @@ const formatMonthYear = (dateString: string) => {
 
         </TableContainer>
         <TablePagination
-        className="dark:bg-gray-700 dark:text-gray-100"
+        className="dark:text-gray-100 dark:bg-gray-800"
         sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
         rowsPerPageOptions={[10, 25, 50]}
         component="div"
@@ -1350,10 +1551,8 @@ const formatMonthYear = (dateString: string) => {
         </Snackbar>
 
 
-
     </div>
   );
 };
 
 export default Groceries;
-

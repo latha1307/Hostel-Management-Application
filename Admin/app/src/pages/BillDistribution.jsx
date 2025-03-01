@@ -198,8 +198,8 @@ const BillDistribution = () => {
         BILL DISTRIBUTION - {hostel} Hostel
       </Typography>
       <div className="flex items-center mt-8 mb-2">
-        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer" /></Link>
-        <span className="ml-2 text-primary text-xl font-bold">Back</span>
+        <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-primary cursor-pointer dark:text-gray-200" /></Link>
+        <span className="ml-2 text-primary text-xl font-bold dark:text-gray-200">Back</span>
       </div>
 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
