@@ -1291,57 +1291,110 @@ const isEditRow = editMode[rowId] || false;
                         />
                       ) : (
                         <>
-                          <TextField
-                            size="small"
-                            label="Quantity"
-                            value={dailyConsumptionVegData[date]?.quantity || ""}
-                            onChange={(e) =>
-                              handleVegetableChange(date, "quantity", e.target.value)
-                            }
-                            disabled={!isEditRow}
-                            sx={{
-                              width: "100px",
-                              marginBottom: "6px",
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                  borderColor: "gray",
-                                },
-                                "& input": {
-                                  color: "white",
-                                },
-                              },
-                            }}
-                            className="dark:bg-transparent dark:text-white"
-                          />
-                          <TextField
-                            size="small"
-                            label="Cost/kg"
-                            value={dailyConsumptionVegData[date]?.costPerKg || ""}
-                            onChange={(e) =>
-                              handleVegetableChange(date, "costPerKg", e.target.value)
-                            }
-                            disabled={!isEditRow}
-                            sx={{
-                              width: "100px",
-                              marginBottom: "6px",
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                  borderColor: "gray",
-                                },
-                                "& input": {
-                                  color: "white",
-                                },
-                              },
-                            }}
-                            className="dark:bg-transparent dark:text-white"
-                          />
-                          <Typography
-                            variant="caption"
-                            sx={{ fontWeight: "bold", marginTop: "6px" }}
-                            className="dark:text-gray-200"
-                          >
-                            ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
-                          </Typography>
+                                <TextField
+  
+  size="small"
+  label="Quantity"
+  value={dailyConsumptionVegData[date]?.quantity || ""}
+  onChange={(e) =>
+    handleVegetableChange(date, "quantity", e.target.value)
+  }
+  disabled={!isEditRow}
+  sx={{
+    width: "100px",
+    marginBottom: "6px",
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "gray",
+      },
+      "&:hover fieldset": {
+        borderColor: "gray",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "gray",
+      },
+      "& input": {
+        color: "black",
+      },
+    },
+    "&.dark .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "white",
+      },
+      "&:hover fieldset": {
+        borderColor: "white",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "white",
+      },
+      "& input": {
+        color: "white",
+      },
+    },
+  }}
+  className="dark:bg-transparent"
+/>
+
+<TextField
+
+  size="small"
+  label="Cost/kg"
+  value={dailyConsumptionVegData[date]?.costPerKg || ""}
+  onChange={(e) =>
+    handleVegetableChange(date, "costPerKg", e.target.value)
+  }
+  disabled={!isEditRow}
+  sx={{
+    width: "100px",
+    marginBottom: "6px",
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "gray",
+      },
+      "&:hover fieldset": {
+        borderColor: "gray",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "gray",
+      },
+      "& input": {
+        color: "black",
+      },
+    },
+    "&.dark .MuiOutlinedInput-root": {
+      "& fieldset": {
+        borderColor: "white",
+      },
+      "&:hover fieldset": {
+        borderColor: "white",
+      },
+      "&.Mui-focused fieldset": {
+        borderColor: "white",
+      },
+      "& input": {
+        color: "white",
+      },
+    },
+  }}
+  className="dark:bg-transparent"
+/>
+
+<Typography
+  variant="caption"
+  sx={{
+    fontWeight: "bold",
+    marginTop: "6px",
+    color: "black",
+    "&.dark": {
+      color: "white",
+    },
+  }}
+  className="dark:text-white"
+>
+  ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
+</Typography>
+
+
                         </>
                       )}
                     </Box>
