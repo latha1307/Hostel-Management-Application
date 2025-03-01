@@ -1197,6 +1197,7 @@ useEffect(() => {
 
                         <TextField
                           size="small"
+                          type='number'
                           value={value}
                           onChange={(e) => handleConsumptionChange(date, e.target.value)}
                           disabled={!isEditRow}
@@ -1223,6 +1224,7 @@ useEffect(() => {
                         <>
                           <TextField
                             size="small"
+                          type='number'
                             label="Quantity"
                             value={dailyConsumptionVegData[date]?.quantity || ""}
                             onChange={(e) =>
@@ -1245,6 +1247,8 @@ useEffect(() => {
                           />
                           <TextField
                             size="small"
+                          type='number'
+
                             label="Cost/kg"
                             value={dailyConsumptionVegData[date]?.costPerKg || ""}
                             onChange={(e) =>
