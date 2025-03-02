@@ -40,21 +40,32 @@ const Login: React.FC = () => {
 
     // Generate a 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000);
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min expiry
 
-    // Store OTP in Supabase table with expiration time
+    // Store OTP in Supabase
     const { error } = await supabase.from("password_reset_otp").upsert([
-      { email, otp: otpCode, expires_at: new Date(Date.now() + 10 * 60 * 1000) }, // Expires in 10 minutes
+      { email, otp: otpCode, expires_at: expiresAt },
     ]);
 
     if (error) {
       setSnackbarMessage("Failed to send OTP. Try again.");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Send email with OTP
+    const { error: emailError } = await supabase.auth.signInWithOtp({ email });
+
+    if (emailError) {
+      setSnackbarMessage("Error sending OTP email. Try again.");
     } else {
-      setSnackbarMessage(`OTP sent to ${email}.`);
+      setSnackbarMessage(`OTP sent to ${email}. Check your inbox.`);
       setOtpSent(true);
     }
 
     setSnackbarOpen(true);
   };
+
 
   // Handle OTP verification
   const handleVerifyOtp = async () => {
