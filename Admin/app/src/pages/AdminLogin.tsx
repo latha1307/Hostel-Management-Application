@@ -2,8 +2,12 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 import { Snackbar } from "@mui/material";
+interface LoginProps {
+  setIsLoggedIn: (value: boolean) => void;
+}
 
-const Login: React.FC = () => {
+const Login: React.FC<LoginProps> = ({ setIsLoggedIn}) => {
+
   const [view, setView] = useState("login"); // 'login' | 'forgotPassword' | 'register'
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +30,9 @@ const Login: React.FC = () => {
       setSnackbarMessage("Login failed. Check your email and password.");
       setSnackbarOpen(true);
     } else {
-      navigate("/dashboard");
+      setIsLoggedIn(true);
+      navigate("/");
+      window.location.reload()
     }
   };
 
@@ -74,6 +80,7 @@ const Login: React.FC = () => {
     } else {
       setSnackbarMessage("Password reset successful! Please log in.");
       navigate("/login");
+      window.location.reload();
     }
     setSnackbarOpen(true);
   };
@@ -110,7 +117,7 @@ const Login: React.FC = () => {
               />
             </div>
 
-            <button onClick={handleLogin} className="w-full mt-6 py-3 bg-[#9e298b] text-white font-semibold rounded-lg hover:bg-[#71045F]">
+            <button onClick={handleLogin}  disabled={loading}  className="w-full mt-6 py-3 bg-[#9e298b] text-white font-semibold rounded-lg hover:bg-[#71045F]">
               {loading ? "Logging in..." : "Login"}
             </button>
 

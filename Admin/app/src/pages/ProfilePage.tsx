@@ -68,6 +68,7 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
       localStorage.clear();
       sessionStorage.clear();
       navigate("/login");
+      window.location.reload()
     } catch (error) {
       console.error("Logout failed:", error.message);
     }
