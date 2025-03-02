@@ -30,7 +30,7 @@ const Login: React.FC = () => {
     setSnackbarOpen(true);
   };
 
-  // Handle OTP generation and sending
+
   const handleForgotPassword = async () => {
     if (!email) {
       setSnackbarMessage("Please enter your email first.");
@@ -38,9 +38,9 @@ const Login: React.FC = () => {
       return;
     }
 
-    // Generate a 6-digit OTP
+    // Generate 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000);
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min expiry
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // OTP expires in 10 min
 
     // Store OTP in Supabase
     const { error } = await supabase.from("password_reset_otp").upsert([
@@ -48,43 +48,75 @@ const Login: React.FC = () => {
     ]);
 
     if (error) {
-      setSnackbarMessage("Failed to send OTP. Try again.");
+      setSnackbarMessage("Failed to store OTP. Try again.");
       setSnackbarOpen(true);
       return;
     }
 
-    // Send email with OTP
-    const { error: emailError } = await supabase.auth.signInWithOtp({ email });
+    // Send OTP via email (You need an email service like SendGrid, Nodemailer, etc.)
+    await sendOtpEmail(email, otpCode);  // Implement this function separately
 
-    if (emailError) {
-      setSnackbarMessage("Error sending OTP email. Try again.");
-    } else {
-      setSnackbarMessage(`OTP sent to ${email}. Check your inbox.`);
-      setOtpSent(true);
-    }
-
+    setSnackbarMessage(`OTP sent to ${email}. Check your inbox.`);
+    setOtpSent(true);
     setSnackbarOpen(true);
   };
+
+  const nodemailer = require("nodemailer");
+
+  async function sendOtpEmail(email, otpCode) {
+    let transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: "tpgithostels2025@gmail.com",
+        pass: "fhea fpdp rxjy yotl",
+      },
+    });
+
+    let mailOptions = {
+      from: "tpgithostels2025@gmail.com",
+      to: email,
+      subject: "Your OTP for Password Reset",
+      text: `Your OTP for password reset is: ${otpCode}. This OTP will expire in 10 minutes.`,
+    };
+
+    await transporter.sendMail(mailOptions);
+  }
 
 
   // Handle OTP verification
   const handleVerifyOtp = async () => {
+    if (!email || !otp) {
+      setSnackbarMessage("Please enter your email and OTP.");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    // Fetch OTP from Supabase
     const { data, error } = await supabase
       .from("password_reset_otp")
-      .select("*")
+      .select("otp, expires_at")
       .eq("email", email)
-      .eq("otp", otp)
       .single();
 
     if (error || !data) {
       setSnackbarMessage("Invalid OTP. Try again.");
-    } else {
-      setSnackbarMessage("OTP Verified! Enter a new password.");
-      setOtpVerified(true);
+      setSnackbarOpen(true);
+      return;
     }
 
+    // Check if OTP matches and is not expired
+    if (data.otp !== otp || new Date() > new Date(data.expires_at)) {
+      setSnackbarMessage("OTP expired or incorrect.");
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setSnackbarMessage("OTP verified! You can now reset your password.");
+    setOtpVerified(true);
     setSnackbarOpen(true);
   };
+
+
 
   // Handle password reset after OTP verification
   const handleResetPassword = async () => {
@@ -94,22 +126,27 @@ const Login: React.FC = () => {
       return;
     }
 
+    // Update password in Supabase
     const { error } = await supabase.auth.updateUser({
-      email,
       password: newPassword,
     });
 
     if (error) {
       setSnackbarMessage("Failed to reset password. Try again.");
-    } else {
-      setSnackbarMessage("Password reset successful. You can now log in.");
-      setForgotPassword(false);
-      setOtpSent(false);
-      setOtpVerified(false);
+      setSnackbarOpen(true);
+      return;
     }
 
+    // Delete OTP after successful password reset
+    await supabase.from("password_reset_otp").delete().eq("email", email);
+
+    setSnackbarMessage("Password reset successful. You can now log in.");
+    setOtpVerified(false);
+    setOtpSent(false);
     setSnackbarOpen(true);
   };
+
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
