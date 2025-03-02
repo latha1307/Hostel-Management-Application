@@ -1295,37 +1295,38 @@ className="dark:bg-white"
                   ))}
                 </Box>
                 <div className="flex justify-center mt-4">
-  <Button
-    variant="contained"
-    color="primary"
-    startIcon={<SaveIcon />}
-    sx={{
-      borderRadius: "8px",
-      textTransform: "none",
-      padding: "6px 16px",
-      fontSize: "14px",
-      fontWeight: "bold",
-      backgroundColor: "#1976D2",
-      "&.dark": {
-        backgroundColor: "#1565C0",
-      },
-      "&:hover": {
-        backgroundColor: "#1565C0",
-        "&.dark": {
-          backgroundColor: "#1258A7",
-        },
-      },
-    }}
-    onClick={() => {
-      if (selectedCategory === "Provisions") {
-        handleSaveChanges(dailyConsumptionData);
-      } else {
-        handleSaveChanges(dailyConsumptionVegData);
-      }
-    }}
-  >
-    Save Changes
-  </Button>
+                <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<SaveIcon />}
+                        sx={{
+                          borderRadius: "8px",
+                          textTransform: "none",
+                          padding: "6px 16px",
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          backgroundColor: "#1976D2",
+                          "&.dark": {
+                            backgroundColor: "#1565C0",
+                          },
+                          "&:hover": {
+                            backgroundColor: "#1565C0",
+                            "&.dark": {
+                              backgroundColor: "#1258A7",
+                            },
+                          },
+                        }}
+                        onClick={() => {
+                          if(selectedCategory==='Provisions'){
+                          handleSaveChanges(dailyConsumptionData)}
+                          else{
+                            handleSaveChanges(dailyConsumptionVegData)
+                          }
+                        }}
+                      >
+                        Save Changes
+                      </Button>
+
 </div>
 
 
