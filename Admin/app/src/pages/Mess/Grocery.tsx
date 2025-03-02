@@ -1199,86 +1199,86 @@ useEffect(() => {
 
                       {selectedCategory === "Provisions" ? (
 
-<TextField
-size="small"
-type="number"
-value={value}
-onChange={(e) => handleConsumptionChange(date, e.target.value)}
-disabled={!isEditRow}
-sx={{
-  width: "100px",
-  backgroundColor: "white",
-  borderRadius: "5px",
-  marginBottom: "6px",
-  "&.Mui-disabled": {
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-  "& .MuiOutlinedInput-root": {
-    "& fieldset": {
-      borderColor: "gray",
-    },
-    "& input": {
-      color: "black", // Default for light mode
-    },
-  },
-  "&.dark .MuiOutlinedInput-root input": {
-    color: "white", // For dark mode
-  },
-}}
-className="dark:bg-white"
-/>
+                        <TextField
+                        size="small"
+                        type="number"
+                        value={value}
+                        onChange={(e) => handleConsumptionChange(date, e.target.value)}
+                        disabled={!isEditRow}
+                        sx={{
+                          width: "100px",
+                          backgroundColor: "white",
+                          borderRadius: "5px",
+                          marginBottom: "6px",
+                          "&.Mui-disabled": {
+                            backgroundColor: "rgba(255,255,255,0.2)",
+                          },
+                          "& .MuiOutlinedInput-root": {
+                            "& fieldset": {
+                              borderColor: "gray",
+                            },
+                            "& input": {
+                              color: "black", // Default for light mode
+                            },
+                          },
+                          "&.dark .MuiOutlinedInput-root input": {
+                            color: "white", // For dark mode
+                          },
+                        }}
+                        className="dark:bg-white"
+                        />
 
                       ) : (
                         <>
                           <TextField
-  className="bg-white"
-  size="small"
-  type="number"
-  label="Quantity"
-  value={dailyConsumptionVegData[date]?.quantity || ""}
-  onChange={(e) => handleVegetableChange(date, "quantity", e.target.value)}
-  disabled={!isEditRow}
-  sx={{
-    width: "100px",
-    marginBottom: "6px",
-    "& .MuiOutlinedInput-root": {
-      "& fieldset": {
-        borderColor: "gray",
-      },
-      "& input": {
-        color: isDarkMode ? "white !important" : "black !important", // Force color change
-      },
-    },
-    "& .MuiInputLabel-root": {
-      color: isDarkMode ? "white !important" : "black !important", // Ensure label color changes
-    },
-  }}
-/>
+                            className="bg-white"
+                            size="small"
+                            type="number"
+                            label="Quantity"
+                            value={dailyConsumptionVegData[date]?.quantity || ""}
+                            onChange={(e) => handleVegetableChange(date, "quantity", e.target.value)}
+                            disabled={!isEditRow}
+                            sx={{
+                              width: "100px",
+                              marginBottom: "6px",
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": {
+                                  borderColor: "gray",
+                                },
+                                "& input": {
+                                  color: isDarkMode ? "white !important" : "black !important", // Force color change
+                                },
+                              },
+                              "& .MuiInputLabel-root": {
+                                color: isDarkMode ? "white !important" : "black !important", // Ensure label color changes
+                              },
+                            }}
+                          />
 
-<TextField
-  className="bg-white"
-  size="small"
-  type="number"
-  label="Cost/kg"
-  value={dailyConsumptionVegData[date]?.costPerKg || ""}
-  onChange={(e) => handleVegetableChange(date, "costPerKg", e.target.value)}
-  disabled={!isEditRow}
-  sx={{
-    width: "100px",
-    marginBottom: "6px",
-    "& .MuiOutlinedInput-root": {
-      "& fieldset": {
-        borderColor: "gray",
-      },
-      "& input": {
-        color: isDarkMode ? "white !important" : "black !important", // Force color change
-      },
-    },
-    "& .MuiInputLabel-root": {
-      color: isDarkMode ? "white !important" : "black !important", // Ensure label color changes
-    },
-  }}
-/>
+                          <TextField
+                            className="bg-white"
+                            size="small"
+                            type="number"
+                            label="Cost/kg"
+                            value={dailyConsumptionVegData[date]?.costPerKg || ""}
+                            onChange={(e) => handleVegetableChange(date, "costPerKg", e.target.value)}
+                            disabled={!isEditRow}
+                            sx={{
+                              width: "100px",
+                              marginBottom: "6px",
+                              "& .MuiOutlinedInput-root": {
+                                "& fieldset": {
+                                  borderColor: "gray",
+                                },
+                                "& input": {
+                                  color: isDarkMode ? "white !important" : "black !important", // Force color change
+                                },
+                              },
+                              "& .MuiInputLabel-root": {
+                                color: isDarkMode ? "white !important" : "black !important", // Ensure label color changes
+                              },
+                            }}
+                          />
 
 
 
@@ -1294,6 +1294,7 @@ className="dark:bg-white"
                     </Box>
                   ))}
                 </Box>
+
                 {isEditRow && (
                     <Box
                       sx={{
