@@ -13,6 +13,7 @@
   import { Header } from "./components/Header.jsx";
   import supabase from "./supabaseClient.js";
   import Login from "./pages/AdminLogin.tsx";
+import ResetPassword from "./pages/ResetPassword.tsx";
 
   function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -74,6 +75,7 @@
 
                   <Route path="/admin/profile" element={<AdminDetails email={email} />} />
                   <Route path="/admin/add" element={<AdminManagement />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/" element={<Provisions />} />
                 </Routes>
               </div>

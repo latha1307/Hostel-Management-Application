@@ -21,8 +21,9 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Box
 } from "@mui/material";
-import { Edit, Save, ArrowBack, Logout, LockReset, Delete } from "@mui/icons-material";
+import { Edit, Save, ArrowBack, Logout, Delete } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 
@@ -61,65 +62,76 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
     if (data) setAdmins(data);
   };
 
-  const handleResetPassword = async () => {
-    if (!email) return;
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://yourdomain.com/reset-password",
-    });
-    setSnackbarMessage(error ? "Failed to send reset email." : "Password reset email sent successfully.");
-    setSnackbarOpen(true);
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error.message);
+    }
+  };
+
+  const handleDeleteAdmin = async () => {
+    if (adminToDelete) {
+      await supabase.from("admin").delete().eq("id", adminToDelete.id);
+      setAdmins(admins.filter(a => a.id !== adminToDelete.id));
+      setDeleteDialogOpen(false);
+      setSnackbarMessage("Admin deleted successfully!");
+      setSnackbarOpen(true);
+    }
   };
 
   return (
     <Container maxWidth="md" sx={{ marginTop: 5 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 20 }}>
+      <Box display="flex" justifyContent="space-between" mb={2}>
         <Button variant="contained" startIcon={<ArrowBack />} component={Link} to="/">
           Back
         </Button>
-        <Button variant="contained" color="error" startIcon={<Logout />} onClick={() => navigate("/login")}> Logout </Button>
-      </div>
+        <Button variant="contained" color="error" startIcon={<Logout />} onClick={handleLogout}> Logout </Button>
+      </Box>
 
-      <Card sx={{ padding: 3, borderRadius: 3, boxShadow: 5 }}>
+      <Card sx={{ padding: 3, borderRadius: 3, boxShadow: 5, bgcolor: "#f5f5f5" }}>
         <CardContent>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography variant="h5" fontWeight="bold">Admin Profile</Typography>
-            <div>
-              <IconButton color="primary" onClick={() => setIsEditing(!isEditing)}>
-                {isEditing ? <Save /> : <Edit />}
-              </IconButton>
-              <IconButton color="secondary" onClick={handleResetPassword}>
-                <LockReset />
-              </IconButton>
-            </div>
-          </div>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h5" fontWeight="bold" color="primary">Admin Profile</Typography>
+            <IconButton color="primary" onClick={() => setIsEditing(!isEditing)}>
+              <Edit />
+            </IconButton>
+          </Box>
 
           {admin && (
-            <div>
+            <Box>
               <TextField fullWidth margin="normal" label="Name" value={admin.name} disabled={!isEditing} />
               <TextField fullWidth margin="normal" label="Email" value={admin.email} disabled />
               {isEditing && <Button variant="contained" sx={{ mt: 2 }} onClick={() => setIsEditing(false)}> Save Changes </Button>}
-            </div>
+            </Box>
           )}
         </CardContent>
       </Card>
 
-      <Typography variant="h5" sx={{ marginTop: 4, marginBottom: 2 }}>Admin List</Typography>
-      <TableContainer component={Paper} sx={{ marginBottom: 3 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mt={4} mb={2}>
+        <Typography variant="h5" color="secondary">Admin List</Typography>
+        <Button variant="contained" component={Link} to="/admin/add" color="success"> Add Admin </Button>
+      </Box>
+
+      <TableContainer component={Paper} sx={{ marginBottom: 3, boxShadow: 3 }}>
         <Table>
-          <TableHead>
+          <TableHead sx={{ bgcolor: "#1976d2" }}>
             <TableRow>
-              <TableCell>Name</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Actions</TableCell>
+              <TableCell sx={{ color: "white" }}>Name</TableCell>
+              <TableCell sx={{ color: "white" }}>Email</TableCell>
+              <TableCell sx={{ color: "white" }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {admins.map((adminItem) => (
-              <TableRow key={adminItem.id}>
+              <TableRow key={adminItem.id} hover>
                 <TableCell>{adminItem.name}</TableCell>
                 <TableCell>{adminItem.email}</TableCell>
                 <TableCell>
-                  <IconButton color="error" onClick={() => setAdminToDelete(adminItem) || setDeleteDialogOpen(true)}>
+                  <IconButton color="error" onClick={() => { setAdminToDelete(adminItem); setDeleteDialogOpen(true); }}>
                     <Delete />
                   </IconButton>
                 </TableCell>
@@ -138,12 +150,12 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={() => setDeleteDialogOpen(false) || setAdmins(admins.filter(a => a.id !== adminToDelete?.id))} color="error"> Delete </Button>
+          <Button onClick={handleDeleteAdmin} color="error"> Delete </Button>
         </DialogActions>
       </Dialog>
 
       <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={() => setSnackbarOpen(false)}>
-        <Alert severity="info">{snackbarMessage}</Alert>
+        <Alert severity="success">{snackbarMessage}</Alert>
       </Snackbar>
     </Container>
   );
