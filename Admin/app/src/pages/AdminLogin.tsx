@@ -30,7 +30,6 @@ const Login: React.FC = () => {
     }
   };
 
-  // Handle registration
   const handleForgotPassword = async () => {
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email);
@@ -40,10 +39,11 @@ const Login: React.FC = () => {
       setSnackbarMessage("Failed to send OTP. Try again.");
     } else {
       setSnackbarMessage("OTP sent to your email. Check your inbox.");
-      setView("verifyOtp");
+      setOtpSent(true); // Ensure OTP input is shown
     }
     setSnackbarOpen(true);
   };
+
 
   // Step 2: Verify OTP
   const handleVerifyOtp = async () => {
