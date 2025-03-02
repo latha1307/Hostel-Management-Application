@@ -54,7 +54,7 @@ const Login: React.FC<LoginProps> = ({ setIsLoggedIn }) => {
     setIsResetDisabled(true);
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: "https://hostel-management-application.vercel.app/reset-password",
+      redirectTo: "https://hostel-management-application.vercel.app/#/reset-password",
     });
 
     if (error) {
