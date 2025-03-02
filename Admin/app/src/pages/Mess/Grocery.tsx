@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from "react";
+import { useTheme } from "@mui/material/styles";
 import {
   Box,
   Button,
@@ -130,6 +131,9 @@ const Groceries = () => {
     const [openSnackbar, setOpenSnackbar] = useState(false);
 const [snackbarMessage, setSnackbarMessage] = useState("");
 const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+
+const theme = useTheme();
+const isDarkMode = theme.palette.mode === "dark";
 
 
   const handleChangePage = (event, newPage) => {
@@ -1007,12 +1011,12 @@ useEffect(() => {
               return (
                 <React.Fragment >
                   {/* Main Row */}
-                  <TableRow className="dark:bg-gray-700 dark:text-gray-100" sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
+                  <TableRow className="dark:bg-gray-800 dark:text-gray-200" sx={{ border: "1px solid #E0E0E0", backgroundColor: "white" }}>
                     <TableCell>
                     <IconButton
+                    className="dark:text-gray-200"
                   aria-label="expand row"
                   size="small"
-                  className="dark:text-gray-100"
                   onClick={() => {
                     const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
 
@@ -1055,7 +1059,7 @@ useEffect(() => {
 
                 <IconButton
                   color="primary"
-                  className="dark:hover:bg-slate-600"
+                   className="dark:text-gray-200"
                   onClick={() => {
                     if (selectedCategory === 'Provisions' || selectedCategory === 'Vegetables') {
                       const rowId = selectedCategory === "Provisions" ? row.id : row.vegetableid;
@@ -1065,7 +1069,7 @@ useEffect(() => {
                     }
                   }}
                 >
-                  <EditIcon className='dark:text-gray-900' />
+                  <EditIcon className='dark:text-gray-200' />
                 </IconButton>
 
 
@@ -1179,7 +1183,7 @@ useEffect(() => {
                           boxShadow: "0 4px 8px rgba(0, 0, 0, 0.2)",
                         },
                       }}
-                      className="dark:bg-slate-600"
+                      
                     >
                       <Typography
                         variant="caption"
@@ -1188,49 +1192,51 @@ useEffect(() => {
                           fontWeight: "bold",
                           marginBottom: "6px",
                         }}
-                        className="dark:text-gray-300"
+                        className="dark:text-black"
                       >
                         {dayjs(date).format("DD MMM")}
                       </Typography>
 
                       {selectedCategory === "Provisions" ? (
 
-                        <TextField
-                          size="small"
-                          type='number'
-                          value={value}
-                          onChange={(e) => handleConsumptionChange(date, e.target.value)}
-                          disabled={!isEditRow}
-                          sx={{
-                            width: "100px",
-                            backgroundColor: "white",
-                            borderRadius: "5px",
-                            marginBottom: "6px",
-                            "&.Mui-disabled": {
-                              backgroundColor: "rgba(255,255,255,0.2)",
-                            },
-                            "& .MuiOutlinedInput-root": {
-                              "& fieldset": {
-                                borderColor: "gray",
-                              },
-                              "& input": {
-                                color: "white",
-                              },
-                            },
-                          }}
-                          className="dark:bg-transparent dark:text-white"
-                        />
+<TextField
+size="small"
+type="number"
+value={value}
+onChange={(e) => handleConsumptionChange(date, e.target.value)}
+disabled={!isEditRow}
+sx={{
+  width: "100px",
+  backgroundColor: "white",
+  borderRadius: "5px",
+  marginBottom: "6px",
+  "&.Mui-disabled": {
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "gray",
+    },
+    "& input": {
+      color: "black", // Default for light mode
+    },
+  },
+  "&.dark .MuiOutlinedInput-root input": {
+    color: "white", // For dark mode
+  },
+}}
+className="dark:bg-white"
+/>
+
                       ) : (
                         <>
-<<<<<<< HEAD
-                                <TextField
-  
+                          <TextField
+  className="bg-white"
   size="small"
+  type="number"
   label="Quantity"
   value={dailyConsumptionVegData[date]?.quantity || ""}
-  onChange={(e) =>
-    handleVegetableChange(date, "quantity", e.target.value)
-  }
+  onChange={(e) => handleVegetableChange(date, "quantity", e.target.value)}
   disabled={!isEditRow}
   sx={{
     width: "100px",
@@ -1239,42 +1245,23 @@ useEffect(() => {
       "& fieldset": {
         borderColor: "gray",
       },
-      "&:hover fieldset": {
-        borderColor: "gray",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "gray",
-      },
       "& input": {
-        color: "black",
+        color: isDarkMode ? "white !important" : "black !important", // Force color change
       },
     },
-    "&.dark .MuiOutlinedInput-root": {
-      "& fieldset": {
-        borderColor: "white",
-      },
-      "&:hover fieldset": {
-        borderColor: "white",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "white",
-      },
-      "& input": {
-        color: "white",
-      },
+    "& .MuiInputLabel-root": {
+      color: isDarkMode ? "white !important" : "black !important", // Ensure label color changes
     },
   }}
-  className="dark:bg-transparent"
 />
 
 <TextField
-
+  className="bg-white"
   size="small"
+  type="number"
   label="Cost/kg"
   value={dailyConsumptionVegData[date]?.costPerKg || ""}
-  onChange={(e) =>
-    handleVegetableChange(date, "costPerKg", e.target.value)
-  }
+  onChange={(e) => handleVegetableChange(date, "costPerKg", e.target.value)}
   disabled={!isEditRow}
   sx={{
     width: "100px",
@@ -1283,106 +1270,25 @@ useEffect(() => {
       "& fieldset": {
         borderColor: "gray",
       },
-      "&:hover fieldset": {
-        borderColor: "gray",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "gray",
-      },
       "& input": {
-        color: "black",
+        color: isDarkMode ? "white !important" : "black !important", // Force color change
       },
     },
-    "&.dark .MuiOutlinedInput-root": {
-      "& fieldset": {
-        borderColor: "white",
-      },
-      "&:hover fieldset": {
-        borderColor: "white",
-      },
-      "&.Mui-focused fieldset": {
-        borderColor: "white",
-      },
-      "& input": {
-        color: "white",
-      },
+    "& .MuiInputLabel-root": {
+      color: isDarkMode ? "white !important" : "black !important", // Ensure label color changes
     },
   }}
-  className="dark:bg-transparent"
 />
 
-<Typography
-  variant="caption"
-  sx={{
-    fontWeight: "bold",
-    marginTop: "6px",
-    color: "black",
-    "&.dark": {
-      color: "white",
-    },
-  }}
-  className="dark:text-white"
->
-  ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
-</Typography>
 
 
-=======
-                          <TextField
-                            size="small"
-                          type='number'
-                            label="Quantity"
-                            value={dailyConsumptionVegData[date]?.quantity || ""}
-                            onChange={(e) =>
-                              handleVegetableChange(date, "quantity", e.target.value)
-                            }
-                            disabled={!isEditRow}
-                            sx={{
-                              width: "100px",
-                              marginBottom: "6px",
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                  borderColor: "gray",
-                                },
-                                "& input": {
-                                  color: "white",
-                                },
-                              },
-                            }}
-                            className="dark:bg-transparent dark:text-white"
-                          />
-                          <TextField
-                            size="small"
-                          type='number'
-
-                            label="Cost/kg"
-                            value={dailyConsumptionVegData[date]?.costPerKg || ""}
-                            onChange={(e) =>
-                              handleVegetableChange(date, "costPerKg", e.target.value)
-                            }
-                            disabled={!isEditRow}
-                            sx={{
-                              width: "100px",
-                              marginBottom: "6px",
-                              "& .MuiOutlinedInput-root": {
-                                "& fieldset": {
-                                  borderColor: "gray",
-                                },
-                                "& input": {
-                                  color: "white",
-                                },
-                              },
-                            }}
-                            className="dark:bg-transparent dark:text-white"
-                          />
                           <Typography
                             variant="caption"
                             sx={{ fontWeight: "bold", marginTop: "6px" }}
-                            className="dark:text-gray-200"
+                            className="dark:text-black"
                           >
                             ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
                           </Typography>
->>>>>>> upstream/main
                         </>
                       )}
                     </Box>
@@ -1397,179 +1303,7 @@ useEffect(() => {
 
 
         )}
-                  {/* Collapsible Row */}
-                  {isRowOpen && (
-                    <TableRow>
-                      <TableCell colSpan={10} sx={{ padding: 0 }}>
-                        <Collapse in={isRowOpen} timeout="auto" unmountOnExit>
-                          <Box
-                            sx={{
-                              padding: 2,
-                              backgroundColor: "#F9FAFB",
-                              borderBottomLeftRadius: "8px",
-                              borderBottomRightRadius: "8px",
-                              boxShadow: "0px 2px 4px rgba(0, 0, 0, 0.1)",
-                              border: "1px solid #E0E0E0",
-                              marginBottom: "4px",
-                            }}
-                            className="dark:bg-slate-800 "
-                          >
-                            <Typography
-                              variant="subtitle1"
-                              sx={{
-                                fontWeight: "bold",
-                                color: "#333",
-                                marginBottom: "8px",
-                                textAlign: "center",
-                              }}
-                              className="dark:text-gray-100"
-                            >
-                              Daily Issued Information - {selectedCategory}
-                            </Typography>
 
-                            <Box
-                              sx={{
-                                display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
-                                gap: 2,
-                                padding: "8px",
-                              }}
-                            >
-                              {formattedData.map(({ date, value }) => (
-                                <Box
-                                  key={date}
-                                  sx={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    alignItems: "center",
-                                    padding: "8px",
-                                    borderRadius: "8px",
-                                    backgroundColor: "white",
-                                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                                    transition: "0.3s",
-                                    "&:hover": {
-                                      transform: "scale(1.05)",
-                                      boxShadow: "0 2px 6px rgba(0, 0, 0, 0.2)",
-                                    },
-                                  }}
-                                  className="dark:bg-slate-600 "
-                                >
-                                  <Typography
-                                    variant="caption"
-                                    sx={{
-                                      color: "#555",
-                                      fontWeight: "bold",
-                                    }}
-                                  >
-                                    {dayjs(date).format("DD MMM")}
-                                  </Typography>
-
-                                  {selectedCategory === "Provisions" ? (
-                                    // **Provisions: Only 1 Field**
-                                    <TextField
-                                      size="small"
-                                      type="number"
-                                      value={value}
-                                      onChange={(e) => handleConsumptionChange(date, e.target.value)}
-                                      disabled={!isEditRow}
-                                      sx={{
-                                        width: "80px",
-                                        backgroundColor: "white",
-                                        borderRadius: "5px",
-                                        "&.Mui-disabled": {
-                                          backgroundColor: "rgba(255,255,255,0.2)",
-                                        },
-                                        input: {
-                                          color: "#000",
-                                          "&.dark": {
-                                            color: "#FFF",
-                                          },
-                                        },
-                                      }}
-                                      className="dark:bg-gray-200 dark:text-white disabled:bg-gray-100 dark:disabled:bg-gray-400"
-                                    />
-
-                                  ) : (
-                                    // **Vegetables: Quantity & Cost/kg**
-                                    <>
-                                      <TextField
-                                        size="small"
-                                        label="Quantity"
-                                        type="number"
-                                        value={dailyConsumptionVegData[date]?.quantity || ""}
-                                        onChange={(e) =>
-                                          handleVegetableChange(date, "quantity", e.target.value)
-                                        }
-                                        disabled={!isEditRow}
-                                        sx={{ width: "80px" }}
-                                      />
-                                      <TextField
-                                        size="small"
-                                        label="Cost/kg"
-                                        type="number"
-                                        value={dailyConsumptionVegData[date]?.costPerKg || ""}
-                                        onChange={(e) =>
-                                          handleVegetableChange(date, "costPerKg", e.target.value)
-                                        }
-                                        disabled={!isEditRow}
-                                        sx={{ width: "80px" }}
-                                      />
-                                      <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-                                        ₹{(dailyConsumptionVegData[date]?.totalCost || 0).toFixed(2)}
-                                      </Typography>
-
-                                    </>
-                                  )}
-                                </Box>
-                              ))}
-                            </Box>
-
-                            {isEditRow && (
-                              <Box
-                                sx={{
-                                  display: "flex",
-                                  justifyContent: "center",
-                                  marginTop: "16px",
-                                }}
-                              >
-                                <Button
-                                  variant="contained"
-                                  color="primary"
-                                  startIcon={<SaveIcon />}
-                                  sx={{
-                                    borderRadius: "8px",
-                                    textTransform: "none",
-                                    padding: "6px 16px",
-                                    fontSize: "14px",
-                                    fontWeight: "bold",
-                                    backgroundColor: "#1976D2",
-                                    "&.dark": {
-                                      backgroundColor: "#1565C0",
-                                    },
-                                    "&:hover": {
-                                      backgroundColor: "#1565C0",
-                                      "&.dark": {
-                                        backgroundColor: "#1258A7",
-                                      },
-                                    },
-                                  }}
-                                  onClick={() => {
-                                    if(selectedCategory==='Provisions'){
-                                    handleSaveChanges(dailyConsumptionData)}
-                                    else{
-                                      handleSaveChanges(dailyConsumptionVegData)
-                                    }
-                                  }}
-                                >
-                                  Save Changes
-                                </Button>
-                              </Box>
-                            )}
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  )}
 
                 </React.Fragment>
               )
