@@ -31,62 +31,53 @@ const Login: React.FC = () => {
   };
 
   // Handle registration
-  const handleRegister = async () => {
+  const handleForgotPassword = async () => {
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-    setLoading(false);
+    const { error } = await supabase.auth.resetPasswordForEmail(email);
 
+    setLoading(false);
     if (error) {
-      setSnackbarMessage("Registration failed. Try again.");
+      setSnackbarMessage("Failed to send OTP. Try again.");
     } else {
-      setSnackbarMessage("Registration successful! Please check your email.");
-      setView("login");
+      setSnackbarMessage("OTP sent to your email. Check your inbox.");
+      setView("verifyOtp");
     }
     setSnackbarOpen(true);
   };
 
-// Handle forgot password request (Send OTP via Supabase)
-const handleForgotPassword = async () => {
-  if (!email) {
-    setSnackbarMessage("Please enter your email.");
+  // Step 2: Verify OTP
+  const handleVerifyOtp = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.verifyOtp({
+      email,
+      token: otp,
+      type: "recovery",
+    });
+
+    setLoading(false);
+    if (error) {
+      setSnackbarMessage("Invalid or expired OTP.");
+    } else {
+      setSnackbarMessage("OTP verified! Set a new password.");
+      setView("resetPassword");
+    }
     setSnackbarOpen(true);
-    return;
-  }
+  };
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email);
+  // Step 3: Reset Password
+  const handleResetPassword = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
 
-  if (error) {
-    setSnackbarMessage("Failed to send reset link. Try again.");
+    setLoading(false);
+    if (error) {
+      setSnackbarMessage("Failed to reset password. Try again.");
+    } else {
+      setSnackbarMessage("Password reset successful! Please log in.");
+      navigate("/login");
+    }
     setSnackbarOpen(true);
-    return;
-  }
-
-  setSnackbarMessage("Check your email for the OTP link.");
-  setSnackbarOpen(true);
-  setOtpSent(true);
-};
-
-// Handle password reset (User submits new password with OTP token)
-const handleResetPassword = async () => {
-  if (newPassword.length < 6) {
-    setSnackbarMessage("Password must be at least 6 characters long.");
-    setSnackbarOpen(true);
-    return;
-  }
-
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
-
-  if (error) {
-    setSnackbarMessage("Failed to reset password. Try again.");
-    setSnackbarOpen(true);
-    return;
-  }
-
-  setSnackbarMessage("Password reset successful! You can now log in.");
-  setSnackbarOpen(true);
-  setView("login");
-};
-
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -163,6 +154,9 @@ const handleResetPassword = async () => {
                   />
                 </div>
 
+                <button onClick={handleVerifyOtp} className="w-full mt-6 py-3 bg-[#9e298b] text-white font-semibold rounded-lg hover:bg-[#71045F]">
+                  Verify OTP
+                </button>
               </>
             )
           ) : (
