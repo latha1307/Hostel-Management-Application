@@ -75,7 +75,6 @@ import ResetPassword from "./pages/ResetPassword.tsx";
 
                   <Route path="/admin/profile" element={<AdminDetails email={email} />} />
                   <Route path="/admin/add" element={<AdminManagement />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
                   <Route path="/" element={<Provisions />} />
                 </Routes>
               </div>
@@ -84,6 +83,7 @@ import ResetPassword from "./pages/ResetPassword.tsx";
         ) : (
           <Routes>
             <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
         )}
