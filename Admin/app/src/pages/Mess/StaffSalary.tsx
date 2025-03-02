@@ -23,11 +23,9 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
-import FilterListIcon from "@mui/icons-material/FilterList";
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-import { theme } from "../../constants/theme";
 
 interface SalaryItem {
   StaffCategory: string;
@@ -58,6 +56,7 @@ const StaffSalary = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [open, setOpen] = useState(false);
+  const [selectedDate, setSelectedDate] = useState("");
   const [formData, setFormData] = useState<FormData>({
     StaffCategory: "",
     StaffName: "",
@@ -67,7 +66,7 @@ const StaffSalary = () => {
     DateOfIssued: "",
   });
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [deleteItemId, setDeleteItemId] = useState<number | null>(null);
 
   const fetchSalaryData = useCallback(async () => {
@@ -209,6 +208,9 @@ const StaffSalary = () => {
     }
   };
 
+    useEffect(() => {
+      setSelectedDate(new Date().toISOString().split("T")[0]);
+    }, []);
 
   const formatDate = (dateString: string): string => {
     if (!dateString) return '';
@@ -230,11 +232,15 @@ const StaffSalary = () => {
     setPage(0);
   };
 
-  const paginatedData = salaryData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+  const formattedDate = selectedDate.slice(0, 7);
+
+  const selectedData = salaryData.filter(item => item.DateOfIssued.slice(0, 7) === formattedDate);
+
+  const paginatedData = selectedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <div className="max-h-screen bg-pageBg p-1 -mt-10 max-w-screen dark:text-gray-200 dark:bg-gray-800">
-     
+    <div className="max-h-screen p-1 -mt-10 max-w-screen dark:text-gray-200 dark:bg-gray-800">
+
       <div className="flex items-center mt-8 mb-2 dark:text-gray-200">
         <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="dark:text-gray-200 text-primary cursor-pointer" /></Link>
         <span className="ml-2 text-primary text-xl font-bold dark:text-gray-200">Staff Salaries</span>
@@ -281,13 +287,58 @@ const StaffSalary = () => {
 />
 
 
-          <Button
-            variant="contained"
-            startIcon={<FilterListIcon />}
-            sx={{ backgroundColor: theme.colors.secondary }}
-          >
-            Filter By
-          </Button>
+          <TextField
+            type="date"
+            label="Select Date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            variant="outlined"
+            size="small"
+            sx={{
+              width: "180px",
+              backgroundColor: "white",
+              borderRadius: "10px",
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "10px",
+                "& fieldset": {
+                  borderColor: "gray", // Default border color
+                },
+              },
+              "& .MuiOutlinedInput-root.Mui-focused fieldset": {
+                borderColor: "gray", // Border color when focused
+              },
+              "& .MuiInputBase-input": {
+                color: "black", // Default input text color
+              },
+              "& input::-webkit-calendar-picker-indicator": {
+                filter: "invert(0)", // Default icon color (black)
+              },
+              ".dark &": {
+                backgroundColor: "transparent", // Dark mode background
+                "& .MuiOutlinedInput-root": {
+                  "& fieldset": {
+                    borderColor: "gray", // Dark mode border color
+                  },
+                },
+                "& .MuiInputBase-input": {
+                  color: "white", // Input text white in dark mode
+                },
+                "& input::-webkit-calendar-picker-indicator": {
+                  filter: "invert(60%)", // Dark mode: turns icon gray
+                },
+              },
+            }}
+            className="dark:bg-transparent"
+            InputLabelProps={{
+              shrink: true,
+              sx: {
+                color: "black", // Default label color
+                ".dark &": {
+                  color: "gray", // Dark mode label color (Select Date text)
+                },
+              },
+            }}
+          />
         </Box>
         <Button
           variant="contained"
@@ -355,7 +406,7 @@ const StaffSalary = () => {
           <TablePagination
             className='dark:bg-gray-800 dark:text-gray-200'
             sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
-            rowsPerPageOptions={[5, 10, 25]}
+            rowsPerPageOptions={[10, 20, 50]}
             component="div"
             count={salaryData.length}
             rowsPerPage={rowsPerPage}

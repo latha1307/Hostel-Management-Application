@@ -53,34 +53,12 @@ const Login: React.FC = () => {
       return;
     }
 
-    // Send OTP via email (You need an email service like SendGrid, Nodemailer, etc.)
-    await sendOtpEmail(email, otpCode);  // Implement this function separately
 
     setSnackbarMessage(`OTP sent to ${email}. Check your inbox.`);
     setOtpSent(true);
     setSnackbarOpen(true);
   };
 
-  const nodemailer = require("nodemailer");
-
-  async function sendOtpEmail(email, otpCode) {
-    let transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: "tpgithostels2025@gmail.com",
-        pass: "fhea fpdp rxjy yotl",
-      },
-    });
-
-    let mailOptions = {
-      from: "tpgithostels2025@gmail.com",
-      to: email,
-      subject: "Your OTP for Password Reset",
-      text: `Your OTP for password reset is: ${otpCode}. This OTP will expire in 10 minutes.`,
-    };
-
-    await transporter.sendMail(mailOptions);
-  }
 
 
   // Handle OTP verification

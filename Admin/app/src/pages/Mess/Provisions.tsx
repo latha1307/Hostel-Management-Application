@@ -384,7 +384,14 @@ const handleMonthSubmit = async () => {
     setPage(0);
   };
 
-  const paginatedData = groceriesData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const selectedData = groceriesData.filter(item => item.monthyear === monthYear);
+
+  const paginatedData = selectedData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
 
 
   const filteredData = paginatedData.filter((row) =>
