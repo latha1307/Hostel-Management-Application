@@ -13,7 +13,6 @@
   import { Header } from "./components/Header.jsx";
   import supabase from "./supabaseClient.js";
   import Login from "./pages/AdminLogin.tsx";
-import ResetPassword from "./pages/ResetPassword.tsx";
 
   function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -44,14 +43,13 @@ import ResetPassword from "./pages/ResetPassword.tsx";
     };
 
     if (loading) {
-      return <div>Loading...</div>; // Prevent redirect while checking session
+      return <div>Loading...</div>;
     }
 
     return (
       <Router>
         {isLoggedIn ? (
           <div className={`${darkMode ? "dark" : ""} flex h-full bg-gray-100 font-quickSand`}>
-            {/* Pass email to Header */}
             <Header
               toggleDarkMode={toggleDarkMode}
               darkMode={darkMode}
@@ -83,7 +81,6 @@ import ResetPassword from "./pages/ResetPassword.tsx";
         ) : (
           <Routes>
             <Route path="/login" element={<Login setIsLoggedIn={setIsLoggedIn} />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="*" element={<Navigate to="/login" />} />
           </Routes>
         )}

@@ -23,7 +23,7 @@ import {
   DialogTitle,
   Box
 } from "@mui/material";
-import { Edit, Save, ArrowBack, Logout, Delete } from "@mui/icons-material";
+import { Edit, ArrowBack, Logout, Delete } from "@mui/icons-material";
 import { Link, useNavigate } from "react-router-dom";
 import supabase from "../supabaseClient";
 

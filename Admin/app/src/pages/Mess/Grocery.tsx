@@ -429,9 +429,10 @@ useEffect(() => {
             .select("dailyconsumption, total_quantity_issued, total_cost, itemname")
             .eq("id", editId)
             .single();
+            console.log("Existing Entry:", existingEntry);
 
           if (fetchError && fetchError.code !== "PGRST116") throw fetchError;
-          console.log("Existing Entry:", existingEntry);
+
 
           let updatedDailyConsumption: Record<string, string> = {};
           if (existingEntry?.dailyconsumption) {
@@ -514,7 +515,7 @@ useEffect(() => {
             .from("vegetables")
             .select("dailyconsumption, TotalCost, itemName")
             .eq("vegetableid", editId)
-            .maybeSingle();
+            .single();
 
           if (fetchError) {
             console.error("❌ Error fetching vegetable data:", fetchError);
@@ -744,6 +745,7 @@ useEffect(() => {
                   hostel,
                   TotalAmount,
                   DateOfConsumed,
+                  no_of_cylinder,
                 },
               ]);
 
