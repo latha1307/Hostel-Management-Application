@@ -160,14 +160,20 @@ const handleSearch = (event) => {
         value.toLowerCase().includes(searchQuery.toLowerCase())
     )
   );
-  const FetchAttendanceData = useCallback(async (hostelType?: string) => {
+  const FetchAttendanceData = useCallback(async (hostelType?: string,selectedDate?: string) => {
     setLoading(true);
     setError(null);
+    console.log("fetching studentdata");
     try {
       let query = supabase.from("hoste").select("*").order("id", { ascending: true });
   
       if (hostelType) {
         query = query.eq("hostel", hostelType); // Filter by hostel type
+      }
+      if (selectedDate) {
+        const formattedDate =dayjs(selectedDate).format("YYYY-MM");
+        console.log("final date",formattedDate);
+        query = query.eq("monthyear", formattedDate ); // Filter by selected date
       }
   
       const { data, error } = await query;
@@ -185,8 +191,11 @@ const handleSearch = (event) => {
   
   // Fetch data when component mounts or hostel type changes
   useEffect(() => {
-    FetchAttendanceData(hostel || "Girls"); // Default to 'Girls' if undefined
-  }, [hostel,FetchAttendanceData]);
+    if (selectedDate) {
+      FetchAttendanceData(hostel || "Girls",selectedDate.format("YYYY-MM"));
+    }
+  
+  }, [hostel,selectedDate,FetchAttendanceData]);
   
      
 

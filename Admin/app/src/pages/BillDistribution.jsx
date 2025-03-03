@@ -32,6 +32,7 @@ const BillDistribution = () => {
   const [otherAmount, setOtherAmount] = useState(0);
   const [isOtherAdded, setIsOtherAdded] = useState(false);
   const [open, setOpen] = useState(false);
+  const [distributeOpen, setDistributeOpen] = useState(false);
   const [studentHeadcounts, setStudentHeadcounts] = useState(0);
   const [selectedDate, setSelectedDate] = useState("");
   const totalSummation = items.reduce((sum, item) => sum + item.amount, 0);
@@ -60,7 +61,7 @@ const BillDistribution = () => {
 
 
   const fetchBillData = useCallback(async () => {
-    if (!selectedDate) return; // Prevents calling without a valid date
+    if (!selectedDate) return;
 
     setLoading(true);
     setError(null);
@@ -68,7 +69,6 @@ const BillDistribution = () => {
     try {
       console.log("Fetching data for:", selectedDate);
 
-      // Fetch Grocery Data
       const { data: consumeddata, error: error1 } = await supabase
         .from("consumedgrocery")
         .select("total_cost")
@@ -135,7 +135,7 @@ const BillDistribution = () => {
 
     const { data: studentsdata, error: error7 } = await supabase
     .from("hoste")
-    .select("Total")
+    .select("Present_Days")
     .eq("hostel", hostel)
     .eq("monthyear", selectedDate);
 
@@ -149,7 +149,7 @@ const BillDistribution = () => {
       const totalGasCost = Array.isArray(gasdata) ? gasdata.reduce((sum, row) => sum + row.TotalAmount, 0) : 0;
       const totalMilkCost = milkdata?.reduce((sum, row) => sum + parseInt(row.TotalCost || 0), 0) || 0;
       const totalStaffCost = staffdata?.reduce((sum, row) => sum + parseInt(row.SalaryAmount || 0), 0) || 0;
-      const totalHeadcounts = studentsdata?.reduce((sum, row) => sum + parseInt(row.Total || 0), 0) || 0;
+      const totalHeadcounts = studentsdata?.reduce((sum, row) => sum + parseInt(row.Present_Days || 0), 0) || 0;
 
       // ✅ Update the UI amounts
       setItems((prevItems) =>
@@ -187,10 +187,102 @@ const BillDistribution = () => {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
+  const handleClickOpen = () => {
+    setDistributeOpen(true);
+  };
+
+  const handleClickClose = () => {
+    setDistributeOpen(false);
+  };
+
+
   const handleAddOrEditOther = () => {
     setIsOtherAdded(true);
     handleClose();
   };
+
+  const handleDistribute = async () => {
+    try {
+        // Prepare data for insertion
+        const messBillData = {
+            monthyear: selectedDate, // Format YYYY-MM
+            hostel: hostel,
+            grocery_issued_total: items.find(item => item.name === "GROCERIES ISSUED")?.amount || 0,
+            vegetables_total: items.find(item => item.name === "VEGETABLES")?.amount || 0,
+            egg_total: items.find(item => item.name === "EGG")?.amount || 0,
+            milk_total: items.find(item => item.name === "MILK")?.amount || 0,
+            gas_total: items.find(item => item.name === "GAS")?.amount || 0,
+            staff_salary_total: items.find(item => item.name === "STAFF SALARY")?.amount || 0,
+            students_head_count: studentHeadcounts || 0,
+            reduction_total: (foodWaste || 0) + (otherAmount || 0),
+            per_day_amount: Number(perDayAmount.toFixed(2)) || 0, // Ensure it's a number
+        };
+
+        console.log("Fetching data from hoste table...");
+
+        // Fetch all students' Present_Days, Adjust_Advance, and Prev_Month_Fine
+        const { data: hosteData, error: fetchError } = await supabase
+            .from("hoste")
+            .select("id, Present_Days, Adjust_Advance, Prev_Month_Fine") // Fetching id as well
+            .eq("hostel", hostel)
+            .eq("monthyear", selectedDate);
+
+        if (fetchError) {
+            console.error("Error getting students data:", fetchError.message);
+            return;
+        }
+
+        if (!hosteData || hosteData.length === 0) {
+            console.error("No data found in hoste table for the given month and hostel.");
+            alert("No records found for the selected month and hostel.");
+            return;
+        }
+
+        console.log("Inserting Mess Bill Data:", messBillData);
+
+        // Insert data into Supabase
+        const { error: insertError } = await supabase
+            .from("messbill")
+            .insert([messBillData]);
+
+        if (insertError) {
+            console.error("Error inserting mess bill:", insertError.message);
+            alert("Failed to distribute mess bill. Please try again.");
+            return;
+        }
+
+        console.log("Mess bill inserted successfully!");
+        alert("Mess bill distributed successfully!");
+
+        // **Update Total for each student separately**
+        for (const student of hosteData) {
+            const presentDays = Number(student.Present_Days) || 0;
+            const adjustAdvance = Number(student.Adjust_Advance) || 0;
+            const prevMonthFine = Number(student.Prev_Month_Fine) || 0;
+            const totalAmount = (presentDays * Number(perDayAmount)) - adjustAdvance + prevMonthFine;
+
+            console.log(`Updating student ID ${student.id} with Total: ${totalAmount}`);
+
+            const { error: updateError } = await supabase
+                .from("hoste")
+                .update({ Total: totalAmount.toFixed(0) }) // ✅ Directly set calculated value
+                .eq("id", student.id); // ✅ Updating each student separately
+
+            if (updateError) {
+                console.error(`Error updating student ID ${student.id}:`, updateError.message);
+            }
+        }
+
+        console.log("All student records updated successfully!");
+        alert("Hoste table updated successfully!");
+
+    } catch (error) {
+        console.error("Unexpected error:", error);
+        alert("An unexpected error occurred.");
+    }
+};
+
+
 
   return (
     <Box className="dark:text-gray-200" sx={{ p: 10, paddingTop: 1, textAlign: "center" }}>
@@ -336,6 +428,7 @@ const BillDistribution = () => {
   variant="contained"
   color="error"
   sx={{ fontSize: "1rem",marginTop:"10px", height: "4%"}}
+  onClick={handleClickOpen}
 >
   Distribute To All Students
 </Button>
@@ -352,6 +445,43 @@ const BillDistribution = () => {
         <DialogActions>
           <Button onClick={handleClose} color="error">Cancel</Button>
           <Button onClick={handleAddOrEditOther} color="primary">{isOtherAdded ? "Save" : "Add"}</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={distributeOpen} onClose={handleClickClose}>
+        <DialogTitle>Mess Bill Distribution</DialogTitle>
+        <DialogContent>
+  <Typography variant="h6">Summation</Typography>
+  {items.map((item, index) => (
+    <Typography key={index}>
+      {item.name}: ₹{item.amount}
+    </Typography>
+  ))}
+
+  <Typography variant="h6" sx={{ mt: 2 }}>Reduction</Typography>
+  <Typography>Food Waste: ₹{foodWaste}</Typography>
+  <Typography>Others: ₹{otherAmount}</Typography>
+
+  <Typography variant="h6" sx={{ mt: 2 }}>Distribution</Typography>
+  <Typography>Total Headcount: {studentHeadcounts}</Typography>
+  <Typography>Per Day Amount: ₹{perDayAmount.toFixed(2)}</Typography>
+</DialogContent>
+
+
+        <DialogActions>
+          <Button onClick={handleClickClose} color="secondary">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              handleDistribute();
+              handleClickClose();
+            }}
+            color="primary"
+            variant="contained"
+          >
+            Distribute
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

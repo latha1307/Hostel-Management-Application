@@ -121,6 +121,7 @@ const Provisions = () => {
    | null>(null);
   const [fileName, setFileName] = useState("Provisions_Stock.xlsx");
   const [searchQuery, setSearchQuery] = useState("");
+  const [disableAddMonth, setdisableAddMonth] = useState(false)
 
 
 
@@ -384,7 +385,22 @@ const handleMonthSubmit = async () => {
     setPage(0);
   };
 
-  const paginatedData = groceriesData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const selectedData = groceriesData.filter(item => item.monthyear === monthYear);
+
+
+  useEffect(() => {
+    const selectedData = groceriesData.filter(item => item.monthyear === monthYear);
+    setdisableAddMonth(selectedData.length > 0 ? true : false);
+  }, [groceriesData, monthYear]);  // ✅ Updated dependencies
+
+
+
+  const paginatedData = selectedData.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
 
 
   const filteredData = paginatedData.filter((row) =>
@@ -636,6 +652,7 @@ const handleMonthSubmit = async () => {
         "&:hover": { backgroundColor: "#4B5563" },
       },
     }}
+    disabled= {disableAddMonth}
   >
     Add Month
   </Button>
@@ -733,7 +750,7 @@ const handleMonthSubmit = async () => {
             sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
             rowsPerPageOptions={[10, 20, 50]}
             component="div"
-            count={groceriesData.length}
+            count={selectedData.length}
             rowsPerPage={rowsPerPage}
             page={page}
             onPageChange={handleChangePage}

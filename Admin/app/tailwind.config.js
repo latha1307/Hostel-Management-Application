@@ -3,7 +3,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        quickSand: ["Quicksand", "sans-serif"],
+        quicksand: ['Quicksand', 'sans-serif'],
       },
       colors: {
         pageBg: '#F4F7FE',

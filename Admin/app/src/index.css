@@ -5,10 +5,14 @@
 @tailwind utilities;
 
 * {
-  @apply transition-colors duration-200
+  @apply transition-colors duration-200;
 }
 
-
+/* Apply Quicksand to all text */
+body {
+  @apply font-quicksand;
+  font-family: 'Quicksand', sans-serif;
+}
 
 html, body {
   height: 100%;

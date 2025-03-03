@@ -43,14 +43,13 @@
     };
 
     if (loading) {
-      return <div>Loading...</div>; // Prevent redirect while checking session
+      return <div>Loading...</div>;
     }
 
     return (
       <Router>
         {isLoggedIn ? (
           <div className={`${darkMode ? "dark" : ""} flex h-full bg-gray-100 font-quickSand`}>
-            {/* Pass email to Header */}
             <Header
               toggleDarkMode={toggleDarkMode}
               darkMode={darkMode}
@@ -63,7 +62,7 @@
               className={`flex-1 flex flex-col transition-all dark:bg-gray-800 duration-300
               ${isSidebarOpen ? "ml-64" : "ml-16"}`}
             >
-              <div className="flex-grow mt-24 px-6 max-w-screen overflow-x-hidden">
+              <div className={`flex-grow mt-24 px-6 ${ isSidebarOpen ? 'max-w-[83vw]' : 'max-w-[96vw]'} overflow-x-hidden`}>
                 <Routes>
                   <Route path="/mess/provisions" element={<Provisions />} />
                   <Route path="/manage-mess/:hostel" element={<Main />} />
@@ -74,6 +73,7 @@
 
                   <Route path="/admin/profile" element={<AdminDetails email={email} />} />
                   <Route path="/admin/add" element={<AdminManagement />} />
+                  <Route path="/" element={<Provisions />} />
                 </Routes>
               </div>
             </div>

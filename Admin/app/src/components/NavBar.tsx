@@ -63,6 +63,7 @@ const Navbar = ({ isSidebarOpen }) => {
           {navItems.map((item, index) => (
             <div key={index}>
               <Tooltip title={!isSidebarOpen ? item.label : ""} placement="right">
+              <Link to={item.path}>
                 <div
                   className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                   onClick={() => item.subItems && handleExpand(index)}
@@ -70,7 +71,7 @@ const Navbar = ({ isSidebarOpen }) => {
                   <div className="mr-2">{item.icon}</div>
                   {isSidebarOpen && (
                     <span className="ml-4 text-md">
-                      {item.path ? <Link to={item.path}>{item.label}</Link> : item.label}
+                      {item.label}
                     </span>
                   )}
                   {item.subItems && isSidebarOpen && (
@@ -79,6 +80,7 @@ const Navbar = ({ isSidebarOpen }) => {
                     </div>
                   )}
                 </div>
+                </Link>
               </Tooltip>
 
               {/* Sub-items */}
@@ -86,14 +88,16 @@ const Navbar = ({ isSidebarOpen }) => {
                 <div className="ml-8 mt-1 space-y-1">
                   {item.subItems.map((subItem, subIndex) => (
                     <Tooltip key={subIndex} title={!isSidebarOpen ? subItem.label : ""} placement="right">
+                      <Link to={subItem.path}>
                       <div
                         className="flex items-center p-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-all"
                       >
                         <div className="text-md">{subItem.icon}</div>
                         <span className="ml-4">
-                          <Link to={subItem.path}>{subItem.label}</Link>
+                          {subItem.label}
                         </span>
                       </div>
+                      </Link>
                     </Tooltip>
                   ))}
                 </div>
