@@ -18,7 +18,8 @@ import {
   IconButton,
   InputAdornment,
   Collapse,
-  Typography
+  Typography,
+  Card
 } from "@mui/material";
 import ArrowBack from "@mui/icons-material/ArrowBack";
 import Autocomplete from '@mui/material/Autocomplete';
@@ -130,6 +131,7 @@ const Groceries = () => {
     const [monthYear, setMonthYear] = useState<string | null>(null);
     const [openSnackbar, setOpenSnackbar] = useState(false);
 const [snackbarMessage, setSnackbarMessage] = useState("");
+const [todayAmount, settodayAmount] = useState(0)
 const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
 
 const theme = useTheme();
@@ -807,6 +809,28 @@ useEffect(() => {
     setFormattedData(newFormattedData);
   }, [dailyConsumptionData, dailyConsumptionVegData, selectedDate, selectedCategory]);
 
+  const calculateTodayAmount = (groceriesData, selectedCategory, selectedDate) => {
+    if (selectedCategory === "Vegetables" && groceriesData.length > 0) {
+      console.log("Groceries Data:", groceriesData);
+      console.log("Selected Date:", selectedDate);
+
+      const todayTotal = groceriesData
+        .filter((item) => {
+          console.log("Item Daily Consumption:", item.dailyconsumption);
+          return item.dailyconsumption?.[selectedDate]; // Check if selectedDate exists in the object
+        })
+        .reduce((sum, item) => sum + (item.dailyconsumption?.[selectedDate]?.totalCost || 0), 0);
+
+      console.log("Today Total:", todayTotal);
+      return todayTotal;
+    }
+    return 0;
+  };
+
+  useEffect(() => {
+    settodayAmount(calculateTodayAmount(groceriesData, selectedCategory, selectedDate));
+  }, [groceriesData, selectedCategory, selectedDate]);
+
 
   return (
     <div className="max-h-screen max-w-screen bg-gray-100 dark:bg-gray-800 p-1 -mt-16">
@@ -946,6 +970,14 @@ useEffect(() => {
 
       </Box>
       <div className="flex items-center space-x-4 mb-2">
+        {selectedCategory=== 'Vegetables' && (
+          <div>
+            <Typography>Today Amount</Typography>
+            <Card>
+              ₹ {todayAmount}
+            </Card>
+          </div>
+  )}
         <IconButton className="flex items-center space-x-1  text-blue-500 relative -top-1"
          onClick={() => fetchGroceriesData(selectedCategory)} >
         <span className="text-blue-500 text-sm font-medium">Refresh</span>
