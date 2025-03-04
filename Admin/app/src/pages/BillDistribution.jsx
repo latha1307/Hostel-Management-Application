@@ -265,7 +265,7 @@ const BillDistribution = () => {
 
             const { error: updateError } = await supabase
                 .from("hoste")
-                .update({ Total: totalAmount.toFixed(0) }) // ✅ Directly set calculated value
+                .update({ Total: totalAmount.toFixed(2) }) // ✅ Directly set calculated value
                 .eq("id", student.id); // ✅ Updating each student separately
 
             if (updateError) {
