@@ -48,6 +48,7 @@ const AdminManagement = () => {
 
   return (
     <Box
+      className="dark:bg-gray-800"
       sx={{
         background: "white",
         minHeight: "100vh",
@@ -59,21 +60,140 @@ const AdminManagement = () => {
       }}
     >
       <Container maxWidth={false} disableGutters sx={{ display: "flex", flexDirection: "column", alignItems: "center", px: { xs: 2, sm: 3, md: 5, lg: 10 } }}>
-        <Card sx={{ width: { xs: "100%", sm: "85%", md: "60%" }, boxShadow: 6, borderRadius: 3, p: 3, background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(10px)", mb: 3 }}>
+        <Card className="dark:bg-gray-600" sx={{ width: { xs: "100%", sm: "85%", md: "60%" }, boxShadow: 6, borderRadius: 3, p: 3, background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(10px)", mb: 3 }}>
           <CardContent>
             <IconButton sx={{ position: "absolute", top: 10, left: 10 }} onClick={() => window.history.back()}>
-              <ArrowBack color="primary" />
+              <ArrowBack className="dark:text-gray-200" color="primary" />
             </IconButton>
-            <Typography variant="h5" fontWeight="bold" textAlign="center" color="primary" mb={2}>
+            <Typography className="dark:text-gray-200" variant="h5" fontWeight="bold" textAlign="center" color="primary" mb={2}>
               Add New Admin
             </Typography>
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-              <TextField label="Name" variant="outlined" name="name" value={admin.name} onChange={handleChange} fullWidth required InputProps={{ startAdornment: (<InputAdornment position="start"><Person color="primary" /></InputAdornment>) }} />
+            <TextField
+        className="dark:text-gray-100"
+        label="Name"
+        variant="outlined"
+        name="name"
+        value={admin.name}
+        onChange={handleChange}
+        fullWidth
+        required
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Person color="primary" />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "gray" },
+            "&:hover fieldset": { borderColor: "lightgray" },
+            "&.Mui-focused fieldset": { borderColor: "white" },
+          },
+          "& .MuiInputBase-input": {
+            color: "black",
+            "&:focus": { color: "white" },
+          },
+          "& .MuiInputLabel-root": { color: "gray" },
+          "& .MuiInputLabel-root.Mui-focused": { color: "white" },
+          "@media (prefers-color-scheme: dark)": {
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#f3f4f6" },
+              "&:hover fieldset": { borderColor: "#e5e7eb" },
+              "&.Mui-focused fieldset": { borderColor: "white" },
+            },
+            "& .MuiInputBase-input": { color: "#f3f4f6" },
+            "& .MuiInputLabel-root": { color: "#e5e7eb" },
+            "& .MuiInputLabel-root.Mui-focused": { color: "white" },
+          },
+        }}
+      />
 
-              <TextField label="Email" type="email" variant="outlined" name="email" value={admin.email} onChange={handleChange} fullWidth required InputProps={{ startAdornment: (<InputAdornment position="start"><Email color="primary" /></InputAdornment>) }} />
+      <TextField
+        className="dark:text-gray-100"
+        label="Email"
+        type="email"
+        variant="outlined"
+        name="email"
+        value={admin.email}
+        onChange={handleChange}
+        fullWidth
+        required
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Email color="primary" />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "gray" },
+            "&:hover fieldset": { borderColor: "lightgray" },
+            "&.Mui-focused fieldset": { borderColor: "white" },
+          },
+          "& .MuiInputBase-input": {
+            color: "black",
+            "&:focus": { color: "white" },
+          },
+          "& .MuiInputLabel-root": { color: "gray" },
+          "& .MuiInputLabel-root.Mui-focused": { color: "white" },
+          "@media (prefers-color-scheme: dark)": {
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#f3f4f6" },
+              "&:hover fieldset": { borderColor: "#e5e7eb" },
+              "&.Mui-focused fieldset": { borderColor: "white" },
+            },
+            "& .MuiInputBase-input": { color: "#f3f4f6" },
+            "& .MuiInputLabel-root": { color: "#e5e7eb" },
+            "& .MuiInputLabel-root.Mui-focused": { color: "white" },
+          },
+        }}
+      />
 
-              <TextField label="Password" type="password" variant="outlined" name="password" value={admin.password} onChange={handleChange} fullWidth required InputProps={{ startAdornment: (<InputAdornment position="start"><Lock color="primary" /></InputAdornment>) }} />
+      <TextField
+        className="dark:text-gray-100"
+        label="Password"
+        type="password"
+        variant="outlined"
+        name="password"
+        value={admin.password}
+        onChange={handleChange}
+        fullWidth
+        required
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <Lock color="primary" />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            "& fieldset": { borderColor: "gray" },
+            "&:hover fieldset": { borderColor: "lightgray" },
+            "&.Mui-focused fieldset": { borderColor: "white" },
+          },
+          "& .MuiInputBase-input": {
+            color: "black",
+            "&:focus": { color: "white" },
+          },
+          "& .MuiInputLabel-root": { color: "gray" },
+          "& .MuiInputLabel-root.Mui-focused": { color: "white" },
+          "@media (prefers-color-scheme: dark)": {
+            "& .MuiOutlinedInput-root": {
+              "& fieldset": { borderColor: "#f3f4f6" },
+              "&:hover fieldset": { borderColor: "#e5e7eb" },
+              "&.Mui-focused fieldset": { borderColor: "white" },
+            },
+            "& .MuiInputBase-input": { color: "#f3f4f6" },
+            "& .MuiInputLabel-root": { color: "#e5e7eb" },
+            "& .MuiInputLabel-root.Mui-focused": { color: "white" },
+          },
+        }}
+      />
 
               <Button type="submit" variant="contained" color="primary" sx={{ mt: 2, py: 1, fontSize: "1rem", borderRadius: 2 }} disabled={loading}>
                 {loading ? "Adding..." : "Add Admin"}

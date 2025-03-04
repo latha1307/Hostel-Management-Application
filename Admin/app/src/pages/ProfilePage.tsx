@@ -85,7 +85,7 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ marginTop: 5 }}>
+    <Container maxWidth="md" sx={{ marginTop: 5, padding:1 }}>
       <Box display="flex" justifyContent="space-between" mb={2}>
         <Button variant="contained" startIcon={<ArrowBack />} component={Link} to="/">
           Back
@@ -93,10 +93,10 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
         <Button variant="contained" color="error" startIcon={<Logout />} onClick={handleLogout}> Logout </Button>
       </Box>
 
-      <Card sx={{ padding: 3, borderRadius: 3, boxShadow: 5, bgcolor: "#f5f5f5" }}>
+      <Card className="dark:bg-gray-700" sx={{ padding: 3, borderRadius: 3, boxShadow: 5, bgcolor: "#f5f5f5" }}>
         <CardContent>
           <Box display="flex" justifyContent="space-between" alignItems="center">
-            <Typography variant="h5" fontWeight="bold" color="primary">Admin Profile</Typography>
+            <Typography variant="h5" fontWeight="bold" color="primary" className="dark:text-gray-200">Admin Profile</Typography>
             <IconButton color="primary" onClick={() => setIsEditing(!isEditing)}>
               <Edit />
             </IconButton>
@@ -104,10 +104,64 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
 
           {admin && (
             <Box>
-              <TextField fullWidth margin="normal" label="Name" value={admin.name} disabled={!isEditing} />
-              <TextField fullWidth margin="normal" label="Email" value={admin.email} disabled />
-              {isEditing && <Button variant="contained" sx={{ mt: 2 }} onClick={() => setIsEditing(false)}> Save Changes </Button>}
-            </Box>
+            <TextField
+  fullWidth
+  margin="normal"
+  label="Name"
+  value={admin.name}
+  disabled={!isEditing}
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": { borderColor: isEditing ? "#bdbdbd" : "#d1d1d1" }, // Light gray when not editing
+      "&.Mui-focused fieldset": { borderColor: "#1976d2" }, // Blue focus color
+      ".dark & fieldset": { borderColor: "#e5e7eb" } // Gray-200 in dark mode
+    },
+    "& .MuiInputBase-input": {
+      color: isEditing ? "black" : "#757575", // Gray text in light mode
+      ".dark &": { color: "white !important" } // Ensures text is **always** white in dark mode
+    },
+    "& .MuiInputLabel-root": {
+      color: isEditing ? "#757575" : "#a0a0a0", // Light gray when not editing for blur effect
+      opacity: isEditing ? 1 : 0.6, // Reduce opacity for blur-like effect
+      ".dark &": { color: "#e5e7eb" } // Full opacity in dark mode
+    }
+  }}
+/>
+
+
+<TextField
+  fullWidth
+  margin="normal"
+  label="Email"
+  value={admin.email}
+  disabled
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": { borderColor: isEditing ? "#bdbdbd" : "#d1d1d1" }, // Light gray when not editing
+      "&.Mui-focused fieldset": { borderColor: "#1976d2" }, // Blue focus color
+      ".dark & fieldset": { borderColor: "#e5e7eb" } // Gray-200 in dark mode
+    },
+    "& .MuiInputBase-input": {
+      color: isEditing ? "black" : "#757575", // Gray text in light mode
+      ".dark &": { color: "white !important" } // Ensures text is **always** white in dark mode
+    },
+    "& .MuiInputLabel-root": {
+      color: isEditing ? "#757575" : "#a0a0a0", // Light gray when not editing for blur effect
+      opacity: isEditing ? 1 : 0.6, // Reduce opacity for blur-like effect
+      ".dark &": { color: "#e5e7eb" } // Full opacity in dark mode
+    }
+  }}
+/>
+
+
+
+            {isEditing && (
+              <Button variant="contained" sx={{ mt: 2 }} onClick={() => setIsEditing(false)}>
+                Save Changes
+              </Button>
+            )}
+          </Box>
+          
           )}
         </CardContent>
       </Card>
@@ -121,17 +175,17 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
         <Table>
           <TableHead sx={{ bgcolor: "#1976d2" }}>
             <TableRow>
-              <TableCell sx={{ color: "white" }}>Name</TableCell>
-              <TableCell sx={{ color: "white" }}>Email</TableCell>
-              <TableCell sx={{ color: "white" }}>Actions</TableCell>
+              <TableCell sx={{ color: "white", width: "20%", textAlign:"center" }}>Name</TableCell>
+              <TableCell sx={{ color: "white", width: "40%", textAlign:"center"  }}>Email</TableCell>
+              <TableCell sx={{ color: "white", width: "30%", textAlign:"center"  }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {admins.map((adminItem) => (
               <TableRow key={adminItem.id} hover>
-                <TableCell>{adminItem.name}</TableCell>
-                <TableCell>{adminItem.email}</TableCell>
-                <TableCell>
+                <TableCell className="dark:bg-gray-800 dark:text-gray-200" sx={{ width: "30%", textAlign:"center" }}>{adminItem.name}</TableCell>
+                <TableCell className="dark:bg-gray-800 dark:text-gray-200" sx={{ width: "30%", textAlign:"center" }}>{adminItem.email}</TableCell>
+                <TableCell className="dark:bg-gray-800 dark:text-gray-200" sx={{ width: "30%", textAlign:"center" }}>
                   <IconButton color="error" onClick={() => { setAdminToDelete(adminItem); setDeleteDialogOpen(true); }}>
                     <Delete />
                   </IconButton>
@@ -142,18 +196,30 @@ const ProfilePage: React.FC<Props> = ({ email }) => {
         </Table>
       </TableContainer>
 
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>Confirm Deletion</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Are you sure you want to delete <strong>{adminToDelete?.name}</strong>?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleDeleteAdmin} color="error"> Delete </Button>
-        </DialogActions>
-      </Dialog>
+      <Dialog
+  open={deleteDialogOpen}
+  onClose={() => setDeleteDialogOpen(false)}
+  sx={{
+    "& .MuiPaper-root": {
+      backgroundColor: "var(--dialog-bg) !important", 
+      color: "var(--dialog-text) !important",
+    },
+  }}
+>
+  <DialogTitle>Confirm Deletion</DialogTitle>
+  <DialogContent>
+    <DialogContentText>
+      Are you sure you want to delete <strong>{adminToDelete?.name}</strong>?
+    </DialogContentText>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+    <Button onClick={handleDeleteAdmin} color="error">Delete</Button>
+  </DialogActions>
+</Dialog>
+
+
+
 
       <Snackbar open={snackbarOpen} autoHideDuration={4000} onClose={() => setSnackbarOpen(false)}>
         <Alert severity="success">{snackbarMessage}</Alert>

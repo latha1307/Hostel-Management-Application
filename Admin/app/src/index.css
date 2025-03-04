@@ -22,3 +22,16 @@ html, body {
 #root {
   height: 100%;
 }
+
+/* Light Mode (Default) */
+:root {
+  --dialog-bg: white;
+  --dialog-text: black;
+}
+
+/* Dark Mode */
+.dark {
+  --dialog-bg: #1F2937; /* bg-gray-800 */
+  --dialog-text: #E5E7EB; /* text-gray-200 */
+}
+

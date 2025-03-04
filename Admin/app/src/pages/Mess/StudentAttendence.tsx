@@ -223,11 +223,12 @@ const handleSearch = (event) => {
     Branch: '',
     "Year_of_Study":0,
     "Total_days": 0,
+    Reduction_Days:0,
     "Present_Days": 0,
-    "Reduction_Days": 0,
-    "Adjust_Advance": 0,
+   "Adjust_Advance": 0,
     "Prev_Month_Fine": 0,
-     Total: 0
+    Total:0
+    
     });
     setIsEditing(false);
     setEditId(null);
@@ -269,8 +270,8 @@ const handleSearch = (event) => {
 // Define required headers without monthyear (since it's added later)
 const requiredHeaders = [
   "Register No Unique ID", "Room No", "Name",
-  "Course", "Branch", "Year of Study", "Total days", "Present Days",
-  "Reduction Days", "Adjust Advance", "Total"
+  "Course", "Branch", "Year of Study", "Total days", "Present Days","Reduction Days",
+ "Adjust Advance"
 ];
 
 // Find header row index dynamically
@@ -317,10 +318,10 @@ if (missingHeaders.length > 0) {
               "Year of Study": "Year_of_Study",
               "Total days": "Total_days",
               "Present Days": "Present_Days",
-              "Reduction Days": "Reduction_Days",
+               "Reduction Days":"Reduction_Days",
               "Adjust Advance": "Adjust_Advance",
               "Prev Month Fine": "Prev_Month_Fine",
-              "Total": "Total",
+             
             };
     
             // Function to rename extracted column names to match database column names
