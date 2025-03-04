@@ -1241,6 +1241,7 @@ useEffect(() => {
                         type="number"
                         value={value}
                         onChange={(e) => handleConsumptionChange(date, e.target.value)}
+                        onWheel={(e) => (e.target as HTMLInputElement).blur()}
                         disabled={!isEditRow}
                         sx={{
                           width: "100px",
@@ -1273,7 +1274,14 @@ useEffect(() => {
                             type="number"
                             label="Quantity"
                             value={dailyConsumptionVegData[date]?.quantity || ""}
-                            onChange={(e) => handleVegetableChange(date, "quantity", e.target.value)}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9.]/g, ""); // Allow only numbers and decimals
+                              if (value === "" || parseFloat(value) >= 0) {
+                                handleVegetableChange(date, "quantity", value);
+                              }
+                            }}
+
+                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
                             disabled={!isEditRow}
                             sx={{
                               width: "100px",
@@ -1298,7 +1306,12 @@ useEffect(() => {
                             type="number"
                             label="Cost/kg"
                             value={dailyConsumptionVegData[date]?.costPerKg || ""}
-                            onChange={(e) => handleVegetableChange(date, "costPerKg", e.target.value)}
+                            onChange={(e) => {
+                              const value = e.target.value.replace(/[^0-9.]/g, ""); // Allow only numbers and decimals
+                              handleVegetableChange(date, "costPerKg", value.toString()); // Ensure it's a string
+                            }}
+
+                            onWheel={(e) => (e.target as HTMLInputElement).blur()}
                             disabled={!isEditRow}
                             sx={{
                               width: "100px",

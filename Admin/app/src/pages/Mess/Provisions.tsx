@@ -306,7 +306,7 @@ const handleMonthSubmit = async () => {
     setEditId(null);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -392,7 +392,7 @@ const handleMonthSubmit = async () => {
   useEffect(() => {
     const selectedData = groceriesData.filter(item => item.monthyear === monthYear);
     setdisableAddMonth(selectedData.length > 0 ? true : false);
-  }, [groceriesData, monthYear]);  // ✅ Updated dependencies
+  }, [groceriesData, monthYear]);
 
 
 
@@ -779,14 +779,25 @@ const handleMonthSubmit = async () => {
           : ""
         : formData[name] || ""
     }
-    onChange={handleInputChange}
+    onChange={(e) => {
+      const { value } = e.target;
+      if (type === "number" && Number(value) < 0) return;
+      handleInputChange(e);
+    }}
+    onWheel={(e) => (e.target as HTMLInputElement).blur()}
     fullWidth
     margin="normal"
     type={type}
     InputLabelProps={type === "date" ? { shrink: true } : undefined}
     disabled={name === "monthyear"} // Disable editing for monthyear field
+    inputProps={
+      type === "number"
+        ? { inputMode: "numeric", pattern: "[0-9]*", min: 0 }
+        : undefined
+    }
   />
 ))}
+
 
 </DialogContent>
         <DialogActions>
