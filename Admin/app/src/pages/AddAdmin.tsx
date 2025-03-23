@@ -14,7 +14,7 @@ const AdminManagement = () => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAdmin({ ...admin, [e.target.name]: e.target.value });
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -71,129 +71,123 @@ const AdminManagement = () => {
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             <TextField
-        className="dark:text-gray-100"
-        label="Name"
-        variant="outlined"
-        name="name"
-        value={admin.name}
-        onChange={handleChange}
-        fullWidth
-        required
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Person color="primary" />
-            </InputAdornment>
-          ),
-        }}
-        sx={{
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "gray" },
-            "&:hover fieldset": { borderColor: "lightgray" },
-            "&.Mui-focused fieldset": { borderColor: "white" },
-          },
-          "& .MuiInputBase-input": {
-            color: "black",
-            "&:focus": { color: "white" },
-          },
-          "& .MuiInputLabel-root": { color: "gray" },
-          "& .MuiInputLabel-root.Mui-focused": { color: "white" },
-          "@media (prefers-color-scheme: dark)": {
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#f3f4f6" },
-              "&:hover fieldset": { borderColor: "#e5e7eb" },
-              "&.Mui-focused fieldset": { borderColor: "white" },
-            },
-            "& .MuiInputBase-input": { color: "#f3f4f6" },
-            "& .MuiInputLabel-root": { color: "#e5e7eb" },
-            "& .MuiInputLabel-root.Mui-focused": { color: "white" },
-          },
-        }}
-      />
+  label="Name"
+  variant="outlined"
+  name="name"
+  value={admin.name}
+  onChange={handleChange}
+  fullWidth
+  required
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <Person color="primary" />
+      </InputAdornment>
+    ),
+  }}
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": { borderColor: "#ccc" },
+      "&:hover fieldset": { borderColor: "#999" },
+      "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+    },
+    "& .MuiInputBase-input": { color: "#000" },
+    "& .MuiInputLabel-root": { color: "#666" },
+    "& .MuiInputLabel-root.Mui-focused": { color: "#1976d2" },
 
-      <TextField
-        className="dark:text-gray-100"
-        label="Email"
-        type="email"
-        variant="outlined"
-        name="email"
-        value={admin.email}
-        onChange={handleChange}
-        fullWidth
-        required
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Email color="primary" />
-            </InputAdornment>
-          ),
-        }}
-        sx={{
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "gray" },
-            "&:hover fieldset": { borderColor: "lightgray" },
-            "&.Mui-focused fieldset": { borderColor: "white" },
-          },
-          "& .MuiInputBase-input": {
-            color: "black",
-            "&:focus": { color: "white" },
-          },
-          "& .MuiInputLabel-root": { color: "gray" },
-          "& .MuiInputLabel-root.Mui-focused": { color: "white" },
-          "@media (prefers-color-scheme: dark)": {
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#f3f4f6" },
-              "&:hover fieldset": { borderColor: "#e5e7eb" },
-              "&.Mui-focused fieldset": { borderColor: "white" },
-            },
-            "& .MuiInputBase-input": { color: "#f3f4f6" },
-            "& .MuiInputLabel-root": { color: "#e5e7eb" },
-            "& .MuiInputLabel-root.Mui-focused": { color: "white" },
-          },
-        }}
-      />
+    "@media (prefers-color-scheme: dark)": {
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": { borderColor: "#f3f4f6" },
+        "&:hover fieldset": { borderColor: "#e5e7eb" },
+        "&.Mui-focused fieldset": { borderColor: "white" },
+      },
+      "& .MuiInputBase-input": { color: "#f3f4f6" },
+      "& .MuiInputLabel-root": { color: "#e5e7eb" }, // gray-200
+      "& .MuiInputLabel-root.Mui-focused": { color: "#e5e7eb" },
+    },
+  }}
+/>
 
-      <TextField
-        className="dark:text-gray-100"
-        label="Password"
-        type="password"
-        variant="outlined"
-        name="password"
-        value={admin.password}
-        onChange={handleChange}
-        fullWidth
-        required
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <Lock color="primary" />
-            </InputAdornment>
-          ),
-        }}
-        sx={{
-          "& .MuiOutlinedInput-root": {
-            "& fieldset": { borderColor: "gray" },
-            "&:hover fieldset": { borderColor: "lightgray" },
-            "&.Mui-focused fieldset": { borderColor: "white" },
-          },
-          "& .MuiInputBase-input": {
-            color: "black",
-            "&:focus": { color: "white" },
-          },
-          "& .MuiInputLabel-root": { color: "gray" },
-          "& .MuiInputLabel-root.Mui-focused": { color: "white" },
-          "@media (prefers-color-scheme: dark)": {
-            "& .MuiOutlinedInput-root": {
-              "& fieldset": { borderColor: "#f3f4f6" },
-              "&:hover fieldset": { borderColor: "#e5e7eb" },
-              "&.Mui-focused fieldset": { borderColor: "white" },
-            },
-            "& .MuiInputBase-input": { color: "#f3f4f6" },
-            "& .MuiInputLabel-root": { color: "#e5e7eb" },
-            "& .MuiInputLabel-root.Mui-focused": { color: "white" },
-          },
-        }}
-      />
+<TextField
+  label="Email"
+  type="email"
+  variant="outlined"
+  name="email"
+  value={admin.email}
+  onChange={handleChange}
+  fullWidth
+  required
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <Email color="primary" />
+      </InputAdornment>
+    ),
+  }}
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": { borderColor: "#ccc" },
+      "&:hover fieldset": { borderColor: "#999" },
+      "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+    },
+    "& .MuiInputBase-input": { color: "#000" },
+    "& .MuiInputLabel-root": { color: "#666" },
+    "& .MuiInputLabel-root.Mui-focused": { color: "#1976d2" },
+
+    "@media (prefers-color-scheme: dark)": {
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": { borderColor: "#f3f4f6" },
+        "&:hover fieldset": { borderColor: "#e5e7eb" },
+        "&.Mui-focused fieldset": { borderColor: "white" },
+      },
+      "& .MuiInputBase-input": { color: "#f3f4f6" },
+      "& .MuiInputLabel-root": { color: "#e5e7eb" }, // gray-200
+      "& .MuiInputLabel-root.Mui-focused": { color: "#e5e7eb" },
+    },
+  }}
+/>
+
+<TextField
+  
+  label="Password"
+  type="password"
+  variant="outlined"
+  name="password"
+  value={admin.password}
+  onChange={handleChange}
+  fullWidth
+  required
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <Lock color="primary" />
+      </InputAdornment>
+    ),
+  }}
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      "& fieldset": { borderColor: "#ccc" },
+      "&:hover fieldset": { borderColor: "#999" },
+      "&.Mui-focused fieldset": { borderColor: "#1976d2" },
+    },
+    "& .MuiInputBase-input": { color: "#000" },
+    "& .MuiInputLabel-root": { color: "#666" },
+    "& .MuiInputLabel-root.Mui-focused": { color: "#1976d2" },
+
+    "@media (prefers-color-scheme: dark)": {
+      "& .MuiOutlinedInput-root": {
+        "& fieldset": { borderColor: "#f3f4f6" },
+        "&:hover fieldset": { borderColor: "#e5e7eb" },
+        "&.Mui-focused fieldset": { borderColor: "white" },
+      },
+      "& .MuiInputBase-input": { color: "#f3f4f6" },
+      "& .MuiInputLabel-root": { color: "#e5e7eb" }, // gray-200
+      "& .MuiInputLabel-root.Mui-focused": { color: "#e5e7eb" },
+    },
+  }}
+/>
+
+
 
               <Button type="submit" variant="contained" color="primary" sx={{ mt: 2, py: 1, fontSize: "1rem", borderRadius: 2 }} disabled={loading}>
                 {loading ? "Adding..." : "Add Admin"}
