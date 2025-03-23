@@ -613,9 +613,17 @@ useEffect(() => {
 
       let response;
 
+      const updatedDateOfConsumed = formData.DateOfConsumed
+      ? formData.DateOfConsumed
+      : new Date().toISOString().split("T")[0];
+
+    console.log("Updated DateOfConsumed:", updatedDateOfConsumed);
+
+
+
       if (isEditing) {
-        // Editing logic
         switch (selectedCategory) {
+
 
           case 'Egg':
             response = await supabase
@@ -623,7 +631,7 @@ useEffect(() => {
               .update({
                 Quantity,
                 CostPerPiece,
-                DateOfConsumed,
+                DateOfConsumed: updatedDateOfConsumed,
               })
               .eq('id', editId);
 
@@ -636,7 +644,7 @@ useEffect(() => {
               .update({
                 Quantity,
                 CostPerLitre,
-                DateOfConsumed,
+                DateOfConsumed: updatedDateOfConsumed,
               })
               .eq('id', editId);
 
@@ -649,12 +657,14 @@ useEffect(() => {
               .update({
                 no_of_cylinder,
                 TotalAmount,
-                DateOfConsumed,
+                DateOfConsumed: updatedDateOfConsumed,
               })
               .eq('id', editId);
 
+
             if (response.error) throw response.error;
             break;
+
 
           default:
             throw new Error('Invalid category');
@@ -685,7 +695,7 @@ useEffect(() => {
                   hostel,
                   itemname,
                   monthyear: monthYear,
-                  unit, // Use extracted unit
+                  unit,
                 },
               ]);
 
@@ -833,7 +843,7 @@ useEffect(() => {
 
 
   return (
-    <div className="max-h-screen max-w-screen bg-gray-100 dark:bg-gray-800 p-1 -mt-16">
+    <div className="max-h-screen max-w-screen bg-[#E2DFD0] dark:bg-gray-800 p-1 -mt-16">
       {/* Header */}
       <div className="flex items-center mt-14 mb-2">
         <Link to={`/manage-mess/${hostel === 'Boys' ? 'Boys' : 'Girls'}`}><ArrowBack className="text-gray-900 dark:text-gray-100 cursor-pointer" /></Link>
@@ -969,10 +979,10 @@ useEffect(() => {
 
 
       </Box>
-      <div className="flex items-center space-x-4 mb-2">
+      <div className="flex items-center space-x-4 mb-2 text-center">
         {selectedCategory=== 'Vegetables' && (
           <div>
-            <Typography>Today Amount</Typography>
+            <Typography className="dark:text-gray-200">Total Amount on <br/>{selectedDate}</Typography>
             <Card>
               ₹ {todayAmount}
             </Card>
@@ -1456,8 +1466,6 @@ useEffect(() => {
                     ? selectedDate
                     : field.name === "monthyear"
                     ? formattedDate
-                    : field.type === "date"
-                    ? formData[field.name] || new Date().toISOString().split("T")[0]
                     : formData[field.name] || ""
                 }
                 onChange={handleInputChange}

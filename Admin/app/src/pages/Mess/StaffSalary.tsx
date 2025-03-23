@@ -356,15 +356,22 @@ const StaffSalary = () => {
         <div>Loading...</div>
       ) : (
         <>
-          <TableContainer
+        <Box sx={{
+                  maxHeight: "110vh",
+                  maxWidth: "100%",
+                  overflowX: "auto",
+                  padding: "8px"
+                }}>
+        <TableContainer
             className='dark:bg-gray-800 dark:text-gray-200'
             sx={{
-              height: "400px",
+              maxHeight: "100vh",
               overflow: "auto",
               backgroundColor: 'white',
               border: "1px solid #E0E0E0",
               borderTopLeftRadius: "8px",
               borderTopRightRadius: "8px",
+              overflowX: "auto",
             }}
           >
             <Table size='small'>
@@ -402,7 +409,6 @@ const StaffSalary = () => {
               </TableBody>
             </Table>
           </TableContainer>
-
           <TablePagination
             className='dark:bg-gray-800 dark:text-gray-200'
             sx={{backgroundColor: 'white', border: '1px solid #E0E0E0'}}
@@ -414,6 +420,9 @@ const StaffSalary = () => {
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
+        </Box>
+
+
         </>
       )}
 

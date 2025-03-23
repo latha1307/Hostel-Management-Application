@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -54,7 +55,7 @@ const Navbar = ({ isSidebarOpen }) => {
 
   return (
     <aside
-      className={`fixed top-0 left-0 z-40 h-screen pt-20 bg-white border-r border-gray-200 dark:bg-gray-800 transition-all ${
+      className={`fixed top-0 left-0 z-40 h-screen pt-20 bg-gradient-to-b from-[#006D77] to-[#5FABB0]  border-r border-gray-200 dark:bg-gradient-to-b dark:from-gray-800 dark:to-gray-800 transition-all ${
         isSidebarOpen ? "w-64" : "w-16"
       }`}
     >
@@ -65,7 +66,7 @@ const Navbar = ({ isSidebarOpen }) => {
               <Tooltip title={!isSidebarOpen ? item.label : ""} placement="right">
               <Link to={item.path}>
                 <div
-                  className="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                  className="flex items-center p-2  rounded-lg text-white hover:bg-[#5FABB0] dark:hover:bg-gray-700 cursor-pointer"
                   onClick={() => item.subItems && handleExpand(index)}
                 >
                   <div className="mr-2">{item.icon}</div>
@@ -90,7 +91,7 @@ const Navbar = ({ isSidebarOpen }) => {
                     <Tooltip key={subIndex} title={!isSidebarOpen ? subItem.label : ""} placement="right">
                       <Link to={subItem.path}>
                       <div
-                        className="flex items-center p-2 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-all"
+                        className="flex items-center p-2  text-white hover:bg-[#5FABB0] dark:hover:bg-gray-700 px-4 py-2 rounded-lg transition-all"
                       >
                         <div className="text-md">{subItem.icon}</div>
                         <span className="ml-4">

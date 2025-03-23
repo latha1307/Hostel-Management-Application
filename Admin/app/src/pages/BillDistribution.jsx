@@ -305,7 +305,6 @@ const BillDistribution = () => {
         <MenuItem key={value} value={value}>{label}</MenuItem>
       ))}
     </Select>
-        <Button variant="contained" color="primary" sx={{ fontSize: "0.7rem" }}>View History</Button>
       </Box>
 
       <Card  className='dark:bg-gray-700 dark:text-gray-200' sx={{ p: 2, bgcolor: "#fff", borderRadius: 2, boxShadow: "0px 4px 8px green", mb: 2 }}>

@@ -528,7 +528,7 @@ const handleMonthSubmit = async () => {
     reader.readAsArrayBuffer(file);
   };
   return (
-    <div className="max-h-screen bg-gray-100 dark:bg-gray-800 p-1 -mt-10 max-w-screen">
+    <div className="max-h-screen bg-[#E2DFD0] dark:bg-gray-800 p-1 -mt-10 max-w-screen">
       <div className="flex items-center mt-8 mb-2">
         <span className=" text-gray-900 dark:text-gray-100 text-xl font-bold"> Stocks in Inventory</span>
       </div>

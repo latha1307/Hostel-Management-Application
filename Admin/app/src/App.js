@@ -49,7 +49,7 @@
     return (
       <Router>
         {isLoggedIn ? (
-          <div className={`${darkMode ? "dark" : ""} flex h-full bg-gray-100 font-quickSand`}>
+          <div className={`${darkMode ? "dark" : ""} flex h-full bg-[#E2DFD0] font-quickSand`}>
             <Header
               toggleDarkMode={toggleDarkMode}
               darkMode={darkMode}

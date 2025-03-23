@@ -9,7 +9,7 @@ import { useParams } from 'react-router-dom';
 const Main = () => {
   const { hostel } = useParams();
   return (
-    <div className="max-h-screen bg-gray-100 dark:bg-gray-800 p-1 -mt-10 w-[100vh]">
+    <div className="max-h-screen bg-[#E2DFD0] dark:bg-gray-800 p-1 -mt-10 w-[100vh]">
 
       <div className="flex items-center mt-8 mb-4">
         <span className="dark:text-gray-100 text-gray-900 text-xl font-bold">{hostel === 'Boys' ? 'Boys' : 'Girls'} Hostel</span>
